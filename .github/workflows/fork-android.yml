@@ -1,0 +1,162 @@
+# Fork-only workflow: builds a personal Android APK that installs alongside the
+# official LettuceAI app. Lives in its own file so upstream rebases never conflict.
+name: Fork Android APK
+run-name: Fork Android · ${{ inputs.source_ref || github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Commit/branch to build (blank = the branch this run was started on).
+        type: string
+        default: ''
+      targets:
+        description: Tauri Android targets, space separated (aarch64 armv7 i686 x86_64).
+        type: string
+        default: aarch64
+      release:
+        description: Publish the APK as a prerelease in this fork.
+        type: boolean
+        default: true
+  push:
+    branches: ['fork/**']
+    paths-ignore: ['**.md']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fork-android-${{ github.ref }}-${{ inputs.source_ref }}
+  cancel-in-progress: true
+
+env:
+  FORK_APP_ID: com.lettuceai.app.fork
+  FORK_APP_NAME: LettuceAI Next Fork
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+      CARGO_BUILD_JOBS: '4'
+      CARGO_INCREMENTAL: '0'
+      CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+      CMAKE_BUILD_PARALLEL_LEVEL: '4'
+      GGML_NATIVE: 'OFF'
+      ANDROID_PLATFORM: android-30
+      NDK_VERSION: '29.0.14206865'
+      TAURI_TARGETS: ${{ inputs.targets || 'aarch64' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          persist-credentials: false
+      - name: Compute version
+        id: ver
+        run: |
+          base=$(node -p "require('./apps/tauri/tauri.conf.json').version")
+          sha=$(git rev-parse HEAD)
+          echo "version=${base%%-*}-fork.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "code=$(( 1000 + ${{ github.run_number }} ))" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "APP_VERSION=${base%%-*}-fork.${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "SOURCE_SHA=$sha" >> "$GITHUB_ENV"
+          rust_targets=""
+          for t in $TAURI_TARGETS; do
+            case $t in
+              aarch64) rust_targets+="aarch64-linux-android,";;
+              armv7) rust_targets+="armv7-linux-androideabi,";;
+              i686) rust_targets+="i686-linux-android,";;
+              x86_64) rust_targets+="x86_64-linux-android,";;
+              *) echo "unknown target $t"; exit 1;;
+            esac
+          done
+          echo "rust_targets=${rust_targets%,}" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
+          packages: platform-tools platforms;android-37.0 build-tools;37.0.0 ndk;29.0.14206865
+      - name: Configure Android native tools
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android/sdk/ndk/2* /opt/hostedtoolcache/CodeQL || true
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libclang-dev llvm-dev ninja-build pkg-config libssl-dev
+          {
+            echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION"
+            echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/$NDK_VERSION"
+            echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION"
+          } >> "$GITHUB_ENV"
+          df -h /
+      - uses: ./.github/actions/setup-build
+        with:
+          targets: ${{ steps.ver.outputs.rust_targets }}
+          cache-key: fork-android
+          target-directory: ${{ env.CARGO_TARGET_DIR }}
+      - uses: ./.github/actions/configure-release
+        with:
+          version: ${{ steps.ver.outputs.version }}
+          dev: 'false'
+          android: 'true'
+          android-version-code: ${{ steps.ver.outputs.code }}
+      - name: Apply fork identity (separate app id + name)
+        run: |
+          echo "LETTUCE_ANDROID_APPLICATION_ID=$FORK_APP_ID" >> "$GITHUB_ENV"
+          res=apps/tauri/gen/android/app/src/main/res
+          sed -i -E "s/android:targetPackage=\"[^\"]+\"/android:targetPackage=\"$FORK_APP_ID\"/g" $res/xml/shortcuts.xml
+          sed -i -E "s#(<string name=\"(app_name|main_activity_title)\">)[^<]*#\1\"$FORK_APP_NAME\"#g" $res/values/strings.xml
+          grep -E 'app_name|main_activity_title' $res/values/strings.xml
+          grep -o 'targetPackage="[^"]*"' $res/xml/shortcuts.xml | sort -u
+      - name: Configure release signing
+        env:
+          ANDROID_KEY_BASE64: ${{ secrets.ANDROID_KEY_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEY_BASE64" | base64 -d > "$RUNNER_TEMP/fork-release.jks"
+          chmod 600 "$RUNNER_TEMP/fork-release.jks"
+          printf 'keyAlias=%s\npassword=%s\nstoreFile=%s\n' "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" "$RUNNER_TEMP/fork-release.jks" > apps/tauri/gen/android/keystore.properties
+          keytool -list -keystore "$RUNNER_TEMP/fork-release.jks" -alias "$ANDROID_KEY_ALIAS" -storepass:env ANDROID_KEY_PASSWORD > /dev/null
+      - name: Build APK
+        run: bun run tauri android build --ci --config "$GITHUB_WORKSPACE/.release-config.json" --apk --target $TAURI_TARGETS -- --locked
+      - name: Verify and collect APK
+        run: |
+          set -euo pipefail
+          find apps/tauri/gen/android/app/build/outputs -type f -name '*.apk' -print
+          mapfile -t apks < <(find apps/tauri/gen/android/app/build/outputs/apk -type f -name '*release*.apk')
+          ((${#apks[@]} == 1))
+          tools="$ANDROID_HOME/build-tools/37.0.0"
+          "$tools/apksigner" verify --print-certs "${apks[0]}"
+          badging="$("$tools/aapt" dump badging "${apks[0]}")"
+          grep -E "^package:|^application-label:" <<< "$badging"
+          grep -F "name='$FORK_APP_ID'" <<< "$badging"
+          mkdir dist-artifacts
+          name="LettuceAI-Next-Fork_${APP_VERSION}_$(echo $TAURI_TARGETS | tr ' ' '-').apk"
+          cp "${apks[0]}" "dist-artifacts/$name"
+          printf '%s\n%s\n' "$SOURCE_SHA" "$APP_VERSION" > dist-artifacts/BUILD_INFO
+          (cd dist-artifacts && sha256sum -- * > SHA256SUMS.txt)
+          echo "APK_NAME=$name" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fork-android-apk
+          path: dist-artifacts/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+      - name: Publish prerelease
+        if: github.event_name == 'push' || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="fork-android-${{ github.run_number }}"
+          gh release create "$tag" dist-artifacts/* \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --prerelease \
+            --title "LettuceAI Next Fork $APP_VERSION" \
+            --notes "Personal fork build of ${SOURCE_SHA}. App id: $FORK_APP_ID (installs alongside the official app). Download the .apk on your phone and install."
+      - name: Remove signing material
+        if: always()
+        run: rm -f apps/tauri/gen/android/keystore.properties "$RUNNER_TEMP/fork-release.jks"
