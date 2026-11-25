@@ -83,7 +83,7 @@ jobs:
           packages: platform-tools platforms;android-37.0 build-tools;37.0.0 ndk;29.0.14206865
       - name: Configure Android native tools
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android/sdk/ndk/2* /opt/hostedtoolcache/CodeQL || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL || true
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends clang libclang-dev llvm-dev ninja-build pkg-config libssl-dev
           {
