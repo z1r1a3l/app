@@ -17,6 +17,7 @@ workspace = true
 blake3.workspace = true
 lettuce-types.workspace = true
 regex = "1"
+regress = { version = "0.12", features = ["prohibit-unsafe"] }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
