@@ -12,14 +12,7 @@ import { RichMessageBody } from "@/features/regex";
 import { isActive, useHelperChat, useHelperMessage, useHelperStatus, useHelperStop } from "./data";
 import { plaqueHtml, type PlaqueLabels } from "./plaque-html";
 import { helperQueryKeys } from "./queries";
-
-/** Changes when the shown variant or its text changes (swipe, edit). */
-export function variantOf(message: TimelineMessage): string {
-  const text = JSON.stringify(message.parts);
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) | 0;
-  return `${message.candidate_index ?? "-"}:${text.length}:${hash}`;
-}
+import { variantOf } from "./helpers";
 
 export function HelperPlaque({ conversationId, message }: { conversationId: string; message: TimelineMessage }) {
   const { t } = useTranslation("helper");

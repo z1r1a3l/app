@@ -15,7 +15,7 @@ export function FieldsEditor({ fields, onChange }: { fields: HelperFieldDto[]; o
         <div key={index} className="flex items-center gap-2">
           <Input aria-label={t("field")} className="w-2/5" value={field.name} placeholder={t("field")} onChange={(e) => onChange(replace(fields, index, { ...field, name: e.target.value }))} />
           <Input aria-label={t("value")} className="flex-1" value={field.value} placeholder={t("value")} onChange={(e) => onChange(replace(fields, index, { ...field, value: e.target.value }))} />
-          <IconButton aria-label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(fields, index, null))}>
+          <IconButton label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(fields, index, null))}>
             <Trash2 size={icon.sm} />
           </IconButton>
         </div>
@@ -36,7 +36,7 @@ export function EntitiesEditor({ label, entities, onChange }: { label: string; e
         <div key={index} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
           <div className="flex items-center gap-2">
             <Input aria-label={t("name")} className="font-medium" value={entity.name} placeholder={t("name")} onChange={(e) => onChange(replace(entities, index, { ...entity, name: e.target.value }))} />
-            <IconButton aria-label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(entities, index, null))}>
+            <IconButton label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(entities, index, null))}>
               <Trash2 size={icon.sm} />
             </IconButton>
           </div>
@@ -59,7 +59,7 @@ export function InventoryEditor({ holders, onChange }: { holders: HelperHolderDt
         <div key={index} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
           <div className="flex items-center gap-2">
             <Input aria-label={t("owner")} value={holder.owner} placeholder={t("owner")} onChange={(e) => onChange(replace(holders, index, { ...holder, owner: e.target.value }))} />
-            <IconButton aria-label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(holders, index, null))}>
+            <IconButton label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(holders, index, null))}>
               <Trash2 size={icon.sm} />
             </IconButton>
           </div>
@@ -95,7 +95,7 @@ export function NotebookEditor({ truths, onChange }: { truths: HelperTruthDto[];
           <div className="flex items-center gap-2">
             <Input aria-label={t("truthId")} className="w-16 font-mono" value={truth.id} onChange={(e) => onChange(replace(truths, index, { ...truth, id: e.target.value }))} />
             <Input aria-label={t("hiddenFrom")} className="flex-1" value={truth.hidden_from} placeholder={t("hiddenFrom")} onChange={(e) => onChange(replace(truths, index, { ...truth, hidden_from: e.target.value }))} />
-            <IconButton aria-label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(truths, index, null))}>
+            <IconButton label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(truths, index, null))}>
               <Trash2 size={icon.sm} />
             </IconButton>
           </div>
@@ -113,7 +113,7 @@ export function NotebookEditor({ truths, onChange }: { truths: HelperTruthDto[];
                   <span aria-hidden>{clue.found === false ? "⚠" : "•"}</span>
                   <span className="flex-1">
                     {clue.text}
-                    {clue.found !== null && <span className="ml-1 text-fg-3">({clue.found ? t("clueFound") : t("clueMissing")})</span>}
+                    {clue.found !== null && <span className="ml-1 text-fg-3">{clue.found ? t("clueFound") : t("clueMissing")}</span>}
                   </span>
                 </li>
               ))}
