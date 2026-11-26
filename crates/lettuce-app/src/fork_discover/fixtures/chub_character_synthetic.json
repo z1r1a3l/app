@@ -1,0 +1,59 @@
+{
+ "_note": "SYNTHETIC: shaped after the gateway.chub.ai /search response documented by gallery-dl and SillyTavern-BotBrowser; chub.ai was unreachable (Cloudflare geo block) when fixtures were recorded.",
+ "node": {
+  "id": 123456,
+  "name": "Eira the Witch",
+  "fullPath": "crystal/eira-the-witch",
+  "tagline": "A lonely witch in a tower",
+  "description": "<p>A <b>lonely</b> witch.</p>",
+  "topics": [
+   "Fantasy",
+   "Female",
+   "NSFW"
+  ],
+  "starCount": 120,
+  "nChats": 3400,
+  "nMessages": 90000,
+  "n_favorites": 45,
+  "rating": 4.6,
+  "nTokens": 2100,
+  "nsfw_image": false,
+  "avatar_url": "https://avatars.charhub.io/avatars/crystal/eira-the-witch/avatar.webp",
+  "createdAt": "2024-03-01T10:00:00Z",
+  "lastActivityAt": "2024-04-01T10:00:00Z",
+  "max_res_url": "https://avatars.charhub.io/avatars/crystal/eira-the-witch/chara_card_v2.png",
+  "related_lorebooks": [],
+  "definition": {
+   "name": "Eira",
+   "personality": "Eira is a centuries-old witch.",
+   "tavern_personality": "sharp-tongued, shy",
+   "scenario": "{{user}} enters the Spire.",
+   "first_message": "*The book is upside down.*",
+   "example_dialogs": "<START>\n{{char}}: Leave.",
+   "description": "Creator notes here",
+   "system_prompt": "",
+   "post_history_instructions": "",
+   "alternate_greetings": [
+    "Hello again."
+   ],
+   "embedded_lorebook": {
+    "name": "Spire",
+    "entries": [
+     {
+      "keys": [
+       "spire"
+      ],
+      "content": "The Obsidian Spire is a pocket dimension.",
+      "enabled": true,
+      "insertion_order": 100
+     }
+    ]
+   },
+   "extensions": {
+    "chub": {
+     "full_path": "crystal/eira-the-witch"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "totalItems": "44",
+ "characters": [
+  {
+   "id": "fac8ab89-019a-4bf5-b8bb-25f995ff28c5",
+   "displayName": "Frieren",
+   "avatarUrl": "https://assets.pygmalion.chat/f57199cd-5c69-44c2-a67e-c5957ef83a27",
+   "description": "Frieren, the elf mage from anime \"Sousou no Frieren\" or \"Frieren: Beyond Journey's End\".\n",
+   "source": "Sousou no Frieren",
+   "stars": 63,
+   "views": 4166,
+   "downloads": 181,
+   "isPublic": true,
+   "tags": [
+    "Wizard",
+    "Female",
+    "Anime",
+    "Elf"
+   ],
+   "createdAt": "1714798947",
+   "updatedAt": "1722520534",
+   "owner": {
+    "id": "105996b0-1d2c-4ad7-ad0e-0a0c71642db8",
+    "displayName": "Immeral Astorias ",
+    "username": "hydrogen",
+    "avatarUrl": "https://assets.pygmalion.chat/085e1444-8577-4111-be9c-07fb2ae3708a"
+   },
+   "chatCount": 565,
+   "versionId": "40506f84-8179-4a63-86b3-0d73ff4ff205",
+   "personalityTokenCount": 2069,
+   "approvedAt": "1714901388"
+  },
+  {
+   "id": "b225b4ac-e3ad-48ab-8568-91c215ca421f",
+   "displayName": "Muelsyse",
+   "avatarUrl": "https://assets.pygmalion.chat/f310bfa9-e9cc-4167-abc5-1a0ed0378970",
+   "description": "Muelsyse, director of the Ecological Section at Rhine Lab. After the events in Columbia some peace and quiet would be in order.",
+   "source": "Arknights",
+   "stars": 22,
+   "views": 901,
+   "downloads": 97,
+   "isPublic": true,
+   "tags": [
+    "minimALIstic",
+    "Anime",
+    "Elf",
+    "Female",
+    "Video Game"
+   ],
+   "createdAt": "1706343632",
+   "updatedAt": "1722520534",
+   "owner": {
+    "id": "3d3db02b-941c-4f2b-9308-1f41e948738d",
+    "displayName": "Maiden",
+    "username": "maiden5774",
+    "avatarUrl": "https://assets.pygmalion.chat/4c576030-86f7-4e3d-9f29-e654223e43b8"
+   },
+   "chatCount": 44,
+   "versionId": "72e76977-6a48-460e-b6b1-4b886b3ccf8b",
+   "personalityTokenCount": 1492,
+   "approvedAt": "1706349025"
+  }
+ ]
+}
