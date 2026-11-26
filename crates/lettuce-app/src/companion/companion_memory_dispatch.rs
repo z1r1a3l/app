@@ -381,6 +381,15 @@ where
         )
     }
 
+    /// fork: `at` raised to the job's current stored `updated_at`, so a
+    /// mutation is never older than the snapshot (TimestampRegression).
+    fn fork_fresh_at(&self, id: lettuce_types::JobId, at: TimestampMillis) -> TimestampMillis {
+        match lettuce_jobs::JobStore::get(self.jobs, id) {
+            Ok(Some(job)) => at.max(job.updated_at),
+            _ => at,
+        }
+    }
+
     pub(crate) fn claim_admissions(
         &self,
         admissions: Vec<CompanionPostTurnMemoryAdmission>,
@@ -391,7 +400,8 @@ where
     ) -> Result<Vec<CompanionMemoryClaimedWork>, CompanionMemoryDispatchError> {
         let mut work = Vec::with_capacity(admissions.len());
         for admission in admissions {
-            let claim_at = now.max(admission.job.updated_at);
+            // fork: never stamp a mutation older than the job's stored snapshot.
+            let claim_at = self.fork_fresh_at(admission.job.id, now.max(admission.job.updated_at));
             let Some(claim) =
                 self.jobs
                     .claim(admission.job.id, worker_id, claim_at, lease_for, allowed)?
@@ -435,7 +445,8 @@ where
                 reason: "claimed work does not match its admission, handle or running job",
             });
         }
-        let at = now.max(work.job.updated_at);
+        // fork: the run can outlast `now` (captured before inference); re-read the job.
+        let at = self.fork_fresh_at(work.job.id, now.max(work.job.updated_at));
         match result {
             Ok(result) => {
                 if result.dispatch.run.conversation_id != work.admission.batch.conversation_id

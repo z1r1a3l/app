@@ -10801,6 +10801,10 @@ async fn plain_memory_cycles_split_large_backlogs_at_twice_the_interval() {
         .expect("claim second chunk")
         .pop()
         .expect("claimed second chunk");
+    // fork: a lease renewal stamped later than the run's captured `now` must
+    // not make settlement fail with "mutation timestamp is older than the job snapshot".
+    lettuce_jobs::JobStore::heartbeat(database, &second.claim.claim, TimestampMillis::new(second.job.updated_at.get() + 60_000), LEASE)
+        .expect("renew the lease after the run started");
     let settled_second = host
         .run_claimed(second, CancellationReason::User, TimestampMillis::new(1_115))
         .await
