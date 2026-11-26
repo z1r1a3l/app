@@ -390,6 +390,10 @@
     "danger": "Danger zone"
   },
   "sections": {
+    "regex": {
+      "title": "Regex scripts",
+      "subtitle": "Find & replace in messages"
+    },
     "providers": {
       "title": "Providers",
       "subtitle": "Connect to AI services"

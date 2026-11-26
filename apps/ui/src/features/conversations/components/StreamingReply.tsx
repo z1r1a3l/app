@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Message, motion as m } from "@lettuceai/crisp";
 import { spacing, type Author, type Group } from "../data/messages";
 import type { GenerationStore } from "../data/generation-store";
-import { MessageBody } from "./MessageRow";
+import { MessageBody, RegexedBody } from "./MessageRow";
 import { useChatLook, useMessageAppearance } from "@/entities/preferences";
 
 export interface StreamingReplyProps {
@@ -41,7 +41,7 @@ export function StreamingReply({ store, author, group, pinned }: StreamingReplyP
         {...(reasoning ? { reasoning: { text: <MessageBody text={reasoning} query="" /> } } : {})}
         className="mt-0!"
       >
-        <MessageBody text={text} query="" />
+        <RegexedBody text={text} role="assistant" messageId={null} query="" />
       </Message>
     </motion.div>
   );

@@ -13,6 +13,7 @@ import { MemoryPage } from "./memory/MemoryPage";
 import { ImageSettingsPage } from "./image/ImageSettingsPage";
 import { ReplyHelperPage } from "./reply-helper/ReplyHelperPage";
 import { PromptsPage } from "./prompts/PromptsPage";
+import { RegexSection } from "./RegexSection";
 import { BackupPage } from "./backup/BackupPage";
 import { SyncPage } from "./sync/SyncPage";
 import { ResetPage } from "./reset/ResetPage";
@@ -41,6 +42,7 @@ export function SettingsSectionPage() {
   if (section === "imageGeneration") return <ImageSettingsPage />;
   if (section === "replyHelper") return <ReplyHelperPage />;
   if (section === "prompts") return <PromptsPage />;
+  if (section === "regex") return <RegexSection />;
   if (section === "backup") return <BackupPage />;
   if (section === "sync") return <SyncPage />;
   if (section === "reset") return <ResetPage />;

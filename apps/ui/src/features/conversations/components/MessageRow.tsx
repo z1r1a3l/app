@@ -18,6 +18,7 @@ import { SceneImageStatus } from "../scene-images/SceneImageStatus";
 import { MessageImageViewer } from "./MessageImageViewer";
 import { useOverlayBack } from "@/shared/hooks/useOverlayBack";
 import { formatMessageTime } from "@/shared/formatting/messageTime";
+import { RichMessageBody, useRegexDisplay } from "@/features/regex";
 
 function EmbeddedImageViewer({ image, onClose }: { image: { src: string; alt: string }; onClose: () => void }) {
   useOverlayBack(true, onClose);
@@ -33,6 +34,12 @@ export function MessageBody({ text, query }: { text: string; query: string }) {
       {image && <EmbeddedImageViewer image={image} onClose={closeImage} />}
     </>
   );
+}
+
+/** fork: a message body after display regex scripts; HTML results render in a Shadow DOM. */
+export function RegexedBody({ text, role, messageId, query }: { text: string; role: string; messageId: string | null; query: string }) {
+  const shown = useRegexDisplay(text, role, messageId);
+  return shown.rich ? <RichMessageBody text={shown.text} /> : <MessageBody text={shown.text} query={query} />;
 }
 
 export function Attached({ media }: { media: readonly MediaItem[] }) {
@@ -187,7 +194,7 @@ function Row({
         {inlineScene ? (
           <SceneBody message={message} participants={participants} query={query} />
         ) : (
-          <MessageBody text={displayTextOf(message, participants)} query={query} />
+          <RegexedBody text={displayTextOf(message, participants)} role={message.role} messageId={message.id} query={query} />
         )}
         {picturesBelow.length > 0 && <div className="mt-2"><Attached media={picturesBelow} /></div>}
         {message.scene_image && <SceneImageStatus conversationId={conversationId} message={message} onReview={onSceneImage} />}

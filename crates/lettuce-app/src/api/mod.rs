@@ -6,6 +6,11 @@
 mod active_work;
 mod app;
 mod character_notes;
+pub(crate) mod fork_regex;
+pub use fork_regex::{
+    regex_conversation_scripts, regex_import_parse, regex_pending_characters, regex_scope_get,
+    regex_scope_replace, regex_scope_state_set, regex_scopes_list, regex_test,
+};
 mod group_notes;
 mod library;
 pub use app::content_filter::{content_filter_clear, content_filter_log};

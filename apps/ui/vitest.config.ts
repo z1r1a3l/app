@@ -4,6 +4,8 @@ import viteConfig from "./vite.config.ts";
 export default mergeConfig(
   viteConfig,
   defineConfig({
+    // fork: the regex tests read the Vexa golden fixtures from crates/.
+    server: { fs: { allow: ["../.."] } },
     test: {
       restoreMocks: true,
       maxWorkers: 2,
