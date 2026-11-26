@@ -2,6 +2,9 @@ pub(super) mod control;
 #[cfg(test)]
 mod control_tests;
 pub(super) mod embedding_health;
+mod fork_memory_turns;
+#[cfg(test)]
+mod fork_memory_turns_tests;
 pub(super) mod models;
 pub(super) mod read;
 #[cfg(test)]
@@ -364,6 +367,8 @@ async fn apply<R: serde::Serialize>(
                         )
                     })
             };
+            let turns_action = fork_memory_turns::action(&edit)?;
+            let space_id = memory.id.to_string();
             let mutation = match edit {
                 Edit::Add(request) => {
                     let category = request.category.map(category);
@@ -518,6 +523,7 @@ async fn apply<R: serde::Serialize>(
                         let history = scope
                             .apply_memory_manual_edit(&edit, projection.as_ref())
                             .map_err(EditFailure::from)?;
+                        fork_memory_turns::apply(scope, &space_id, &history, &turns_action, now)?;
                         Ok(dto::MemoryEditResult {
                             revision: history.resulting_revision.get(),
                             memory_id: history

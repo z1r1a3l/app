@@ -21,7 +21,8 @@ async fn branch_targets_keep_memory_at_the_cutoff_and_isolate_later_changes() {
         conversation_id: chat.clone(), text: "Before the branch".into(), category: None,
         observed_at: None, expected_revision: 1, client_operation_id: "before-cut".into(),
         perspective_character_id: None,
-    }).await.expect("add before cut");
+            turns: None,
+}).await.expect("add before cut");
     let original_id = added.memory_id.expect("memory id");
     let current = open(&harness, &chat).await;
     conversation_add_user_message(&harness.context, dto::ConversationAddUserMessageRequest {
@@ -33,7 +34,8 @@ async fn branch_targets_keep_memory_at_the_cutoff_and_isolate_later_changes() {
         category: dto::MemoryCategoryChange::Keep, observed_at: dto::MemoryObservedAtChange::Keep,
         expected_revision: 2, client_operation_id: "later-memory".into(),
         perspective_character_id: None,
-    }).await.expect("later memory");
+            turns: Default::default(),
+}).await.expect("later memory");
     let source = open(&harness, &chat).await;
     let copied_character = conversation_branch_direct_to_character(&harness.context, dto::ConversationCharacterCopyRequest {
         conversation_id: chat.clone(), message_id: cutoff.clone(), character_id: other.to_string(),
@@ -166,7 +168,8 @@ async fn branch_targets_copy_only_local_companion_memories_into_an_independent_s
                 category: None, observed_at: None, expected_revision: current.revision,
                 client_operation_id: format!("memory-{}-{index}", characters.len()),
                 perspective_character_id: None,
-            }).await.expect("shared pool memory");
+                            turns: None,
+}).await.expect("shared pool memory");
             chats.push(chat);
         }
     }

@@ -238,6 +238,69 @@ describe("chat memory page", () => {
     expect(called("memoryPin")).toHaveLength(0);
   });
 
+  it("adds a memory with a turn range", async () => {
+    const { called } = await open({ mode: "manual" });
+    fireEvent.click(await screen.findByRole("button", { name: "Add memory" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add memory" });
+    fireEvent.change(within(dialog).getByPlaceholderText("What should the character remember?"), { target: { value: "They met at the market." } });
+    fireEvent.change(within(dialog).getByLabelText("From"), { target: { value: "10" } });
+    fireEvent.change(within(dialog).getByLabelText("To"), { target: { value: "20" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(called("memoryAdd")).toHaveLength(1));
+    expect(called("memoryAdd")[0]?.request).toMatchObject({
+      text: "They met at the market.", turns: { start: 10, end: 20 },
+    });
+  });
+
+  it("treats a single filled turn field as one turn", async () => {
+    const { called } = await open({ mode: "manual" });
+    fireEvent.click(await screen.findByRole("button", { name: "Add memory" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add memory" });
+    fireEvent.change(within(dialog).getByPlaceholderText("What should the character remember?"), { target: { value: "A single beat." } });
+    fireEvent.change(within(dialog).getByLabelText("From"), { target: { value: "7" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(called("memoryAdd")).toHaveLength(1));
+    expect(called("memoryAdd")[0]?.request).toMatchObject({ turns: { start: 7, end: 7 } });
+  });
+
+  it("saves edited turns and keeps them when only the text changes", async () => {
+    const { called } = await open({ world: { items: [item("m1", "They met at the market.", { origin: "model", cycle_label: "21-40" })] } });
+    fireEvent.click(await screen.findByRole("button", { name: /They met at the market/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Memory" });
+    expect((within(dialog).getByLabelText("From") as HTMLInputElement).value).toBe("21");
+    expect((within(dialog).getByLabelText("To") as HTMLInputElement).value).toBe("40");
+    fireEvent.change(within(dialog).getByLabelText("From"), { target: { value: "25" } });
+    fireEvent.change(within(dialog).getByLabelText("To"), { target: { value: "30" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(called("memoryUpdate")).toHaveLength(1));
+    expect(called("memoryUpdate")[0]?.request).toMatchObject({
+      memory_id: "m1", text: null, turns: { type: "set", value: { start: 25, end: 30 } },
+    });
+  });
+
+  it("keeps existing turns when only the text is edited", async () => {
+    const { called } = await open({ world: { items: [item("m1", "They met at the market.", { origin: "model", cycle_label: "21-40" })] } });
+    fireEvent.click(await screen.findByRole("button", { name: /They met at the market/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Memory" });
+    fireEvent.change(within(dialog).getByDisplayValue("They met at the market."), { target: { value: "They met at the night market." } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(called("memoryUpdate")).toHaveLength(1));
+    expect(called("memoryUpdate")[0]?.request).toMatchObject({
+      text: "They met at the night market.", turns: { type: "keep" },
+    });
+  });
+
+  it("does not save a reversed turn range", async () => {
+    const { called } = await open({ mode: "manual" });
+    fireEvent.click(await screen.findByRole("button", { name: "Add memory" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add memory" });
+    fireEvent.change(within(dialog).getByPlaceholderText("What should the character remember?"), { target: { value: "Bad range." } });
+    fireEvent.change(within(dialog).getByLabelText("From"), { target: { value: "20" } });
+    fireEvent.change(within(dialog).getByLabelText("To"), { target: { value: "10" } });
+    expect(within(dialog).getByRole("button", { name: "Add" }).hasAttribute("disabled")).toBe(true);
+    expect(called("memoryAdd")).toHaveLength(0);
+  });
+
   it("applies text, temperature and pin one after another with rising revisions", async () => {
     let finishUpdate: () => void = () => {};
     const gate = new Promise<void>((resolve) => {

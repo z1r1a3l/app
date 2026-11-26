@@ -28,7 +28,8 @@ async fn memory_categories_match_write_permissions_and_preserve_companion_sessio
         expected_revision: roleplay.revision,
         client_operation_id: "roleplay-routine".into(),
         perspective_character_id: None,
-    }).await.expect_err("companion category refused");
+            turns: None,
+}).await.expect_err("companion category refused");
     assert_eq!(error.code, ApiErrorCode::InvalidInput);
 
     let database = harness.context.backend().database();
@@ -50,7 +51,8 @@ async fn memory_categories_match_write_permissions_and_preserve_companion_sessio
         category: Some(dto::MemoryCategory::Routine), observed_at: None,
         expected_revision: view.revision, client_operation_id: "companion-routine".into(),
         perspective_character_id: None,
-    }).await.expect("companion category accepted");
+            turns: None,
+}).await.expect("companion category accepted");
 
     let character = CharacterRepository::get(database, character_id).expect("character").expect("exists").character;
     let mut defaults = character.defaults;
@@ -65,7 +67,8 @@ async fn memory_categories_match_write_permissions_and_preserve_companion_sessio
         category: Some(dto::MemoryCategory::Milestone), observed_at: None,
         expected_revision: preserved.revision, client_operation_id: "retained-companion-milestone".into(),
         perspective_character_id: None,
-    }).await.expect("retained companion category accepted");
+            turns: None,
+}).await.expect("retained companion category accepted");
 }
 
 #[tokio::test]
@@ -80,7 +83,8 @@ async fn manual_memory_without_tokenizer_replays_and_uses_conversation_membershi
         expected_revision: 1,
         client_operation_id: "manual-add".into(),
         perspective_character_id: None,
-    };
+            turns: None,
+};
     let added = memory_add(&harness.context, request.clone())
         .await
         .expect("manual add without tokenizer");
@@ -205,7 +209,8 @@ async fn manual_setters_replay_conflict_and_preserve_legacy_pin_temperature_rule
             expected_revision: 1,
             client_operation_id: "setters-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add");
@@ -219,7 +224,8 @@ async fn manual_setters_replay_conflict_and_preserve_legacy_pin_temperature_rule
         expected_revision: 2,
         client_operation_id: "setter-update".into(),
         perspective_character_id: None,
-    };
+            turns: Default::default(),
+};
     let updated = memory_update(&harness.context, update.clone())
         .await
         .expect("update");
@@ -366,7 +372,8 @@ async fn dynamic_add_and_metadata_update_require_embedding_without_writing() {
             expected_revision: 1,
             client_operation_id: "before-dynamic-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("manual add");
@@ -411,7 +418,8 @@ async fn dynamic_add_and_metadata_update_require_embedding_without_writing() {
         expected_revision: 2,
         client_operation_id: "dynamic-add".into(),
         perspective_character_id: None,
-    };
+            turns: None,
+};
     assert_eq!(
         memory_add(&harness.context, add)
             .await
@@ -428,7 +436,8 @@ async fn dynamic_add_and_metadata_update_require_embedding_without_writing() {
         expected_revision: 2,
         client_operation_id: "dynamic-update".into(),
         perspective_character_id: None,
-    };
+            turns: Default::default(),
+};
     assert_eq!(
         memory_update(&harness.context, update)
             .await
@@ -469,7 +478,8 @@ async fn manual_edit_history_is_carried_by_backup_and_restore() {
             expected_revision: 1,
             client_operation_id: "backup-manual-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add");
@@ -535,7 +545,8 @@ async fn manual_edit_history_syncs_into_the_peers_resolved_space() {
             expected_revision: 1,
             client_operation_id: "sync-manual-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add");
@@ -690,7 +701,8 @@ async fn memory_get_recounts_unknown_items_and_summary_once_without_embedding_or
             expected_revision: 1,
             client_operation_id: "read-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add unknown");
@@ -925,7 +937,8 @@ async fn memory_status_reports_real_model_and_embedding_failures_and_lease_pause
                     expected_revision: 1,
                     client_operation_id: "status-add".into(),
                     perspective_character_id: None,
-                },
+                                    turns: None,
+},
             )
             .await
             .expect("unknown item");
@@ -1062,7 +1075,8 @@ async fn memory_user_edits_are_cut_locally_by_fork_and_delete_after() {
                 expected_revision: 1,
                 client_operation_id: "undo-add".into(),
                 perspective_character_id: None,
-            },
+                            turns: None,
+},
         )
         .await
         .expect("add");
@@ -1088,7 +1102,8 @@ async fn memory_user_edits_are_cut_locally_by_fork_and_delete_after() {
                 expected_revision: 2,
                 client_operation_id: "undo-update".into(),
                 perspective_character_id: None,
-            },
+                            turns: Default::default(),
+},
         )
         .await
         .expect("update");
@@ -1207,7 +1222,8 @@ async fn delete_after_undoes_every_manual_setter_and_summary_at_the_removed_anch
             expected_revision: 1,
             client_operation_id: "all-undo-item".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("item")
@@ -1248,7 +1264,8 @@ async fn delete_after_undoes_every_manual_setter_and_summary_at_the_removed_anch
             expected_revision: 3,
             client_operation_id: "all-undo-update".into(),
             perspective_character_id: None,
-        },
+                    turns: Default::default(),
+},
     )
     .await
     .expect("update");
@@ -1313,7 +1330,8 @@ async fn delete_after_undoes_every_manual_setter_and_summary_at_the_removed_anch
             expected_revision: 8,
             client_operation_id: "all-undo-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("late addition");
@@ -1417,7 +1435,8 @@ async fn memory_ids_of_a_deleted_branch_are_refused_and_nothing_is_written() {
             expected_revision: 1,
             client_operation_id: "tombstone-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("fork memory")
@@ -1494,7 +1513,8 @@ async fn parent_delete_after_never_changes_a_forked_childs_memory() {
             expected_revision: 1,
             client_operation_id: "parent-undo-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add");
@@ -1520,7 +1540,8 @@ async fn parent_delete_after_never_changes_a_forked_childs_memory() {
             expected_revision: 2,
             client_operation_id: "parent-undo-update".into(),
             perspective_character_id: None,
-        },
+                    turns: Default::default(),
+},
     )
     .await
     .expect("update");
@@ -1660,7 +1681,8 @@ async fn delete_after_in_one_pooled_chat_preserves_a_later_equal_pin() {
             expected_revision: revision(a.clone()).await.revision,
             client_operation_id: "pool-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add")
@@ -1779,7 +1801,8 @@ async fn perspective_memory_api_creates_and_edits_a_members_space() {
             expected_revision: empty.revision,
             client_operation_id: "perspective-add".into(),
             perspective_character_id: Some(first.to_string()),
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add perspective memory");
@@ -1809,7 +1832,8 @@ async fn perspective_memory_api_creates_and_edits_a_members_space() {
             expected_revision: member_view.revision,
             client_operation_id: "perspective-update".into(),
             perspective_character_id: Some(first.to_string()),
-        },
+                    turns: Default::default(),
+},
     )
     .await
     .expect("update perspective memory");
@@ -1849,7 +1873,8 @@ async fn perspective_memory_api_creates_and_edits_a_members_space() {
             expected_revision: deleted.revision,
             client_operation_id: "perspective-outsider".into(),
             perspective_character_id: Some(outsider.to_string()),
-        },
+                    turns: None,
+},
     )
     .await
     .expect_err("non-member edit");

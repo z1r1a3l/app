@@ -1,14 +1,16 @@
 import type { ApiClient } from "@/api/client";
 import type { MemoryItemView } from "@/api/generated/bindings";
 import type { MemoryDraft } from "./MemoryItems";
+import { rangeOfLabel, sameRange, toContract } from "./fork-turns";
 import type { MemoryWrite } from "./use-memory-write";
 
 export async function saveMemoryDraft(api: ApiClient, conversationId: string, write: MemoryWrite, item: MemoryItemView | null, draft: MemoryDraft, session: number, perspectiveCharacterId: string | null = null): Promise<boolean> {
   const scope = perspectiveCharacterId === null ? {} : { perspective_character_id: perspectiveCharacterId };
   const observed = draft.observedAt?.getTime() ?? null;
+  const turns = draft.turns === null ? null : toContract(draft.turns);
   let ok = true;
   if (item === null) {
-    const payload = { text: draft.text, category: draft.category, observed_at: observed };
+    const payload = { text: draft.text, category: draft.category, observed_at: observed, turns };
     ok = await write(`add:${session}:${JSON.stringify(payload)}`, (current, operationId) =>
       api.call("memoryAdd", { conversation_id: conversationId, ...payload, ...scope, expected_revision: current.revision, client_operation_id: operationId }),
     );
@@ -16,14 +18,16 @@ export async function saveMemoryDraft(api: ApiClient, conversationId: string, wr
     const textChanged = draft.text !== item.text;
     const categoryChanged = draft.category !== item.category;
     const dateChanged = observed !== item.observed_at;
-    if (textChanged || categoryChanged || dateChanged) {
-      const key = `update:${session}:${item.id}:${JSON.stringify([textChanged ? draft.text : null, categoryChanged ? draft.category : "keep", dateChanged ? observed : "keep"])}`;
+    const turnsChanged = !sameRange(draft.turns, rangeOfLabel(item.cycle_label));
+    if (textChanged || categoryChanged || dateChanged || turnsChanged) {
+      const key = `update:${session}:${item.id}:${JSON.stringify([textChanged ? draft.text : null, categoryChanged ? draft.category : "keep", dateChanged ? observed : "keep", turnsChanged ? turns : "keep"])}`;
       ok = await write(key, async (current, operationId) => {
         const stored = current.items.find((entry) => entry.id === item.id);
         const updateText = textChanged && draft.text !== stored?.text;
         const updateCategory = categoryChanged && draft.category !== stored?.category;
         const updateDate = dateChanged && observed !== stored?.observed_at;
-        if (stored && !updateText && !updateCategory && !updateDate) return;
+        const updateTurns = turnsChanged && !sameRange(draft.turns, rangeOfLabel(stored?.cycle_label ?? null));
+        if (stored && !updateText && !updateCategory && !updateDate && !updateTurns) return;
         return api.call("memoryUpdate", {
           conversation_id: conversationId,
           ...scope,
@@ -31,6 +35,7 @@ export async function saveMemoryDraft(api: ApiClient, conversationId: string, wr
           text: updateText ? draft.text : null,
           category: updateCategory ? { type: "set", value: draft.category } : { type: "keep" },
           observed_at: updateDate ? { type: "set", value: observed } : { type: "keep" },
+          turns: updateTurns ? { type: "set", value: turns } : { type: "keep" },
           expected_revision: current.revision,
           client_operation_id: operationId,
         });

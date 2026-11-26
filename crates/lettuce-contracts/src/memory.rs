@@ -66,6 +66,31 @@ pub enum MemoryObservedAtChange {
     ),
 }
 
+/// Inclusive 1-based message numbers, shown as `"{start}-{end}"`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(deny_unknown_fields)]
+pub struct MemoryTurnRange {
+    #[cfg_attr(feature = "specta", specta(type = specta_typescript::Number))]
+    pub start: u64,
+    #[cfg_attr(feature = "specta", specta(type = specta_typescript::Number))]
+    pub end: u64,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(
+    tag = "type",
+    content = "value",
+    rename_all = "snake_case",
+    deny_unknown_fields
+)]
+pub enum MemoryTurnsChange {
+    #[default]
+    Keep,
+    Set(Option<MemoryTurnRange>),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
@@ -88,6 +113,9 @@ pub struct MemoryAddRequest {
     pub client_operation_id: String,
     #[serde(default)]
     pub perspective_character_id: Option<String>,
+    /// Optional message range, same format as a model memory's cycle label.
+    #[serde(default)]
+    pub turns: Option<MemoryTurnRange>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -101,6 +129,8 @@ pub struct MemoryUpdateRequest {
     pub category: MemoryCategoryChange,
     #[serde(default)]
     pub observed_at: MemoryObservedAtChange,
+    #[serde(default)]
+    pub turns: MemoryTurnsChange,
     #[cfg_attr(feature = "specta", specta(type = specta_typescript::Number))]
     pub expected_revision: u64,
     pub client_operation_id: String,
@@ -462,6 +492,7 @@ mod tests {
         let request = serde_json::from_str::<MemoryUpdateRequest>(r#"{"conversation_id":"conversation","memory_id":"memory","text":"Changed","expected_revision":1,"client_operation_id":"operation"}"#).expect("omitted fields keep their values");
         assert_eq!(request.category, MemoryCategoryChange::Keep);
         assert_eq!(request.observed_at, MemoryObservedAtChange::Keep);
+        assert_eq!(request.turns, MemoryTurnsChange::Keep);
     }
 }
 
