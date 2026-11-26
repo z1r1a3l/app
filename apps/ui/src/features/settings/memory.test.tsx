@@ -102,7 +102,7 @@ async function mount(initial: SettingsView, calls: MockCallHandlers = {}, stream
   await act(async () => {
     render(<App runtime={runtime} />);
   });
-  await screen.findByText("Manual memory");
+  await screen.findByText("Context");
   return { runtime, store };
 }
 
@@ -306,7 +306,7 @@ describe("memory settings page", () => {
     await waitFor(() => expect(store.update).toHaveBeenCalledTimes(2));
     expect(lastPatch(store)).toMatchObject({ section: "group_dynamic_memory", value: { retrieval_strategy: "cosine" } });
     fireEvent.click(screen.getByRole("button", { name: "Memory" }));
-    expect(await screen.findByText("Manual memory")).toBeTruthy();
+    expect(await screen.findByText("Context")).toBeTruthy();
     expect(screen.queryByRole("radio", { name: "Group chats" })).toBeNull();
   });
 

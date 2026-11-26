@@ -1438,9 +1438,9 @@
     "title": "Memory",
     "subtitle": "How characters remember",
     "manual": {
-      "group": "Manual memory",
+      "group": "Context",
       "window": "Context window",
-      "windowBody": "Recent messages sent with each reply. Pinned ones always go."
+      "windowBody": "Recent messages sent with each reply, in every memory mode. Pinned ones always go."
     },
     "dynamic": {
       "group": "Dynamic memory",
@@ -1473,7 +1473,7 @@
       "comprehensiveBody": "Remembers the most. Best for long, detailed stories.",
       "customBody": "Custom: your own values. Pick a profile to start over from it.",
       "interval": "Summary interval",
-      "intervalBody": "Messages between summaries. Also how many recent messages go with each reply.",
+      "intervalBody": "Messages between summaries. How many recent messages go with each reply is set by Context window.",
       "maxEntries": "Max memory entries",
       "maxEntriesBody": "The most memories one chat keeps",
       "hotBudget": "Hot memory budget",
