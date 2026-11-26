@@ -2066,6 +2066,8 @@ impl ProviderBackupSource for Database {
         let playground_history = crate::media::playground_history_adapter::read_in(&transaction)
             .map_err(backup_error)?;
         let fork_regex = crate::fork_regex::read_backup_in(&transaction).map_err(backup_error)?;
+        let fork_memory_turns =
+            crate::fork_memory_turns::read_backup_in(&transaction).map_err(backup_error)?;
         let device = read_device_state(&transaction)?;
         transaction.commit().map_err(backup_error)?;
         Ok(ProviderBackupGraph {
@@ -2073,6 +2075,7 @@ impl ProviderBackupSource for Database {
             legacy_imports,
             playground_history,
             fork_regex,
+            fork_memory_turns,
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts,
             profiles,

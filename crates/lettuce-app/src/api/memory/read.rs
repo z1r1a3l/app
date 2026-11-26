@@ -375,7 +375,14 @@ fn memory_view(
     let mut labels = HashMap::new();
     let mut text_labels = HashMap::new();
     let stored_turns = database
-        .fork_memory_turns_for_space(&scope.memory.id.to_string())
+        .fork_memory_turns_for_ids(
+            &scope
+                .memory
+                .items
+                .iter()
+                .map(|item| item.id.to_string())
+                .collect::<Vec<_>>(),
+        )
         .map_err(|error| api_error(ApiErrorCode::Internal, error.to_string()))?;
     for cycle in &scope.cycles {
         if cycle.reverted {

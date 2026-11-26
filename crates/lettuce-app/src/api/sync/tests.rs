@@ -3,6 +3,9 @@ use lettuce_contracts::{self as dto, ApiErrorCode};
 use crate::api::tests::{Harness, Reply, harness_over};
 use crate::api::*;
 
+#[path = "fork_memory_turns_sync_tests.rs"]
+mod fork_memory_turns_sync_tests;
+
 fn device() -> (Harness, std::path::PathBuf) {
     let root = std::env::temp_dir().join(format!("sync-api-{}", lettuce_types::OperationId::new()));
     std::fs::create_dir_all(&root).expect("root");
