@@ -27,6 +27,7 @@ import settings from "./locales/en/settings.json";
 import sync from "./locales/en/sync.json";
 import tour from "./locales/en/tour.json";
 import welcomeBack from "./locales/en/welcome-back.json";
+import forkLorebook from "./locales/en/fork-lorebook.json";
 
 export const defaultNamespace = "common";
 
@@ -59,6 +60,7 @@ const english = {
     sync,
     tour,
     "welcome-back": welcomeBack,
+    "fork-lorebook": forkLorebook,
   },
 } as const;
 

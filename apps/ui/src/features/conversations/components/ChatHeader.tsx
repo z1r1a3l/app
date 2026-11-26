@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import {
   ArrowLeft,
   Brain,
@@ -24,6 +24,8 @@ export interface ChatHeaderProps {
   onBack: () => void;
   onOptions: () => void;
   onMemory: () => void;
+  /** Fork: extra header buttons shown before the memory button (lorebook shortcut). */
+  extra?: ReactNode;
 }
 
 export function ChatHeader({
@@ -37,6 +39,7 @@ export function ChatHeader({
   onOptions,
   onMemory,
   columnStyle,
+  extra,
 }: ChatHeaderProps) {
   const { t } = useTranslation("conversations");
   const { hasBackground, tone } = useOnSurface();
@@ -131,6 +134,7 @@ export function ChatHeader({
           </button>
         </div>
       )}
+      {extra}
       {memory && (
         <IconButton
           label={

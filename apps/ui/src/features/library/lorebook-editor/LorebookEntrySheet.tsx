@@ -63,6 +63,7 @@ export function LorebookEntrySheet({
   onDelete,
   beforeWrite,
   ownRevision,
+  initial,
 }: {
   book: LorebookView_Serialize;
   entry: LorebookEntryView | null;
@@ -73,6 +74,8 @@ export function LorebookEntrySheet({
   onDelete?: () => void;
   beforeWrite?: () => Promise<unknown>;
   ownRevision?: () => number;
+  /** Fork: prefill fields (a generated draft or proposed update) over the entry or a blank one. */
+  initial?: Partial<LorebookEntryInput_Serialize>;
 }) {
   const { t } = useTranslation("lorebook-editor");
   const { t: common } = useTranslation();
@@ -80,7 +83,7 @@ export function LorebookEntrySheet({
   const api = useApi();
   const client = useQueryClient();
   const bookKey = lorebookBookKey(book.lorebook.id);
-  const [draft, setDraft] = useState<LorebookEntryInput_Serialize>(() =>
+  const [draft, setDraft] = useState<LorebookEntryInput_Serialize>(() => ({ ...(
     entry
       ? {
           title: entry.title,
@@ -94,7 +97,7 @@ export function LorebookEntrySheet({
           content: entry.content,
           priority: entry.priority,
         }
-      : blank,
+      : blank), ...initial }),
   );
   const pending = useRef<LorebookEntriesMutateRequest | null>(null);
   const [revision, setRevision] = useState(book.lorebook.revision);

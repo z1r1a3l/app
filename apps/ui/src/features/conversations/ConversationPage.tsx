@@ -37,6 +37,7 @@ import {
 import { ChatBanners, ChatComposer, type ComposerHandle } from "./components/ChatComposer";
 import { ChatTools, type ToolPanel } from "./components/ChatTools";
 import { ChatHeader } from "./components/ChatHeader";
+import { ForkLorebookButton } from "./components/ForkLorebookButton";
 import { InlineAuthorNoteBar } from "./components/InlineAuthorNoteBar";
 import { GenerationProgressToast } from "./components/GenerationProgressToast";
 import { BeetrootRain } from "./components/BeetrootRain";
@@ -785,6 +786,7 @@ function ConversationScreen({ conversationId }: { conversationId: string }) {
       onBack={goBack}
       onOptions={openSettings}
       onMemory={openMemories}
+      extra={companionPage ? null : <ForkLorebookButton conversationId={conversationId} characterId={directCharacterId} messages={timeline.messages} phone={phone} />}
     />
   );
 
