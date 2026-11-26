@@ -110,6 +110,9 @@ pub struct ProviderBackupGraph {
     /// fork: regex scripts; left out when empty.
     #[serde(default, skip_serializing_if = "crate::ForkRegexBackup::is_empty")]
     pub fork_regex: crate::ForkRegexBackup,
+    /// fork: macro variables and dice logs; left out when empty.
+    #[serde(default, skip_serializing_if = "crate::ForkMacrosBackup::is_empty")]
+    pub fork_macros: crate::ForkMacrosBackup,
     pub accounts: Vec<ProviderAccount>,
     pub profiles: Vec<ModelProfile>,
     pub prompts: Vec<PromptDocument>,
@@ -1917,6 +1920,7 @@ mod tests {
             legacy_imports: crate::LegacyImportBackup::default(),
             playground_history: crate::PlaygroundHistoryBackup::default(),
             fork_regex: crate::ForkRegexBackup::default(),
+            fork_macros: crate::ForkMacrosBackup::default(),
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts: vec![ProviderAccount {
                 id: ProviderAccountId::new(),
