@@ -1676,6 +1676,18 @@ pub async fn import_commit(
                     },
                 )
                 .map_err(|e| e.0)
+                .inspect(|result| {
+                    // fork: keep the file's regex scripts.
+                    if let dto::ImportCommitResult::Imported { file_kind, id, .. } = result {
+                        crate::api::fork_regex::after_entity_import(
+                            database,
+                            *file_kind,
+                            &file.name,
+                            &file.bytes,
+                            id,
+                        );
+                    }
+                })
         })
         .await
 }

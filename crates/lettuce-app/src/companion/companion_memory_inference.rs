@@ -615,6 +615,23 @@ pub(crate) fn materialize_sources<C: ConversationReader + ?Sized>(
     conversations: &C,
     run: &DynamicMemoryRun,
 ) -> Result<Vec<MaterializedSource>, CompanionMemoryInferenceError> {
+    // fork: memory, summaries and Eidos read regex-cleaned text.
+    let mut sources = materialize_raw_sources(conversations, run)?;
+    let mut texts = sources
+        .iter_mut()
+        .map(|source| (source.role, &mut source.text))
+        .collect::<Vec<_>>();
+    crate::generation::fork_prompt_regex::clean_memory_sources(
+        &run.conversation_id.to_string(),
+        &mut texts,
+    );
+    Ok(sources)
+}
+
+fn materialize_raw_sources<C: ConversationReader + ?Sized>(
+    conversations: &C,
+    run: &DynamicMemoryRun,
+) -> Result<Vec<MaterializedSource>, CompanionMemoryInferenceError> {
     run.source_messages
         .iter()
         .map(|source| {

@@ -1203,3 +1203,121 @@ async fn unauthenticated_disconnect_keeps_sharing_and_pin() {
     sync_stop(&host.context).await.expect("stop");
     std::fs::remove_dir_all(root).expect("cleanup");
 }
+
+// fork: regex scripts and their scope switches reach the other device, and
+// edits and deletes made there come back.
+#[tokio::test(flavor = "multi_thread")]
+async fn fork_regex_scripts_and_switches_sync_both_ways() {
+    let (host, host_root) = device();
+    let (client, client_root) = device();
+    let global = dto::RegexScopeRef {
+        kind: dto::RegexScopeKindDto::Global,
+        id: None,
+    };
+    let preset = dto::RegexScopeRef {
+        kind: dto::RegexScopeKindDto::Preset,
+        id: Some(uuid::Uuid::new_v4().to_string()),
+    };
+    let script = |id: &str, name: &str| dto::RegexScriptDto {
+        id: id.into(),
+        script_name: name.into(),
+        find_regex: "/a/g".into(),
+        replace_string: "b".into(),
+        trim_strings: Vec::new(),
+        placement: vec![2],
+        disabled: false,
+        markdown_only: true,
+        prompt_only: false,
+        run_on_edit: false,
+        substitute_regex: 0,
+        min_depth: None,
+        max_depth: None,
+    };
+    regex_scope_replace(
+        &host.context,
+        dto::RegexScriptsReplaceRequest {
+            scope: global.clone(),
+            scripts: vec![script("s1", "one"), script("s2", "two")],
+        },
+    )
+    .await
+    .expect("host scripts");
+    regex_scope_replace(
+        &host.context,
+        dto::RegexScriptsReplaceRequest {
+            scope: preset.clone(),
+            scripts: vec![script("p1", "preset")],
+        },
+    )
+    .await
+    .expect("preset scripts");
+    regex_scope_state_set(
+        &host.context,
+        dto::RegexScopeStateRequest {
+            scope: preset.clone(),
+            enabled: Some(true),
+            pending: Some(true),
+        },
+    )
+    .await
+    .expect("pending preset");
+    complete(&host.context, &client.context).await;
+
+    let names = |view: dto::RegexScopeView| {
+        view.scripts
+            .into_iter()
+            .map(|script| script.script_name)
+            .collect::<Vec<_>>()
+    };
+    async fn get(
+        context: &ApiContext,
+        scope: &dto::RegexScopeRef,
+    ) -> Result<dto::RegexScopeView, dto::ApiError> {
+        regex_scope_get(
+            context,
+            dto::RegexScopeRequest {
+                scope: scope.clone(),
+            },
+        )
+        .await
+    }
+    assert_eq!(
+        names(get(&client.context, &global).await.expect("client global")),
+        ["one", "two"]
+    );
+    let client_preset = get(&client.context, &preset).await.expect("client preset");
+    assert!(client_preset.pending);
+    assert_eq!(names(client_preset), ["preset"]);
+
+    regex_scope_replace(
+        &client.context,
+        dto::RegexScriptsReplaceRequest {
+            scope: global.clone(),
+            scripts: vec![script("s2", "two, edited")],
+        },
+    )
+    .await
+    .expect("client edit");
+    regex_scope_state_set(
+        &client.context,
+        dto::RegexScopeStateRequest {
+            scope: preset.clone(),
+            enabled: Some(false),
+            pending: Some(false),
+        },
+    )
+    .await
+    .expect("keep off");
+    complete(&host.context, &client.context).await;
+    assert_eq!(
+        names(get(&host.context, &global).await.expect("host global")),
+        ["two, edited"]
+    );
+    let host_preset = get(&host.context, &preset).await.expect("host preset");
+    assert!(!host_preset.pending && !host_preset.enabled);
+
+    sync_stop(&host.context).await.expect("stop host");
+    sync_stop(&client.context).await.expect("stop client");
+    std::fs::remove_dir_all(host_root).expect("host cleanup");
+    std::fs::remove_dir_all(client_root).expect("client cleanup");
+}

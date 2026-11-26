@@ -107,6 +107,9 @@ pub struct ProviderBackupGraph {
     pub legacy_imports: crate::LegacyImportBackup,
     #[serde(default)]
     pub playground_history: crate::PlaygroundHistoryBackup,
+    /// fork: regex scripts; left out when empty.
+    #[serde(default, skip_serializing_if = "crate::ForkRegexBackup::is_empty")]
+    pub fork_regex: crate::ForkRegexBackup,
     pub accounts: Vec<ProviderAccount>,
     pub profiles: Vec<ModelProfile>,
     pub prompts: Vec<PromptDocument>,
@@ -1913,6 +1916,7 @@ mod tests {
             creation: CreationBackup::default(),
             legacy_imports: crate::LegacyImportBackup::default(),
             playground_history: crate::PlaygroundHistoryBackup::default(),
+            fork_regex: crate::ForkRegexBackup::default(),
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts: vec![ProviderAccount {
                 id: ProviderAccountId::new(),

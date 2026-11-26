@@ -1,0 +1,7 @@
+Она кивает.
+
+<internal_states>
+<state:world>
+<ct>3</ct>
+<loc>Кухня</loc>
+<time>08:00 AM</time>

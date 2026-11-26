@@ -314,6 +314,12 @@ const MIGRATION_49: Migration = Migration {
     sql: include_str!("../migrations/0049_gemini_audio_provider.sql"),
 };
 
+/// Fork-only migration; see migrations/9001_fork_regex_scripts.sql.
+const MIGRATION_9001: Migration = Migration {
+    id: 9001,
+    sql: include_str!("../migrations/9001_fork_regex_scripts.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -364,6 +370,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_47,
     MIGRATION_48,
     MIGRATION_49,
+    MIGRATION_9001,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;
@@ -6321,6 +6328,8 @@ mod tests {
                 "dynamic_memory_runs",
                 "dynamic_memory_suffix_rewinds",
                 "dynamic_memory_summary_checkpoints",
+                "fork_regex_scopes",
+                "fork_regex_scripts",
                 "generation_attempts",
                 "generation_checkpoints",
                 "generation_initial_dispatches",
@@ -6557,6 +6566,9 @@ mod tests {
 mod database_file_tests;
 
 mod backup_index;
+
+mod fork_regex;
+pub use fork_regex::{DatabaseRegexSource, RegexScopeKind, RegexScopeState};
 
 pub use backup_index::BackupIndexRecord;
 

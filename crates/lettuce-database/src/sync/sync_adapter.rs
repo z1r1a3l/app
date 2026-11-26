@@ -1525,6 +1525,17 @@ fn supported_change(change: &CanonicalChange) -> Result<bool, IncomingChangeErro
             lettuce_sync::PROMPT_SYNC_SCHEMA,
             lettuce_sync::PROMPT_SYNC_VERSION,
         )
+        // fork: regex scripts and their scope switches.
+        | (
+            crate::fork_regex::SCRIPT_SYNC_KIND,
+            crate::fork_regex::SCRIPT_SYNC_SCHEMA,
+            crate::fork_regex::SYNC_VERSION,
+        )
+        | (
+            crate::fork_regex::SCOPE_SYNC_KIND,
+            crate::fork_regex::SCOPE_SYNC_SCHEMA,
+            crate::fork_regex::SYNC_VERSION,
+        )
         | (
             lettuce_sync::CHARACTER_LOREBOOK_BINDINGS_SYNC_KIND
             | lettuce_sync::PERSONA_LOREBOOK_BINDINGS_SYNC_KIND
@@ -3071,6 +3082,25 @@ row_codec!(
     }
 );
 
+// fork: regex scripts and their scope switches.
+row_codec!(
+    FORK_REGEX_SCRIPT_CODEC,
+    crate::fork_regex::SCRIPT_SYNC_KIND,
+    crate::fork_regex::SCRIPT_SYNC_SCHEMA,
+    crate::fork_regex::SYNC_VERSION,
+    crate::fork_regex::SCRIPT_ROWS,
+    no_assets
+);
+
+row_codec!(
+    FORK_REGEX_SCOPE_CODEC,
+    crate::fork_regex::SCOPE_SYNC_KIND,
+    crate::fork_regex::SCOPE_SYNC_SCHEMA,
+    crate::fork_regex::SYNC_VERSION,
+    crate::fork_regex::SCOPE_ROWS,
+    no_assets
+);
+
 fn creation_apply_error(error: lettuce_creation::CreationRepositoryError) -> ApplyOneError {
     match error {
         lettuce_creation::CreationRepositoryError::Storage { .. } => ApplyOneError::Storage,
@@ -3289,7 +3319,7 @@ const CONVERSATION_MESSAGE_CODEC: SnapshotCodec = SnapshotCodec {
 
 /// Aggregates journaled by comparing their current state with the latest
 /// journaled snapshot, in dependency order (deletes run in reverse).
-const SCANNED_CODECS: [&SnapshotCodec; 39] = [
+const SCANNED_CODECS: [&SnapshotCodec; 41] = [
     &PROVIDER_ACCOUNT_CODEC,
     &MODEL_PROFILE_CODEC,
     &PERSONA_CODEC,
@@ -3329,6 +3359,8 @@ const SCANNED_CODECS: [&SnapshotCodec; 39] = [
     &JOB_USAGE_CODEC,
     &JOB_USAGE_COST_CODEC,
     &LEGACY_USAGE_CODEC,
+    &FORK_REGEX_SCRIPT_CODEC,
+    &FORK_REGEX_SCOPE_CODEC,
 ];
 
 fn snapshot_codec(kind: &str) -> Option<&'static SnapshotCodec> {

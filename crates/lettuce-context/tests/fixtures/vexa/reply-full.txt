@@ -1,0 +1,224 @@
+Дождь стучит по высоким окнам библиотеки, и лампа над столом мигает в такт ветру. Шарлотта не поднимает глаз от гроссбуха.
+
+<cornflower:whisper>«Ты опять пришёл слишком поздно»</cornflower>, — говорит она едва слышно, переворачивая страницу. <marigold>«Мельница не будет ждать до утра.»</marigold>
+
+Телефон в кармане коротко вибрирует.
+
+<vexa_sms title="Мара">Ты видел приёмник? Он снова ловит сигнал.</vexa_sms>
+
+Она откладывает перо. <heavy>Тишина</heavy> тянется дольше, чем нужно. Где-то внизу хлопает <vexa_lore term="Северное крыло">Закрытая часть поместья, куда слуги не ходят после пожара 1911 года.</vexa_lore> дверь.
+
+<internal_states>
+<state:world>
+  <ct>12</ct>
+  <loc>Поместье Клеймор — Библиотека</loc>
+  <time>06:30 PM</time>
+  <date>14 октября</date>
+  <weather>Холодный дождь, ветер с севера</weather>
+  <room>Дубовый стол у окна, стеллажи вдоль стен, 8x6x4</room>
+  <user_pos>[3,2]</user_pos>
+  <entries>2: южная дверь в коридор, западная дверь в кабинет</entries>
+  <obstacles>Стеллаж у двери, кресло</obstacles>
+  <audio>Дождь глушит шёпот; в коридоре слышно только громкую речь</audio>
+  <pacing>SLOW</pacing>
+</state:world>
+
+<state:onscreen>
+  <ent_on>
+    <name>Шарлотта Клеймор</name>
+    <parrott>ParrotEmotion:[Anger→Irritation→Frustration] | Med</parrott>
+    <residualMood>res:Раздражение | {{user}} | 2</residualMood>
+    <tfdy>T3↓ F2 D2 Y1↑</tfdy>
+    <salience>sal:8</salience>
+    <agenda>Сверяла счета мельницы</agenda>
+    <why>Отчёт нужен завтра утром</why>
+    <end>07:00 PM</end>
+    <move>Остаётся, пока не закончит</move>
+  </ent_on>
+</state:onscreen>
+
+<state:offscreen_agendas>
+  <ent_off>
+    <name>Мара</name>
+    <loc>Мастерская</loc>
+    <agenda>Чинит приёмник. «Опять этот голос…»</agenda>
+    <why>Сигнал повторяется каждый вечер</why>
+    <goal>Записать сигнал целиком</goal>
+    <end>07:15 PM</end>
+    <mood>ParrotEmotion:[Fear→Nervousness→Anxiety] сигнал звучит её голосом</mood>
+    <tfdy>T2 F3↑ D1 Y2 | IW2</tfdy>
+    <salience>sal:6</salience>
+  </ent_off>
+</state:offscreen_agendas>
+
+<state:locations>
+  <map_index>
+    <active_map_id>manor_main</active_map_id>
+    <active_level>0</active_level>
+    <map>
+      <id>manor_main</id>
+      <name>Поместье Клеймор</name>
+      <level><z>0</z><name>Первый этаж</name></level>
+      <main_exit>lobby [4,0,0]</main_exit>
+    </map>
+  </map_index>
+  <loc_rend>
+    <id>library</id>
+    <map_id>manor_main</map_id>
+    <name>Библиотека</name>
+    <dim>8 x 6 x 4 m</dim>
+    <bbox>0,6,8,12</bbox>
+    <anchor>S:hall</anchor>
+    <features>Дубовый стол, лампа, гроссбух</features>
+    <adj>N:∅, S:hall, E:∅, W:study, Up:∅, Down:∅</adj>
+    <grid>0,6,0</grid>
+    <occupants>Шарлотта Клеймор [5,9]</occupants>
+    <exits>S:hall [4,6] | W:study [0,9]</exits>
+  </loc_rend>
+  <loc_rend>
+    <id>hall</id>
+    <map_id>manor_main</map_id>
+    <name>Коридор</name>
+    <dim>8 x 3 x 4 m</dim>
+    <bbox>0,3,8,6</bbox>
+    <anchor>S:lobby</anchor>
+    <features>Портреты, ковровая дорожка</features>
+    <adj>N:library, S:lobby, E:∅, W:∅, Up:∅, Down:∅</adj>
+    <grid>0,3,0</grid>
+    <occupants>∅</occupants>
+    <exits>N:library [4,6] | S:lobby [4,3]</exits>
+  </loc_rend>
+  <loc_rend>
+    <id>lobby</id>
+    <map_id>manor_main</map_id>
+    <name>Холл</name>
+    <dim>8 x 3 x 5 m</dim>
+    <bbox>0,0,8,3</bbox>
+    <anchor>∅</anchor>
+    <features>Парадная дверь, вешалка</features>
+    <adj>N:hall, S:∅, E:∅, W:∅, Up:∅, Down:∅</adj>
+    <grid>0,0,0</grid>
+    <occupants>∅</occupants>
+    <exits>N:hall [4,3]</exits>
+  </loc_rend>
+</state:locations>
+
+<state:entityMem>
+  <ent_mem>
+    <name>Шарлотта Клеймор</name>
+    <mem>{{user}} обещал вернуться к шести | T:12 | V:WITNESSED | C:CERTAIN</mem>
+    <mem>Мара что-то скрывает про приёмник | T:10 | V:INFERRED | C:PARTIAL</mem>
+  </ent_mem>
+</state:entityMem>
+
+<state:entity_state>
+  <ent_col>
+    <name>Шарлотта Клеймор</name>
+    <fontColor>cornflower #56B4E9</fontColor>
+    <look>острые скулы | тёмные волосы в узел | серые глаза | худощавая | строгое платье | шрам на запястье | серебряное перо</look>
+    <voice>низкий, сухой; «Не сейчас.»</voice>
+    <persona>dominant | заботливая | сдержанная | педантичная</persona>
+    <private>Боится, что мельницу придётся продать</private>
+  </ent_col>
+  <ent_col>
+    <name>Мара</name>
+    <fontColor>marigold #E69F00</fontColor>
+    <look>веснушки | рыжие кудри | карие глаза | невысокая | рабочий фартук | ожог на ладони | наушники</look>
+    <voice>быстрый, звонкий; «Слышишь?»</voice>
+    <persona>curious | упрямая | открытая | рассеянная</persona>
+    <private>Узнала свой голос в сигнале</private>
+  </ent_col>
+</state:entity_state>
+
+<state:thoughts>
+  <ent_think>
+    <name>Шарлотта Клеймор</name>
+    <tQ1>Закончить счета до семи</tQ1>
+    <tQ2>Злюсь, что он опоздал</tQ2>
+    <tQ3>На цифрах, которые не сходятся</tQ3>
+    <tQ4>Без мельницы поместье не выживет</tQ4>
+    <tQ5>«Мне нужна помощь, а не оправдания.»</tQ5>
+  </ent_think>
+</state:thoughts>
+
+<state:dam>
+  <ent_dam>
+    <pair>Шарлотта Клеймор→{{user}}</pair>
+    <sluice>E:sealed L:sealed</sluice>
+    <filters>Soc:h(crack)(strain) Val:c Comp:r Rel:o</filters>
+    <misc>clash:y | T:no</misc>
+    <intent>intent:Заставить его взять ответственность</intent>
+  </ent_dam>
+</state:dam>
+
+<state:pair>
+  <pair>
+    <names>Шарлотта Клеймор↔{{user}}</names>
+    <mode>mode:strained</mode>
+    <dam>E:s L:s Gate:attentive</dam>
+    <matrix>🌶️[1,0] 🎲[0,0] 🤝[4,-1] 🛠️[5,0] 🏠[3,0] 🕊️[2,0] 😠[3,1] 🥊[2,1] ❄️[0,0] 🪨[1,0] 🌫️[0,0] 🐍[0,0]</matrix>
+    <wall>wall:🤝-😠</wall>
+  </pair>
+</state:pair>
+
+<state:tracks>
+  <main>Пропавший сигнал | Ki | obj:найти источник сигнала | 1/4 | pressure:low</main>
+  <track>Приёмник Мары | active | записать сигнал | запись получена/приёмник сгорел | ключ к частоте/потеря улики</track>
+  <history>∅</history>
+</state:tracks>
+
+<state:arc>
+  <info>Пропавший сигнал | Ki | mystery | focus:user | user role:focus</info>
+  <timeline>14 окт→16 окт</timeline>
+  <ki>
+    <beat>Мр прнст пврждннй прмнк | FIRED | D:∅ | C:Мара</beat>
+  </ki>
+  <sho>
+    <beat>Прмнк игрт сгнл бдств | UNLOCKED | D:ki1 | ∅</beat>
+  </sho>
+  <ten>
+    <beat>Мр узнт свй глс | LOCKED | D:sho1 | C:Мара</beat>
+  </ten>
+  <ketsu>
+    <beat>Мр ткрвт жрнл | LOCKED | D:ten1 | C:Мара</beat>
+  </ketsu>
+</state:arc>
+
+<state:chekhov>
+  <chamber>
+    <bullet>Серебряное перо Шарлотты | w3 age2</bullet>
+    <bullet>Запертая дверь в северное крыло | w5 age4</bullet>
+  </chamber>
+  <locked>
+    <bullet>Журнал передатчика | w7 age1 [C:Мара]</bullet>
+  </locked>
+  <fired>
+    <bullet>Сломанные часы в холле | w2 age6</bullet>
+  </fired>
+</state:chekhov>
+
+<state:inv>
+  <inv>телефон, ключ от мастерской, фонарик</inv>
+  <titles>опоздавший, гость</titles>
+  <status>промок, замёрз</status>
+</state:inv>
+
+<state:story_notes>
+  <threads>Чей голос в сигнале?</threads>
+  <seeds>Серебряное перо, дверь в северное крыло</seeds>
+  <motives>Шарлотта хочет спасти мельницу; Мара хочет понять сигнал</motives>
+  <horizon>В 19:15 Мара закончит запись</horizon>
+  <GremlinNote>Пусть Шарлотта первой заметит мокрые следы.</GremlinNote>
+  <heckle>Не торопи бит Shō.</heckle>
+</state:story_notes>
+
+<state:notebook>
+  <ent>[T] Мара в мастерской, сигнал в 19:00</ent>
+  <ent>[R] Шарлотта ждала к шести</ent>
+  <ent>[D] Счета мельницы не сходятся</ent>
+</state:notebook>
+
+<state:vent>
+  <vent>Обожаю, как она прячет страх за цифрами. Сигнал уже звучит её голосом, а она ещё не знает.</vent>
+</state:vent>
+</internal_states>

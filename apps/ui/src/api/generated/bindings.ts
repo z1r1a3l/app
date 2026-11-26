@@ -317,6 +317,14 @@ export const commands = {
 	companionSoulGrowthRemove: (request: CompanionSoulGrowthRemoveRequest) => typedError<boolean, ApiError_Serialize>(__TAURI_INVOKE("companion_soul_growth_remove", { request })),
 	companionSoulGrowthLock: (request: CompanionSoulGrowthLockRequest) => typedError<boolean, ApiError_Serialize>(__TAURI_INVOKE("companion_soul_growth_lock", { request })),
 	companionSoulWriterRun: (request: CompanionSoulWriterRunRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("companion_soul_writer_run", { request })),
+	regexScopeGet: (request: RegexScopeRequest) => typedError<RegexScopeView, ApiError_Serialize>(__TAURI_INVOKE("regex_scope_get", { request })),
+	regexScopeReplace: (request: RegexScriptsReplaceRequest) => typedError<RegexScopeView, ApiError_Serialize>(__TAURI_INVOKE("regex_scope_replace", { request })),
+	regexScopeStateSet: (request: RegexScopeStateRequest) => typedError<RegexScopeView, ApiError_Serialize>(__TAURI_INVOKE("regex_scope_state_set", { request })),
+	regexImportParse: (request: RegexImportParseRequest) => typedError<RegexImportView, ApiError_Serialize>(__TAURI_INVOKE("regex_import_parse", { request })),
+	regexTest: (request: RegexTestRequest) => typedError<RegexTestResult, ApiError_Serialize>(__TAURI_INVOKE("regex_test", { request })),
+	regexConversationScripts: (request: RegexConversationRequest) => typedError<RegexConversationScripts, ApiError_Serialize>(__TAURI_INVOKE("regex_conversation_scripts", { request })),
+	regexPendingScopes: () => typedError<RegexScopeRef[], ApiError_Serialize>(__TAURI_INVOKE("regex_pending_scopes")),
+	regexScopesList: () => typedError<RegexScopeSummary[], ApiError_Serialize>(__TAURI_INVOKE("regex_scopes_list")),
 	characterNotesList: (request: CharacterNotesRequest) => typedError<CharacterNoteView[], ApiError_Serialize>(__TAURI_INVOKE("character_notes_list", { request })),
 	characterNotesUpsert: (request: CharacterNoteUpsertRequest) => typedError<CharacterNoteView, ApiError_Serialize>(__TAURI_INVOKE("character_notes_upsert", { request })),
 	characterNotesDelete: (request: CharacterNoteDeleteRequest) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("character_notes_delete", { request })),
@@ -8543,6 +8551,108 @@ export type ReasoningSupportContract = "none" | "effort" | "budget_only" | "dyna
 export type RecommendedRepository = {
 	role: ImageComponentRole,
 	repository: string,
+};
+
+/**  Scripts the chat view runs on messages before it shows them. */
+export type RegexConversationRequest = {
+	conversation_id: string,
+};
+
+export type RegexConversationScripts = {
+	user_name: string,
+	character_name: string,
+	scripts: RegexScriptDto[],
+};
+
+/**
+ *  Parses a SillyTavern / Tavo / Lumiverse regex file, an ST preset or a
+ *  character card, without storing anything.
+ */
+export type RegexImportParseRequest = {
+	json: string,
+};
+
+export type RegexImportView = {
+	/**  "scripts", "preset", "card" or "pack". */
+	kind: string,
+	name: string | null,
+	scripts: RegexScriptDto[],
+};
+
+export type RegexScopeKindDto = "global" | "preset" | "character";
+
+/**  A script list: the global one, a prompt preset's, or a character's. */
+export type RegexScopeRef = {
+	kind: RegexScopeKindDto,
+	/**  The prompt or character id; ignored for the global scope. */
+	id: string | null,
+};
+
+export type RegexScopeRequest = {
+	scope: RegexScopeRef,
+};
+
+export type RegexScopeStateRequest = {
+	scope: RegexScopeRef,
+	enabled: boolean | null,
+	pending: boolean | null,
+};
+
+export type RegexScopeSummary = {
+	scope: RegexScopeRef,
+	scripts: number,
+};
+
+export type RegexScopeView = {
+	scope: RegexScopeRef,
+	enabled: boolean,
+	/**  A character card's scripts that wait for the user to allow them. */
+	pending: boolean,
+	scripts: RegexScriptDto[],
+};
+
+/**
+ *  One script. Placement numbers follow SillyTavern: 1 user message, 2 AI
+ *  reply, 3 slash command, 5 world info, 6 reasoning.
+ */
+export type RegexScriptDto = {
+	id: string,
+	script_name: string,
+	find_regex: string,
+	replace_string: string,
+	trim_strings: string[],
+	placement: number[],
+	disabled: boolean,
+	/**  Changes only what is shown in the chat. */
+	markdown_only: boolean,
+	/**  Changes only what is sent to the model. */
+	prompt_only: boolean,
+	run_on_edit: boolean,
+	/**  0 none, 1 raw, 2 escaped macros in the find pattern. */
+	substitute_regex: number,
+	min_depth: number | null,
+	max_depth: number | null,
+};
+
+export type RegexScriptsReplaceRequest = {
+	scope: RegexScopeRef,
+	scripts: RegexScriptDto[],
+};
+
+/**  Runs scripts over a sample text (the editor's live tester). */
+export type RegexTestRequest = {
+	scripts: RegexScriptDto[],
+	text: string,
+	/**  "display" or "prompt". */
+	target: string,
+	placement: number,
+	depth: number | null,
+};
+
+export type RegexTestResult = {
+	text: string,
+	/**  Scripts whose pattern did not compile, as `name: reason`. */
+	errors: string[],
 };
 
 export type RelationshipChange = {

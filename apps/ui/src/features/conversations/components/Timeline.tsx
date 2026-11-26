@@ -39,6 +39,7 @@ import {
 } from "../data/messages";
 import type { Timeline as TimelineData } from "../data/use-timeline";
 import { Attached, MessageBody, MessageRow } from "./MessageRow";
+import { RegexDisplayProvider } from "@/features/regex";
 import { PendingReply, StreamingReply } from "./StreamingReply";
 import { useChatLook, useMessageAppearance } from "@/entities/preferences";
 
@@ -321,7 +322,10 @@ export function Timeline({
   const trailing = meta.active && meta.targetId === null;
   const regenerating = meta.active ? meta.targetId : null;
 
+  const regexIds = messages.filter((message) => message.role === "user" || message.role === "assistant").map((message) => message.id);
   return (
+    // fork: display regex scripts for this chat.
+    <RegexDisplayProvider conversationId={conversationId} messageIds={regexIds}>
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         ref={scroller}
@@ -472,5 +476,6 @@ export function Timeline({
         </div>
       )}
     </div>
+    </RegexDisplayProvider>
   );
 }
