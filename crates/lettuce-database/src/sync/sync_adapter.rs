@@ -1536,6 +1536,22 @@ fn supported_change(change: &CanonicalChange) -> Result<bool, IncomingChangeErro
             crate::fork_regex::SCOPE_SYNC_SCHEMA,
             crate::fork_regex::SYNC_VERSION,
         )
+        // fork: macro variables and dice logs.
+        | (
+            crate::fork_macros::CHAT_VAR_SYNC_KIND,
+            crate::fork_macros::CHAT_VAR_SYNC_SCHEMA,
+            crate::fork_macros::SYNC_VERSION,
+        )
+        | (
+            crate::fork_macros::GLOBAL_VAR_SYNC_KIND,
+            crate::fork_macros::GLOBAL_VAR_SYNC_SCHEMA,
+            crate::fork_macros::SYNC_VERSION,
+        )
+        | (
+            crate::fork_macros::ROLL_SYNC_KIND,
+            crate::fork_macros::ROLL_SYNC_SCHEMA,
+            crate::fork_macros::SYNC_VERSION,
+        )
         | (
             lettuce_sync::CHARACTER_LOREBOOK_BINDINGS_SYNC_KIND
             | lettuce_sync::PERSONA_LOREBOOK_BINDINGS_SYNC_KIND
@@ -3101,6 +3117,34 @@ row_codec!(
     no_assets
 );
 
+// fork: macro variables and dice logs.
+row_codec!(
+    FORK_CHAT_VAR_CODEC,
+    crate::fork_macros::CHAT_VAR_SYNC_KIND,
+    crate::fork_macros::CHAT_VAR_SYNC_SCHEMA,
+    crate::fork_macros::SYNC_VERSION,
+    crate::fork_macros::CHAT_VAR_ROWS,
+    no_assets
+);
+
+row_codec!(
+    FORK_GLOBAL_VAR_CODEC,
+    crate::fork_macros::GLOBAL_VAR_SYNC_KIND,
+    crate::fork_macros::GLOBAL_VAR_SYNC_SCHEMA,
+    crate::fork_macros::SYNC_VERSION,
+    crate::fork_macros::GLOBAL_VAR_ROWS,
+    no_assets
+);
+
+row_codec!(
+    FORK_MACRO_ROLL_CODEC,
+    crate::fork_macros::ROLL_SYNC_KIND,
+    crate::fork_macros::ROLL_SYNC_SCHEMA,
+    crate::fork_macros::SYNC_VERSION,
+    crate::fork_macros::ROLL_ROWS,
+    no_assets
+);
+
 fn creation_apply_error(error: lettuce_creation::CreationRepositoryError) -> ApplyOneError {
     match error {
         lettuce_creation::CreationRepositoryError::Storage { .. } => ApplyOneError::Storage,
@@ -3319,7 +3363,7 @@ const CONVERSATION_MESSAGE_CODEC: SnapshotCodec = SnapshotCodec {
 
 /// Aggregates journaled by comparing their current state with the latest
 /// journaled snapshot, in dependency order (deletes run in reverse).
-const SCANNED_CODECS: [&SnapshotCodec; 41] = [
+const SCANNED_CODECS: [&SnapshotCodec; 44] = [
     &PROVIDER_ACCOUNT_CODEC,
     &MODEL_PROFILE_CODEC,
     &PERSONA_CODEC,
@@ -3361,6 +3405,9 @@ const SCANNED_CODECS: [&SnapshotCodec; 41] = [
     &LEGACY_USAGE_CODEC,
     &FORK_REGEX_SCRIPT_CODEC,
     &FORK_REGEX_SCOPE_CODEC,
+    &FORK_CHAT_VAR_CODEC,
+    &FORK_GLOBAL_VAR_CODEC,
+    &FORK_MACRO_ROLL_CODEC,
 ];
 
 fn snapshot_codec(kind: &str) -> Option<&'static SnapshotCodec> {

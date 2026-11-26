@@ -5,6 +5,7 @@ pub(crate) mod conversation_generation_input;
 pub(crate) mod conversation_inference;
 pub(crate) mod feature_parameters;
 pub(crate) mod feature_prompt_entries;
+pub(crate) mod fork_prompt_macros;
 pub(crate) mod fork_prompt_regex;
 pub(crate) mod live_sources;
 pub(crate) mod provider_runtime;

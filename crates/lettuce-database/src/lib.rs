@@ -320,6 +320,12 @@ const MIGRATION_9001: Migration = Migration {
     sql: include_str!("../migrations/9001_fork_regex_scripts.sql"),
 };
 
+/// Fork-only migration; see migrations/9002_fork_macro_vars.sql.
+const MIGRATION_9002: Migration = Migration {
+    id: 9002,
+    sql: include_str!("../migrations/9002_fork_macro_vars.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -371,6 +377,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_48,
     MIGRATION_49,
     MIGRATION_9001,
+    MIGRATION_9002,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;
@@ -6328,6 +6335,9 @@ mod tests {
                 "dynamic_memory_runs",
                 "dynamic_memory_suffix_rewinds",
                 "dynamic_memory_summary_checkpoints",
+                "fork_chat_vars",
+                "fork_global_vars",
+                "fork_macro_rolls",
                 "fork_regex_scopes",
                 "fork_regex_scripts",
                 "generation_attempts",
@@ -6569,6 +6579,9 @@ mod backup_index;
 
 mod fork_regex;
 pub use fork_regex::{DatabaseRegexSource, RegexScopeKind, RegexScopeState};
+
+mod fork_macros;
+pub use fork_macros::DatabaseMacroVarStore;
 
 pub use backup_index::BackupIndexRecord;
 

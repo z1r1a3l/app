@@ -6,6 +6,8 @@
 mod active_work;
 mod app;
 mod character_notes;
+pub(crate) mod fork_macros;
+pub use fork_macros::{macro_message_rolls, macro_preview, macro_vars_get, macro_vars_replace};
 pub(crate) mod fork_regex;
 pub use fork_regex::{
     regex_conversation_scripts, regex_import_parse, regex_pending_scopes, regex_scope_get,

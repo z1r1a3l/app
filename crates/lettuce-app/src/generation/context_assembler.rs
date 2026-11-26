@@ -855,6 +855,16 @@ let mut private_items_used =
             })
             .collect::<Vec<_>>()
             .join("\n");
+        // fork: SillyTavern macros over the non-history messages.
+        let fork_macros = crate::generation::fork_prompt_macros::evaluate(
+            &mut messages,
+            &mut in_chat,
+            &transcript,
+            &fork_roles,
+            &request.conversation_id.to_string(),
+            &names.user_name,
+            &names.character_name,
+        );
         insert_in_chat_messages(&mut transcript, in_chat);
         messages.append(&mut transcript);
         if direct {
@@ -864,6 +874,7 @@ let mut private_items_used =
                 }
             }
         }
+        fork_macros.commit(&messages, self.preview.is_none());
 
         let budget = budget_report(&messages, omitted_messages)?;
         let sections = placed_sections(sections, history_text);

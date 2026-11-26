@@ -73,6 +73,13 @@ impl AppBackend {
         lettuce_context::fork_regex::set_regex_source(Arc::new(
             lettuce_database::DatabaseRegexSource(database.clone()),
         ));
+        // fork: macro variables and dice logs live in this database.
+        if let Err(error) = database.fork_vars_prune() {
+            tracing::warn!(%error, "fork variables of deleted chats could not be pruned");
+        }
+        lettuce_context::fork_macros::set_var_store(Arc::new(
+            lettuce_database::DatabaseMacroVarStore(database.clone()),
+        ));
         let backend = Self {
             whisper_runtime: Arc::new(WhisperCppRuntime::new(database.clone())),
             database,

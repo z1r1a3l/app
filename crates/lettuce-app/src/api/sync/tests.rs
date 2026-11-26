@@ -1321,3 +1321,66 @@ async fn fork_regex_scripts_and_switches_sync_both_ways() {
     std::fs::remove_dir_all(host_root).expect("host cleanup");
     std::fs::remove_dir_all(client_root).expect("client cleanup");
 }
+
+// fork: global macro variables reach the other device, and edits and
+// deletes made there come back.
+#[tokio::test(flavor = "multi_thread")]
+async fn fork_global_macro_vars_sync_both_ways() {
+    let (host, host_root) = device();
+    let (client, client_root) = device();
+    let var = |name: &str, value: &str| dto::MacroVarDto {
+        name: name.into(),
+        value: value.into(),
+    };
+    let replace = |vars: Vec<dto::MacroVarDto>| dto::MacroVarsReplaceRequest {
+        conversation_id: None,
+        global: true,
+        vars,
+    };
+    macro_vars_replace(
+        &host.context,
+        replace(vec![var("frankenSIM.mainTheme", "Sola"), var("a:b", "1")]),
+    )
+    .await
+    .expect("host vars");
+    complete(&host.context, &client.context).await;
+    let globals = |view: dto::MacroVarsView| {
+        view.global
+            .into_iter()
+            .map(|v| (v.name, v.value))
+            .collect::<Vec<_>>()
+    };
+    async fn read(context: &ApiContext) -> Result<dto::MacroVarsView, dto::ApiError> {
+        macro_vars_get(
+            context,
+            dto::MacroVarsRequest {
+                conversation_id: None,
+            },
+        )
+        .await
+    }
+    assert_eq!(
+        globals(read(&client.context).await.expect("client vars")),
+        [
+            ("a:b".to_owned(), "1".to_owned()),
+            ("frankenSIM.mainTheme".to_owned(), "Sola".to_owned())
+        ]
+    );
+
+    macro_vars_replace(
+        &client.context,
+        replace(vec![var("frankenSIM.mainTheme", "Noir")]),
+    )
+    .await
+    .expect("client edit");
+    complete(&host.context, &client.context).await;
+    assert_eq!(
+        globals(read(&host.context).await.expect("host vars")),
+        [("frankenSIM.mainTheme".to_owned(), "Noir".to_owned())]
+    );
+
+    sync_stop(&host.context).await.expect("stop host");
+    sync_stop(&client.context).await.expect("stop client");
+    std::fs::remove_dir_all(host_root).expect("host cleanup");
+    std::fs::remove_dir_all(client_root).expect("client cleanup");
+}
