@@ -114,3 +114,37 @@ html:active-view-transition-type(page-back)::view-transition-new(mobile-page) {
 [data-nav="header"] .flex.h-full.min-h-0.flex-col > main.min-h-0.flex-1.overflow-y-auto:last-child {
   padding-bottom: var(--safe-bottom, 0px);
 }
+
+/* Crisp FilterBar: flex overflow-x-auto often drops padding-right from the scroll
+   width, so the last chip sits flush with the edge. A trailing flex spacer is
+   included in the scroll width. scroll-padding helps scrollIntoView. */
+[role="radiogroup"].scrollbar-none.overflow-x-auto {
+  scroll-padding-inline: 0.75rem;
+}
+[role="radiogroup"].scrollbar-none.overflow-x-auto::after {
+  content: "";
+  flex: 0 0 0.75rem;
+}
+
+/*
+ * 44px thumb targets without changing the drawing. Crisp's `tap-target` does this
+ * with an invisible ::after pad; the tab-bar Create button (40px) and FilterBar
+ * chips (32px) do not use that class. Growing them with min-height would change
+ * the look, so we reuse the same invisible pad, on coarse pointers only.
+ */
+@media (pointer: coarse) {
+  nav[class*="bg-nav"] button.rounded-full.bg-accent.shadow-raised,
+  [role="radiogroup"].overflow-x-auto > button.inline-flex.h-8 {
+    position: relative;
+  }
+  nav[class*="bg-nav"] button.rounded-full.bg-accent.shadow-raised::after,
+  [role="radiogroup"].overflow-x-auto > button.inline-flex.h-8::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
