@@ -95,9 +95,116 @@
   },
   "discover": {
     "title": "Discover",
-    "soonTitle": "Discover is on its way",
-    "soonBody": "A place to find and share characters made by the community.",
-    "create": "Create a character",
-    "discord": "Follow along on Discord"
+    "section": {
+      "label": "What to browse",
+      "characters": "Characters",
+      "resources": "Resources"
+    },
+    "resourceKind": {
+      "label": "Resource type",
+      "lorebook": "Lorebooks",
+      "preset": "Presets"
+    },
+    "searchPlaceholder": "Search {{site}}",
+    "total_one": "{{count}} on {{site}}",
+    "total_other": "{{count}} on {{site}}",
+    "loading": "Loading",
+    "emptyTitle": "Nothing found",
+    "emptyBody": "Try other words or tags, or another site than {{site}}.",
+    "end": "That's everything",
+    "retry": "Try again",
+    "sortLabel": "Sort",
+    "sort": {
+      "trending": "Trending",
+      "downloads": "Most downloaded",
+      "stars": "Most starred",
+      "favorites": "Most favorited",
+      "rating": "Top rated",
+      "newest": "Newest",
+      "updated": "Recently updated",
+      "views": "Most viewed",
+      "likes": "Most liked",
+      "messages": "Most chatted",
+      "best": "Best",
+      "popular": "Popular",
+      "hiddenGems": "Hidden gems",
+      "relevance": "Relevance",
+      "tokens": "Largest",
+      "random": "Random"
+    },
+    "tags": "Tags",
+    "tagsCount_one": "{{count}} tag",
+    "tagsCount_other": "{{count}} tags",
+    "filtersTitle": "Filters",
+    "includeTags": "Must have tags",
+    "excludeTags": "Hide tags",
+    "tagPlaceholder": "Type a tag and press Enter",
+    "clearTags": "Clear tags",
+    "nsfw": "Show adult content",
+    "nsfwHint": "Cards marked 18+ by the site.",
+    "nsfwPygmalion": "Pygmalion only shows adult cards to signed-in users, so this changes little here.",
+    "tokensShort": "{{count}} tk",
+    "tokens_one": "{{count}} token",
+    "tokens_other": "{{count}} tokens",
+    "hasLorebook": "Lorebook",
+    "altGreetings_one": "+{{count}} greeting",
+    "altGreetings_other": "+{{count}} greetings",
+    "about": "About",
+    "greeting": "First message",
+    "stat": {
+      "downloads": "Downloads",
+      "stars": "Stars",
+      "likes": "Likes",
+      "chats": "Chats",
+      "messages": "Messages",
+      "views": "Views"
+    },
+    "openSite": "Site",
+    "import": {
+      "character": "Import character",
+      "lorebook": "Import lorebook",
+      "preset": "Import preset"
+    },
+    "cannotImport": "Can't be imported",
+    "jannyPreview": "JannyAI hides card pages behind a bot check, so only the search summary is shown. Import may fail for the same reason.",
+    "importPresetTitle": "Import preset",
+    "presetEntries_one": "{{count}} prompt entry",
+    "presetEntries_other": "{{count}} prompt entries",
+    "presetNotes_one": "{{count}} setting has no equivalent and will be left out.",
+    "presetNotes_other": "{{count}} settings have no equivalent and will be left out.",
+    "presetImported": "{{name}} added to prompts",
+    "open": "Open",
+    "cancel": "Cancel",
+    "capability": {
+      "search": "Search",
+      "preview": "Preview",
+      "import": "Import"
+    },
+    "sources": {
+      "open": "Card sources",
+      "title": "Card sources",
+      "description": "Sites Discover reads. Everything is fetched by the app itself, so no site pages or ads are loaded.",
+      "credit": "Content from {{url}}",
+      "notForKind": "Not available for this type",
+      "footer": "Cards belong to their creators. Respect each site's rules when sharing them."
+    },
+    "sourceNote": {
+      "pygmalion": "Adult cards need a Pygmalion account.",
+      "janny": "Card pages and downloads sit behind a Cloudflare check, so import often fails.",
+      "botbooru": "Searches are rate-limited; wait a minute if it stops answering.",
+      "illarin": "Also hosts presets and lorebooks; SillyTavern presets import, Lumiverse ones don't."
+    },
+    "error": {
+      "busy": "{{site}} is rate-limiting requests. Wait a minute and try again.",
+      "unavailable": "{{site}} can't be reached or refused the request.",
+      "not_found": "{{site}} no longer has this.",
+      "unsupported": "This isn't available from {{site}}.",
+      "malformed": "{{site}} sent something the app couldn't read.",
+      "transport": "No connection.",
+      "other": "Something went wrong with {{site}}.",
+      "notImportable": "This file isn't something the app can import."
+    },
+    "adult": "18+",
+    "creator": "@{{name}}"
   }
 }
