@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 
 use super::number::{js_format, js_number, js_trim};
 
+mod blocks;
+use blocks::{Form, Head, head_of, pieces_of, raw_text};
+
 /// Variables by name.
 pub type Vars = BTreeMap<String, String>;
 
@@ -111,16 +114,22 @@ fn parse(text: &str) -> Vec<Node> {
 }
 
 /// One argument: text pieces and nested macros, in order.
+#[derive(Debug, Clone, Copy)]
 enum ArgPiece<'a> {
     Text(&'a str),
     Macro(&'a [Node]),
 }
 
 fn args_of(nodes: &[Node]) -> Vec<Vec<ArgPiece<'_>>> {
-    let mut out: Vec<Vec<ArgPiece<'_>>> = vec![Vec::new()];
-    for node in nodes {
-        match node {
-            Node::Text(text) => {
+    split_pieces(&pieces_of(nodes))
+}
+
+/// Splits pieces into arguments at each `::` outside nested macros.
+fn split_pieces<'a>(pieces: &[ArgPiece<'a>]) -> Vec<Vec<ArgPiece<'a>>> {
+    let mut out: Vec<Vec<ArgPiece<'a>>> = vec![Vec::new()];
+    for piece in pieces {
+        match piece {
+            ArgPiece::Text(text) => {
                 let mut parts = text.split("::");
                 if let Some(first) = parts.next() {
                     out.last_mut().expect("segment").push(ArgPiece::Text(first));
@@ -129,7 +138,7 @@ fn args_of(nodes: &[Node]) -> Vec<Vec<ArgPiece<'_>>> {
                     out.push(vec![ArgPiece::Text(part)]);
                 }
             }
-            Node::Macro(inner) => out
+            ArgPiece::Macro(inner) => out
                 .last_mut()
                 .expect("segment")
                 .push(ArgPiece::Macro(inner)),
@@ -308,27 +317,7 @@ impl MacroRun {
     }
 
     fn eval_nodes(&mut self, nodes: &[Node], out: &mut String) {
-        for node in nodes {
-            match node {
-                Node::Text(text) => out.push_str(text),
-                Node::Macro(inner) => {
-                    let value = self.eval_macro(inner);
-                    out.push_str(&value);
-                }
-            }
-        }
-    }
-
-    fn eval_piece(&mut self, pieces: &[ArgPiece<'_>], out: &mut String) {
-        for piece in pieces {
-            match piece {
-                ArgPiece::Text(text) => out.push_str(text),
-                ArgPiece::Macro(inner) => {
-                    let value = self.eval_macro(inner);
-                    out.push_str(&value);
-                }
-            }
-        }
+        self.eval_items(&pieces_of(nodes), out);
     }
 
     fn eval_macro(&mut self, inner: &[Node]) -> String {
@@ -338,45 +327,53 @@ impl MacroRun {
             return String::new();
         }
         self.evaluated += 1;
-        let segments = args_of(inner);
-        let head = match segments.first().map(Vec::as_slice) {
-            Some([ArgPiece::Text(text)]) => Some(js_trim(text).to_owned()),
-            Some([]) => Some(String::new()),
-            _ => None,
-        };
-        let known = head.as_deref().is_some_and(|name| {
-            !name.is_empty()
-                && name
-                    .chars()
-                    .all(|c| c.is_alphanumeric() || matches!(c, '_' | '-' | '.'))
-        });
         if self.evaluated > MAX_MACROS_PER_RUN {
             let mut body = String::new();
             self.eval_nodes(inner, &mut body);
             return format!("{{{{{body}}}}}");
         }
-        if known {
-            let name = head.unwrap_or_default().to_lowercase();
-            let mut raw = Vec::with_capacity(segments.len().saturating_sub(1));
-            for segment in &segments[1..] {
-                let mut value = String::new();
-                self.eval_piece(segment, &mut value);
-                raw.push(value);
+        match head_of(inner) {
+            Head::Named(header) if !header.closing => {
+                if header.name == "if" {
+                    // `{{if c}}` without its `{{/if}}` stays as written.
+                    if header.args.len() != 2 {
+                        return raw_text(inner);
+                    }
+                    return self
+                        .eval_if(&header, None)
+                        .unwrap_or_else(|| raw_text(inner));
+                }
+                let raw: Vec<String> = header
+                    .args
+                    .iter()
+                    .map(|pieces| {
+                        let mut value = String::new();
+                        self.eval_items(pieces, &mut value);
+                        value
+                    })
+                    .collect();
+                let args: Vec<String> = raw.iter().map(|value| js_trim(value).to_owned()).collect();
+                if let Some(value) = self.resolve(&header.name, &args) {
+                    return value;
+                }
+                if header.form == Form::Colons {
+                    return Self::unknown(&args_of(inner), &raw);
+                }
+                let mut body = String::new();
+                self.eval_nodes(inner, &mut body);
+                format!("{{{{{body}}}}}")
             }
-            let args: Vec<String> = raw.iter().map(|value| js_trim(value).to_owned()).collect();
-            if let Some(value) = self.resolve(&name, &args) {
-                return value;
+            Head::Shorthand(global, after, more) => self.eval_shorthand(global, after, more, inner),
+            _ => {
+                // Legacy one-colon forms: `{{random:a,b}}`, `{{pick: a, b}}`.
+                let mut body = String::new();
+                self.eval_nodes(inner, &mut body);
+                if let Some(value) = self.resolve_legacy(&body) {
+                    return value;
+                }
+                format!("{{{{{body}}}}}")
             }
-            return Self::unknown(&segments, &raw);
         }
-        // Legacy one-colon or space forms: `{{random:a,b}}`, `{{roll 1d20}}`,
-        // `{{pick: a, b}}`.
-        let mut body = String::new();
-        self.eval_nodes(inner, &mut body);
-        if let Some(value) = self.resolve_legacy(&body) {
-            return value;
-        }
-        format!("{{{{{body}}}}}")
     }
 
     fn unknown(segments: &[Vec<ArgPiece<'_>>], args: &[String]) -> String {
@@ -399,6 +396,12 @@ impl MacroRun {
         let rest = body[split..].trim_start();
         let rest = rest.strip_prefix(':').unwrap_or(rest);
         let list = || -> Vec<String> {
+            if rest.contains("::") {
+                return rest
+                    .split("::")
+                    .map(|item| js_trim(item).to_owned())
+                    .collect();
+            }
             rest.replace("\\,", "\u{0}")
                 .split(',')
                 .map(|item| js_trim(item).replace('\u{0}', ","))
@@ -459,18 +462,33 @@ impl MacroRun {
                 .map(|rest| rest.join("::"))
                 .unwrap_or_default()
         };
+        let arg = |at: usize| args.get(at).cloned().unwrap_or_default();
+        let tail = |at: usize| {
+            args.get(at..)
+                .map(|rest| rest.join("::"))
+                .unwrap_or_default()
+        };
         Some(match name {
             "user" => self.env.user.clone()?,
             "char" => self.env.char.clone()?,
             "noop" => String::new(),
             "newline" => "\n".to_owned(),
             "space" => " ".to_owned(),
-            "trim" => "{{trim}}".to_owned(),
+            // Scoped `{{trim}}…{{/trim}}` returns its (already trimmed) body.
+            "trim" => args
+                .first()
+                .cloned()
+                .unwrap_or_else(|| "{{trim}}".to_owned()),
             "comment" => String::new(),
-            "random" => self.random(args),
+            // One argument is a legacy comma list: `{{random::a,b}}`.
+            "random" => {
+                let list = single_list(args);
+                self.random(&list)
+            }
             "pick" => {
                 let raw = format!("pick::{}", args.join("::"));
-                self.pick(&raw, args)
+                let list = single_list(args);
+                self.pick(&raw, &list)
             }
             "roll" => self.roll(&first()),
             "reverse" => args.join("::").chars().rev().collect(),
@@ -509,6 +527,18 @@ impl MacroRun {
                 self.delete(true, &first());
                 String::new()
             }
+            "getvarkey" | "getvarindex" => self.get_key(false, &first(), &arg(1)),
+            "getglobalvarkey" | "getglobalvarindex" => self.get_key(true, &first(), &arg(1)),
+            "setvarkey" | "setvarindex" => {
+                self.set_key(false, &first(), &arg(1), &tail(2));
+                String::new()
+            }
+            "setglobalvarkey" | "setglobalvarindex" => {
+                self.set_key(true, &first(), &arg(1), &tail(2));
+                String::new()
+            }
+            // Only meaningful inside `{{if}}…{{/if}}`.
+            "else" => String::new(),
             _ => return None,
         })
     }
@@ -593,6 +623,18 @@ impl MacroRun {
         };
         self.set(global, name, next.clone());
         next
+    }
+}
+
+/// `readSingleArgsRandomList` for a one-argument list.
+fn single_list(args: &[String]) -> Vec<String> {
+    match args {
+        [only] => only
+            .replace("\\,", "\u{0}")
+            .split(',')
+            .map(|item| js_trim(item).replace('\u{0}', ","))
+            .collect(),
+        _ => args.to_vec(),
     }
 }
 
