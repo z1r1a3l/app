@@ -205,3 +205,8 @@ export function applyRequest(book: LorebookView_Serialize, accepted: readonly Pr
     }),
   };
 }
+
+/** Words in any script (Cyrillic included), runs of spaces and punctuation as separate tokens. */
+export function tokens(text: string): string[] {
+  return text.match(/[\p{L}\p{N}_]+|\s+|[^\p{L}\p{N}_\s]+/gu) ?? [];
+}

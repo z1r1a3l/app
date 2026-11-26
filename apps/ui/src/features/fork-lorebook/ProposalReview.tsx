@@ -1,8 +1,9 @@
 // Fork (z1r1a3l): review proposed entry updates; nothing is written until "apply".
 import { useTranslation } from "react-i18next";
-import { Badge, Button, Checkbox, Collapsible, Diff } from "@lettuceai/crisp";
+import { Badge, Button, Checkbox, Collapsible } from "@lettuceai/crisp";
 import type { LorebookEntryView } from "@/api/generated/bindings";
 import type { Proposal } from "./data";
+import { WordDiff } from "./WordDiff";
 
 export interface Unchanged {
   entry: LorebookEntryView;
@@ -40,7 +41,10 @@ export function ProposalReview({
       {proposals.length === 0 ? (
         <p className="text-sm text-fg-3">{t("review.nothing")}</p>
       ) : (
-        <p className="text-sm text-fg-3">{t("review.intro", { count: proposals.length })}</p>
+        <div className="space-y-1">
+          <p className="text-sm text-fg-3">{t("review.intro", { count: proposals.length })}</p>
+          <p className="text-xs text-fg-3">{t("review.legend")}</p>
+        </div>
       )}
       {proposals.map((proposal) => {
         const id = proposal.entry.id;
@@ -60,14 +64,10 @@ export function ProposalReview({
                 {titleChanged && <p className="text-sm text-fg-3">{t("review.newTitle", { title: proposal.title })}</p>}
               </div>
             </div>
-            <Diff
-              before={proposal.entry.content}
-              after={proposal.content}
-              beforeLabel={t("review.before")}
-              afterLabel={t("review.after")}
-              view="unified"
-              context={2}
-            />
+            <WordDiff before={proposal.entry.content} after={proposal.content} />
+            <Collapsible variant="plain" title={t("review.fullText")}>
+              <p className="whitespace-pre-wrap break-words text-sm text-fg-2">{proposal.content}</p>
+            </Collapsible>
             {keywordsChanged && (
               <div className="space-y-1 text-sm">
                 <p className="text-fg-3">{t("review.keywords")}</p>

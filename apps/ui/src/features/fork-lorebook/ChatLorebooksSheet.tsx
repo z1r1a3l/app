@@ -211,7 +211,7 @@ export function ChatLorebooksSheet({
   if (screen.kind === "home") {
     body =
       active.isPending || all.isPending ? (
-        <LoadingState />
+        <LoadingState label={t("loading")} />
       ) : active.isError || all.isError ? (
         <FailureState error={active.error ?? all.error} onRetry={() => void (active.isError ? active.refetch() : all.refetch())} />
       ) : (
@@ -264,7 +264,7 @@ export function ChatLorebooksSheet({
   } else if (screen.kind === "book") {
     title = book.data?.lorebook.name ?? t("title");
     body = book.isPending ? (
-      <LoadingState />
+      <LoadingState label={t("loading")} />
     ) : book.isError ? (
       <FailureState error={book.error} onRetry={() => void book.refetch()} />
     ) : (
@@ -332,7 +332,7 @@ export function ChatLorebooksSheet({
     title = t("running.title");
     body = (
       <div className="space-y-4 py-4 text-center">
-        <LoadingState />
+        <LoadingState label={t("loading")} />
         {screen.total > 1 && (
           <>
             <Progress value={Math.round((screen.done / screen.total) * 100)} />

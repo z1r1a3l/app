@@ -171,3 +171,10 @@ describe("fork lorebook helpers", () => {
     expect(text).toContain("User direction: (none)");
   });
 });
+
+describe("word diff tokens", () => {
+  it("keeps Cyrillic words whole", async () => {
+    const { tokens } = await import("./data");
+    expect(tokens("Таверна в порту, Солт.")).toEqual(["Таверна", " ", "в", " ", "порту", ",", " ", "Солт", "."]);
+  });
+});

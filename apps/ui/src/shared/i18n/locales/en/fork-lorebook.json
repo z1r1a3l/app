@@ -99,8 +99,6 @@
     "nothing": "No changes proposed.",
     "select": "Accept changes to {{title}}",
     "newTitle": "New title: {{title}}",
-    "before": "Now",
-    "after": "Proposed",
     "keywords": "Keywords",
     "edit": "Edit",
     "reject": "Reject",
@@ -113,6 +111,8 @@
     "apply_one": "Apply {{count}}",
     "apply_other": "Apply {{count}}",
     "applied_one": "{{count}} entry updated",
-    "applied_other": "{{count}} entries updated"
+    "applied_other": "{{count}} entries updated",
+    "legend": "Green: added. Red, struck out: removed.",
+    "fullText": "Show the new text in full"
   }
 }
