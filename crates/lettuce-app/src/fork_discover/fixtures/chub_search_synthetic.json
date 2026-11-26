@@ -1,0 +1,40 @@
+{
+ "_note": "SYNTHETIC: shaped after the gateway.chub.ai /search response documented by gallery-dl and SillyTavern-BotBrowser; chub.ai was unreachable (Cloudflare geo block) when fixtures were recorded.",
+ "data": {
+  "count": 2,
+  "nodes": [
+   {
+    "id": 123456,
+    "name": "Eira the Witch",
+    "fullPath": "crystal/eira-the-witch",
+    "tagline": "A lonely witch in a tower",
+    "description": "<p>A <b>lonely</b> witch.</p>",
+    "topics": [
+     "Fantasy",
+     "Female",
+     "NSFW"
+    ],
+    "starCount": 120,
+    "nChats": 3400,
+    "nMessages": 90000,
+    "n_favorites": 45,
+    "rating": 4.6,
+    "nTokens": 2100,
+    "nsfw_image": false,
+    "avatar_url": "https://avatars.charhub.io/avatars/crystal/eira-the-witch/avatar.webp",
+    "createdAt": "2024-03-01T10:00:00Z",
+    "lastActivityAt": "2024-04-01T10:00:00Z"
+   },
+   {
+    "id": 654321,
+    "name": "Robot Butler",
+    "fullPath": "anon/robot-butler",
+    "topics": [
+     "SciFi"
+    ],
+    "starCount": "7",
+    "nTokens": 800
+   }
+  ]
+ }
+}

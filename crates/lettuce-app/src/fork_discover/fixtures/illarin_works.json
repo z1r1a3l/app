@@ -1,0 +1,245 @@
+{
+ "allTypes": 246,
+ "app": null,
+ "apps": [
+  {
+   "count": 153,
+   "label": "SillyTavern",
+   "selected": false,
+   "value": "sillytavern"
+  },
+  {
+   "count": 153,
+   "label": "RisuAI",
+   "selected": false,
+   "value": "risu"
+  },
+  {
+   "count": 153,
+   "label": "Lumiverse",
+   "selected": false,
+   "value": "lumiverse"
+  }
+ ],
+ "emptyState": null,
+ "facets": [
+  {
+   "key": "lorebook",
+   "label": "Lorebook",
+   "options": [
+    {
+     "count": 62,
+     "label": "Included",
+     "selected": false,
+     "value": "true"
+    },
+    {
+     "count": 91,
+     "label": "None",
+     "selected": false,
+     "value": "false"
+    }
+   ]
+  },
+  {
+   "key": "alternate_greetings",
+   "label": "Alternate greetings",
+   "options": [
+    {
+     "count": 31,
+     "label": "1",
+     "selected": false,
+     "value": "1"
+    },
+    {
+     "count": 30,
+     "label": "2 to 4",
+     "selected": false,
+     "value": "2-4"
+    },
+    {
+     "count": 20,
+     "label": "5 or more",
+     "selected": false,
+     "value": "5-up"
+    }
+   ]
+  },
+  {
+   "key": "expressions",
+   "label": "Expressions",
+   "options": [
+    {
+     "count": 13,
+     "label": "Included",
+     "selected": false,
+     "value": "true"
+    },
+    {
+     "count": 140,
+     "label": "None",
+     "selected": false,
+     "value": "false"
+    }
+   ]
+  },
+  {
+   "key": "gallery",
+   "label": "Gallery",
+   "options": [
+    {
+     "count": 33,
+     "label": "Included",
+     "selected": false,
+     "value": "true"
+    },
+    {
+     "count": 120,
+     "label": "None",
+     "selected": false,
+     "value": "false"
+    }
+   ]
+  }
+ ],
+ "items": [
+  {
+   "apps": [
+    "sillytavern",
+    "risu",
+    "lumiverse"
+   ],
+   "cover": {
+    "height": 1216,
+    "url": "/media/0388f942-3739-4feb-8241-c6c7a6ae013f/grid_blurred/2",
+    "width": 832
+   },
+   "creator": "crystal_voids",
+   "downloadCount": 8,
+   "id": "be782c9d-bf70-4bc9-8330-861c9b3b6e18",
+   "isNsfw": true,
+   "kind": "character",
+   "name": "Eira Halvorsdottir",
+   "tags": [
+    {
+     "label": "anyPOV",
+     "value": "anypov"
+    },
+    {
+     "label": "Witch",
+     "value": "witch"
+    }
+   ],
+   "type": "character",
+   "viewCount": 21
+  },
+  {
+   "apps": [
+    "sillytavern",
+    "risu",
+    "lumiverse"
+   ],
+   "cover": {
+    "height": 1216,
+    "url": "/media/2f6bb1f6-5839-49ea-9c18-47009f093771/grid_blurred/2",
+    "width": 832
+   },
+   "creator": "crystal_voids",
+   "downloadCount": 2,
+   "id": "ea532acf-b7a2-4cdb-8ec2-60f4e815a9d7",
+   "isNsfw": true,
+   "kind": "character",
+   "name": "Zoya Vetrova",
+   "tags": [
+    {
+     "label": "AnyPOV",
+     "value": "anypov"
+    }
+   ],
+   "type": "character",
+   "viewCount": 12
+  },
+  {
+   "apps": [
+    "sillytavern",
+    "risu",
+    "lumiverse"
+   ],
+   "cover": {
+    "height": 1216,
+    "url": "/media/82cc21e2-43f4-42e7-b655-00fdf765f5cf/grid_blurred/2",
+    "width": 832
+   },
+   "creator": "crystal_voids",
+   "downloadCount": 2,
+   "id": "99e07c0d-5fc4-4180-ac26-5b792e77cb15",
+   "isNsfw": true,
+   "kind": "character",
+   "name": "Irina Drokova",
+   "tags": [
+    {
+     "label": "FemPOV",
+     "value": "fempov"
+    },
+    {
+     "label": "Lesbian",
+     "value": "lesbian"
+    }
+   ],
+   "type": "character",
+   "viewCount": 9
+  }
+ ],
+ "nextCursor": {
+  "before": "2026-11-23T00:05:00.42259Z",
+  "beforeId": "99e07c0d-5fc4-4180-ac26-5b792e77cb15",
+  "beforeCount": 0,
+  "rankedOn": "2026-11-26"
+ },
+ "nsfwPreference": "blurred",
+ "platforms": [
+  {
+   "count": 153,
+   "label": "SillyTavern",
+   "selected": false,
+   "value": "sillytavern"
+  },
+  {
+   "count": 153,
+   "label": "RisuAI",
+   "selected": false,
+   "value": "risu"
+  },
+  {
+   "count": 153,
+   "label": "Lumiverse",
+   "selected": false,
+   "value": "lumiverse"
+  }
+ ],
+ "suppressed": 0,
+ "total": 153,
+ "types": [
+  {
+   "value": "character",
+   "count": 153
+  },
+  {
+   "value": "extension",
+   "count": 27
+  },
+  {
+   "value": "lorebook",
+   "count": 7
+  },
+  {
+   "value": "preset",
+   "count": 41
+  },
+  {
+   "value": "theme",
+   "count": 18
+  }
+ ],
+ "visibility": "blurred"
+}

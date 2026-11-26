@@ -281,6 +281,9 @@ export const commands = {
 	avatarGenerate: (request: AvatarGenerateRequest) => typedError<AvatarGenerationAccepted, ApiError_Serialize>(__TAURI_INVOKE("avatar_generate", { request })),
 	avatarGradient: (request: AvatarGradientRequest) => typedError<AvatarGradient, ApiError_Serialize>(__TAURI_INVOKE("avatar_gradient", { request })),
 	imageDesignReference: (request: ImageDesignReferenceRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("image_design_reference", { request })),
+	discoverSearch: (request: DiscoverSearchRequest_Deserialize) => typedError<DiscoverSearchPage, ApiError_Serialize>(__TAURI_INVOKE("discover_search", { request })),
+	discoverDetail: (request: DiscoverItemRequest) => typedError<DiscoverDetail, ApiError_Serialize>(__TAURI_INVOKE("discover_detail", { request })),
+	discoverDownload: (request: DiscoverItemRequest) => typedError<DiscoverDownload, ApiError_Serialize>(__TAURI_INVOKE("discover_download", { request })),
 	hfBrowserLinks: () => typedError<HfBrowserLinks, ApiError_Serialize>(__TAURI_INVOKE("hf_browser_links")),
 	hfSearch: (request: HfSearchRequest) => typedError<HfSearchResults, ApiError_Serialize>(__TAURI_INVOKE("hf_search", { request })),
 	hfModelFiles: (request: HfModelRequest) => typedError<HfModelInfo_Serialize, ApiError_Serialize>(__TAURI_INVOKE("hf_model_files", { request })),
@@ -2763,6 +2766,127 @@ export type DictationStopRequest_Serialize = {
 
 export type DirectoryPicked = {
 	path: string | null,
+};
+
+/**  One search hit, enough for a grid tile. */
+export type DiscoverCard = {
+	source: DiscoverSource,
+	kind: DiscoverKind,
+	/**  The id the source's detail and download calls take. */
+	id: string,
+	name: string,
+	tagline: string,
+	avatar_url: string | null,
+	creator: string | null,
+	tags: string[],
+	nsfw: boolean,
+	tokens: number | null,
+	stats: DiscoverStats,
+	/**  The card's public page, for "open on site". */
+	page_url: string | null,
+};
+
+/**  The detail sheet: the tile plus the long texts. */
+export type DiscoverDetail = {
+	card: DiscoverCard,
+	/**  The creator's public description (creator notes), as plain text. */
+	description: string,
+	/**  The first greeting, when the source exposes it before download. */
+	greeting: string | null,
+	/**
+	 *  Why the item cannot be imported here (e.g. only a Lumiverse preset is
+	 *  offered), or `None` when Import should work.
+	 */
+	import_blocker: string | null,
+	alternate_greetings: number,
+	has_lorebook: boolean | null,
+	created_at: string | null,
+	updated_at: string | null,
+};
+
+/**
+ *  A downloaded card, written to the app's cache and ready for the normal
+ *  import preview/commit flow.
+ */
+export type DiscoverDownload = {
+	source: FileSource,
+	file_name: string,
+};
+
+export type DiscoverItemRequest = {
+	source: DiscoverSource,
+	kind: DiscoverKind,
+	id: string,
+};
+
+/**
+ *  What kind of resource a listing is. Characters are the main tab; the
+ *  Resources tab browses lorebooks and prompt presets on hubs that host them.
+ *  Regex scripts, themes and extensions can be added here later without
+ *  changing the request shapes.
+ */
+export type DiscoverKind = "character" | "lorebook" | "preset";
+
+export type DiscoverSearchPage = {
+	items: DiscoverCard[],
+	/**  Opaque; pass back as `cursor` for the next page. `None` at the end. */
+	next_cursor: string | null,
+	total: number | null,
+};
+
+export type DiscoverSearchRequest = DiscoverSearchRequest_Serialize | DiscoverSearchRequest_Deserialize;
+
+export type DiscoverSearchRequest_Deserialize = {
+	source: DiscoverSource,
+	kind: DiscoverKind,
+	query?: string,
+	/**  Tags every result must carry (names, as the hub spells them). */
+	tags?: string[],
+	exclude_tags?: string[],
+	/**  A sort key from the source's own list; `None` is the hub default. */
+	sort?: string | null,
+	/**  The `next_cursor` of the previous page; `None` for the first page. */
+	cursor?: string | null,
+	/**  Include adult cards. */
+	nsfw: boolean,
+	/**
+	 *  Also include NSFL (extreme) cards where the hub tags them (Chub);
+	 *  only honoured together with `nsfw`.
+	 */
+	nsfl?: boolean,
+};
+
+export type DiscoverSearchRequest_Serialize = {
+	source: DiscoverSource,
+	kind: DiscoverKind,
+	query: string,
+	/**  Tags every result must carry (names, as the hub spells them). */
+	tags: string[],
+	exclude_tags: string[],
+	/**  A sort key from the source's own list; `None` is the hub default. */
+	sort: string | null,
+	/**  The `next_cursor` of the previous page; `None` for the first page. */
+	cursor: string | null,
+	/**  Include adult cards. */
+	nsfw: boolean,
+	/**
+	 *  Also include NSFL (extreme) cards where the hub tags them (Chub);
+	 *  only honoured together with `nsfw`.
+	 */
+	nsfl: boolean,
+};
+
+/**  A card hub the Discover tab can browse. */
+export type DiscoverSource = "chub" | "character_tavern" | "wyvern" | "botbooru" | "illarin";
+
+export type DiscoverStats = {
+	stars: number | null,
+	downloads: number | null,
+	chats: number | null,
+	messages: number | null,
+	views: number | null,
+	likes: number | null,
+	rating: number | null,
 };
 
 /**  An image model file on disk below the image models folders. */

@@ -26,6 +26,7 @@ mod sync;
 mod jobs;
 mod usage;
 mod deletion;
+pub mod fork_discover;
 
 pub use app_version::app_version;
 pub use composition::*;
