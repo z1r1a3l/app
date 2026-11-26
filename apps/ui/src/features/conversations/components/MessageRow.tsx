@@ -19,6 +19,7 @@ import { MessageImageViewer } from "./MessageImageViewer";
 import { useOverlayBack } from "@/shared/hooks/useOverlayBack";
 import { formatMessageTime } from "@/shared/formatting/messageTime";
 import { RichMessageBody, useRegexDisplay } from "@/features/regex";
+import { HelperPlaque } from "@/features/fork-helper";
 
 function EmbeddedImageViewer({ image, onClose }: { image: { src: string; alt: string }; onClose: () => void }) {
   useOverlayBack(true, onClose);
@@ -198,6 +199,8 @@ function Row({
         )}
         {picturesBelow.length > 0 && <div className="mt-2"><Attached media={picturesBelow} /></div>}
         {message.scene_image && <SceneImageStatus conversationId={conversationId} message={message} onReview={onSceneImage} />}
+        {/* fork: helper model plaque */}
+        {message.role === "assistant" && <HelperPlaque conversationId={conversationId} message={message} />}
       </Message>
     </div>
   );
