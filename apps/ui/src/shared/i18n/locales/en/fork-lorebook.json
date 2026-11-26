@@ -1,0 +1,118 @@
+{
+  "button": "Open chat lorebooks",
+  "title": "Lorebooks in this chat",
+  "back": "Back",
+  "loading": "Loading…",
+  "untitled": "Untitled entry",
+  "saved": "Entry saved",
+  "home": {
+    "fromChat": "From chat history",
+    "create": "New entry from chat",
+    "createHint": "The model writes a draft; you check it before saving",
+    "update": "Update an entry",
+    "updateHint": "Pick one or more entries; see the changes before saving",
+    "review": "Review a lorebook",
+    "reviewHint": "Check every entry of one lorebook you pick against the chat",
+    "groupOnly": "Generating entries from chat history works in one-to-one chats only.",
+    "books": "Active lorebooks",
+    "none": "No lorebooks in this chat",
+    "noneHint": "Attach one in the character profile or in Chat settings → Lorebooks."
+  },
+  "book": {
+    "add": "Add entry",
+    "generate": "Generate from chat",
+    "openEditor": "Open editor",
+    "empty": "This lorebook has no entries yet",
+    "entries_one": "{{count}} entry",
+    "entries_other": "{{count}} entries"
+  },
+  "source": {
+    "messages": "Messages",
+    "memory": "Memory",
+    "mixed": "Both"
+  },
+  "form": {
+    "title": {
+      "create": "New entry from chat",
+      "update": "Update entries",
+      "review": "Review a lorebook"
+    },
+    "intro": {
+      "create": "The model reads the chat and drafts one entry. Nothing is saved until you press Save.",
+      "update": "The model rewrites the chosen entries from the chat. You will see what changes before anything is saved.",
+      "review": "The model checks each entry of the chosen lorebook, one at a time, and proposes changes only where needed. Nothing is saved until you accept."
+    },
+    "book": "Lorebook",
+    "bookPlaceholder": "Choose a lorebook",
+    "bookReviewHint": "Only this lorebook is checked; the others stay untouched.",
+    "entries": "Entries",
+    "entriesPlaceholder": "Choose entries",
+    "entriesHint": "One or several; each is a separate model call.",
+    "source": "What the model reads",
+    "messages": "Messages",
+    "messagesHint_one": "{{count}} message will be sent",
+    "messagesHint_other": "{{count}} messages will be sent",
+    "lastN_one": "Last {{count}}",
+    "lastN_other": "Last {{count}}",
+    "allLoaded": "All loaded",
+    "memory": "Memory",
+    "useSummary": "Include the summary",
+    "useSummaryHint": "The chat's memory summary goes with the request",
+    "noSummary": "This chat has no summary yet",
+    "noMemories": "No memories in this chat yet",
+    "memoriesPicked": "Memories: {{count}} of {{total}}",
+    "direction": "Direction (optional)",
+    "directionHint": {
+      "create": "What the entry should be about",
+      "update": "What to focus on when updating",
+      "review": "What to look for while checking"
+    },
+    "directionPlaceholder": "For example: the tavern and its owner",
+    "force": "Always write an entry",
+    "forceHint": "Even if the model thinks nothing is worth saving",
+    "instruction": "Instruction for the model",
+    "instructionHint": "Editable; kept on this device",
+    "instructionReset": "Restore default",
+    "submit": {
+      "create": "Generate draft",
+      "update": "Propose changes",
+      "review": "Start review"
+    }
+  },
+  "running": {
+    "title": "Working…",
+    "progress": "{{done}} of {{total}} entries checked",
+    "current": "Now: {{title}}",
+    "hint": "The lorebook writer model from Settings is used.",
+    "cancel": "Stop"
+  },
+  "none": {
+    "title": "No entry proposed",
+    "body": "The model decided the chosen text has nothing worth a lorebook entry.",
+    "back": "Change settings",
+    "force": "Write one anyway"
+  },
+  "review": {
+    "title": "Proposed changes",
+    "intro_one": "{{count}} entry needs changes. Tick what to keep.",
+    "intro_other": "{{count}} entries need changes. Tick what to keep.",
+    "nothing": "No changes proposed.",
+    "select": "Accept changes to {{title}}",
+    "newTitle": "New title: {{title}}",
+    "keywords": "Keywords",
+    "edit": "Edit",
+    "reject": "Reject",
+    "unchanged_one": "{{count}} entry is up to date",
+    "unchanged_other": "{{count}} entries are up to date",
+    "failed_one": "{{count}} entry failed",
+    "failed_other": "{{count}} entries failed",
+    "reasonSuffix": " — {{reason}}",
+    "discard": "Discard all",
+    "apply_one": "Apply {{count}}",
+    "apply_other": "Apply {{count}}",
+    "applied_one": "{{count}} entry updated",
+    "applied_other": "{{count}} entries updated",
+    "legend": "Green: added. Red, struck out: removed.",
+    "fullText": "Show the new text in full"
+  }
+}

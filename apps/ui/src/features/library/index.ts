@@ -10,3 +10,6 @@ export { LorebookProjectPage } from "./lorebook-create/LorebookProjectPage";
 export { LorebookEditorPage } from "./lorebook-editor/LorebookEditorPage";
 export { LorebookPreviewPage } from "./lorebook-preview/LorebookPreviewPage";
 export { EntryRow } from "./lorebook-editor/EntryRow";
+// Fork: reused by the chat lorebook shortcut (features/fork-lorebook).
+export { LorebookEntrySheet } from "./lorebook-editor/LorebookEntrySheet";
+export { lorebookBookKey, lorebookBookQuery } from "./lorebook-editor/data";
