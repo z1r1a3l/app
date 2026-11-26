@@ -117,9 +117,8 @@ export function DetailSheet({
             </div>
           </div>
           {blocker && <Alert tone="warning" title={t("discover.cannotImport")} description={blocker} />}
-          {card?.source === "janny" && <Alert tone="info" title={t("discover.jannyPreview")} />}
           {detail.isError && <DiscoverError error={detail.error} site={site?.name ?? ""} onRetry={() => void detail.refetch()} />}
-          {detail.isPending && card?.source !== "janny" ? (
+          {detail.isPending ? (
             <div className="space-y-2" role="status" aria-label={t("discover.loading")}>
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />

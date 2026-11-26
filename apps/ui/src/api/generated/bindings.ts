@@ -2841,6 +2841,11 @@ export type DiscoverSearchRequest_Deserialize = {
 	cursor?: string | null,
 	/**  Include adult cards. */
 	nsfw: boolean,
+	/**
+	 *  Also include NSFL (extreme) cards where the hub tags them (Chub);
+	 *  only honoured together with `nsfw`.
+	 */
+	nsfl?: boolean,
 };
 
 export type DiscoverSearchRequest_Serialize = {
@@ -2856,10 +2861,15 @@ export type DiscoverSearchRequest_Serialize = {
 	cursor: string | null,
 	/**  Include adult cards. */
 	nsfw: boolean,
+	/**
+	 *  Also include NSFL (extreme) cards where the hub tags them (Chub);
+	 *  only honoured together with `nsfw`.
+	 */
+	nsfl: boolean,
 };
 
 /**  A card hub the Discover tab can browse. */
-export type DiscoverSource = "chub" | "pygmalion" | "character_tavern" | "janny" | "wyvern" | "botbooru" | "illarin";
+export type DiscoverSource = "chub" | "character_tavern" | "wyvern" | "botbooru" | "illarin";
 
 export type DiscoverStats = {
 	stars: number | null,

@@ -1,5 +1,5 @@
 //! Fork: the Discover tab's hub browser. Searches public character-card hubs
-//! (Chub, Pygmalion, Character Tavern, JannyAI, Wyvern, Botbooru, Illarin),
+//! (Chub, Character Tavern, Wyvern, Botbooru, Illarin),
 //! reads one card's details, and downloads it as an importable file (card PNG,
 //! lorebook JSON or prompt preset JSON) for the regular import flow.
 //!
@@ -12,8 +12,6 @@ mod chub;
 mod common;
 mod devalue;
 mod illarin;
-mod janny;
-mod pygmalion;
 mod tavern;
 mod wyvern;
 
@@ -30,9 +28,8 @@ use lettuce_contracts::{
 use lettuce_network::{
     JsonAuth, JsonClient, JsonClientError, JsonQueryParameter, JsonResponse, JsonStaticHeader, RequestPolicy,
 };
-use lettuce_settings::SecretValue;
 
-use common::{HttpRequest, error, unsupported};
+use common::{HttpRequest, error};
 
 /// Card files with large embedded art and lorebooks run past the default cap.
 const MAX_RESPONSE_BYTES: usize = 48 * 1024 * 1024;
@@ -60,9 +57,7 @@ pub(crate) trait Fetch: Sync {
 fn source_name(source: DiscoverSource) -> &'static str {
     match source {
         DiscoverSource::Chub => "Chub",
-        DiscoverSource::Pygmalion => "Pygmalion",
         DiscoverSource::CharacterTavern => "Character Tavern",
-        DiscoverSource::Janny => "JannyAI",
         DiscoverSource::Wyvern => "Wyvern",
         DiscoverSource::Botbooru => "Botbooru",
         DiscoverSource::Illarin => "Illarin",
@@ -94,9 +89,7 @@ pub(crate) async fn search_with(
     let name = source_name(request.source);
     let http = match request.source {
         DiscoverSource::Chub => chub::search(request)?,
-        DiscoverSource::Pygmalion => pygmalion::search(request)?,
         DiscoverSource::CharacterTavern => tavern::search(request)?,
-        DiscoverSource::Janny => janny::search(request)?,
         DiscoverSource::Wyvern => wyvern::search(request)?,
         DiscoverSource::Botbooru => botbooru::search(request)?,
         DiscoverSource::Illarin => illarin::search(request)?,
@@ -104,9 +97,7 @@ pub(crate) async fn search_with(
     let body = fetch.fetch(name, http).await?.body;
     match request.source {
         DiscoverSource::Chub => chub::parse_search(&body, request),
-        DiscoverSource::Pygmalion => pygmalion::parse_search(&body, request),
         DiscoverSource::CharacterTavern => tavern::parse_search(&body, request),
-        DiscoverSource::Janny => janny::parse_search(&body, request),
         DiscoverSource::Wyvern => wyvern::parse_search(&body, request),
         DiscoverSource::Botbooru => botbooru::parse_search(&body, request),
         DiscoverSource::Illarin => illarin::parse_search(&body, request),
@@ -121,11 +112,7 @@ pub(crate) async fn detail_with(
     let name = source_name(request.source);
     let http = match request.source {
         DiscoverSource::Chub => chub::detail(kind, id)?,
-        DiscoverSource::Pygmalion => pygmalion::detail(kind, id)?,
         DiscoverSource::CharacterTavern => tavern::detail(kind, id)?,
-        DiscoverSource::Janny => {
-            return Err(unsupported("JannyAI card pages sit behind a Cloudflare check; the search result is all there is"));
-        }
         DiscoverSource::Wyvern => wyvern::detail(kind, id)?,
         DiscoverSource::Botbooru => botbooru::detail(kind, id)?,
         DiscoverSource::Illarin => illarin::detail(kind, id)?,
@@ -133,9 +120,7 @@ pub(crate) async fn detail_with(
     let body = fetch.fetch(name, http).await?.body;
     match request.source {
         DiscoverSource::Chub => chub::parse_detail(&body, kind),
-        DiscoverSource::Pygmalion => pygmalion::parse_detail(&body),
         DiscoverSource::CharacterTavern => tavern::parse_detail(&body),
-        DiscoverSource::Janny => Err(unsupported("JannyAI has no detail view")),
         DiscoverSource::Wyvern => wyvern::parse_detail(&body),
         DiscoverSource::Botbooru => botbooru::parse_detail(&body),
         DiscoverSource::Illarin => illarin::parse_detail(&body, kind),
@@ -146,9 +131,7 @@ pub(crate) async fn download_with(fetch: &impl Fetch, request: &DiscoverItemRequ
     let (kind, id) = (request.kind, request.id.as_str());
     match request.source {
         DiscoverSource::Chub => chub::download(fetch, kind, id).await,
-        DiscoverSource::Pygmalion => pygmalion::download(fetch, kind, id).await,
         DiscoverSource::CharacterTavern => tavern::download(fetch, kind, id).await,
-        DiscoverSource::Janny => janny::download(fetch, kind, id).await,
         DiscoverSource::Wyvern => wyvern::download(fetch, kind, id).await,
         DiscoverSource::Botbooru => botbooru::download(fetch, kind, id).await,
         DiscoverSource::Illarin => illarin::download(fetch, kind, id).await,
@@ -190,12 +173,7 @@ impl Fetch for Net {
         let mut headers: Vec<JsonStaticHeader> =
             request.headers.iter().map(|&(name, value)| JsonStaticHeader { name, value }).collect();
         headers.push(JsonStaticHeader { name: "user-agent", value: USER_AGENT });
-        let auth = match request.bearer {
-            Some(key) => JsonAuth::Bearer(
-                SecretValue::new(key).map_err(|_| error(ApiErrorCode::Internal, "bad hub key"))?,
-            ),
-            None => JsonAuth::None,
-        };
+        let auth = JsonAuth::None;
         let client = client()?;
         let path = url.path();
         let response = match request.body {

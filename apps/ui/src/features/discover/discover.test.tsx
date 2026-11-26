@@ -54,7 +54,7 @@ it("searches the chosen hub with the NSFW toggle and switches sources", async ()
   });
   expect(await screen.findByText("Eira the Witch")).toBeTruthy();
   expect(screen.getByText("18+", { selector: "span.rounded-md" })).toBeTruthy();
-  expect(requests[0]).toMatchObject({ source: "chub", kind: "character", nsfw: true, sort: "default", cursor: null });
+  expect(requests[0]).toMatchObject({ source: "chub", kind: "character", nsfw: true, nsfl: false, sort: "default", cursor: null });
 
   fireEvent.click(screen.getByRole("tab", { name: "Wyvern" }));
   await waitFor(() => expect(requests.at(-1)).toMatchObject({ source: "wyvern", sort: "total_likes" }));
@@ -62,6 +62,45 @@ it("searches the chosen hub with the NSFW toggle and switches sources", async ()
 
   fireEvent.click(screen.getAllByRole("switch", { name: "Show adult content" })[0]!);
   await waitFor(() => expect(requests.at(-1)).toMatchObject({ source: "wyvern", nsfw: false }));
+});
+
+it("keeps Chub's NSFL toggle separate from 18+ and off by default", async () => {
+  const requests: DiscoverSearchRequest[] = [];
+  await open({
+    discoverSearch: (request) => {
+      requests.push(request);
+      return ok({ items: [robot], next_cursor: null, total: 1 });
+    },
+  });
+  expect(await screen.findByText("Robot Butler")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Tags" }));
+  const sheet = within(await screen.findByRole("dialog"));
+  const nsfl = sheet.getByRole("switch", { name: "Show NSFL content" });
+  expect(nsfl.getAttribute("aria-checked")).toBe("false");
+  fireEvent.click(nsfl);
+  await waitFor(() => expect(requests.at(-1)).toMatchObject({ source: "chub", nsfw: true, nsfl: true }));
+  expect(JSON.parse(localStorage.getItem("lettuce.fork.discover") ?? "{}")).toMatchObject({ nsfl: true });
+
+  // Turning 18+ off also stops NSFL and locks its toggle.
+  fireEvent.click(sheet.getByRole("switch", { name: "Show adult content" }));
+  await waitFor(() => expect(requests.at(-1)).toMatchObject({ nsfw: false, nsfl: false }));
+  expect(sheet.getByRole("switch", { name: "Show NSFL content" }).hasAttribute("disabled")).toBe(true);
+});
+
+it("hides the NSFL toggle for hubs without it and drops removed sources from saved prefs", async () => {
+  localStorage.setItem("lettuce.fork.discover", JSON.stringify({ source: "janny", nsfw: true }));
+  const requests: DiscoverSearchRequest[] = [];
+  await open({
+    discoverSearch: (request) => {
+      requests.push(request);
+      return ok({ items: [robot], next_cursor: null, total: 1 });
+    },
+  });
+  await waitFor(() => expect(requests[0]).toMatchObject({ source: "chub", nsfl: false }));
+  fireEvent.click(screen.getByRole("tab", { name: "Wyvern" }));
+  fireEvent.click(screen.getByRole("button", { name: "Tags" }));
+  const sheet = within(await screen.findByRole("dialog"));
+  expect(sheet.queryByRole("switch", { name: "Show NSFL content" })).toBeNull();
 });
 
 it("shows details and hands the downloaded card to the import sheet", async () => {
@@ -95,7 +134,9 @@ it("lists card sources with capabilities and a credit line", async () => {
   const sheet = within(await screen.findByRole("dialog"));
   expect(sheet.getByText("character-tavern.com")).toBeTruthy();
   expect(sheet.getByText("Content from https://botbooru.com")).toBeTruthy();
-  expect(sheet.getAllByText("Import").length).toBeGreaterThan(5);
+  expect(sheet.getAllByText("Import").length).toBeGreaterThanOrEqual(5);
+  expect(sheet.queryByText("Pygmalion")).toBeNull();
+  expect(sheet.queryByText("JannyAI")).toBeNull();
 });
 
 it("browses presets as resources from Illarin", async () => {

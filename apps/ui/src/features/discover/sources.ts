@@ -5,7 +5,7 @@ export type Capability = "search" | "preview" | "import";
 export type SortLabel =
   | "trending" | "downloads" | "stars" | "favorites" | "rating" | "newest" | "updated" | "views"
   | "likes" | "messages" | "best" | "popular" | "hiddenGems" | "relevance" | "tokens" | "random";
-export type SourceNote = "pygmalion" | "janny" | "botbooru" | "illarin";
+export type SourceNote = "botbooru" | "illarin";
 export type Section = "characters" | "resources";
 
 export interface SourceInfo {
@@ -18,6 +18,8 @@ export interface SourceInfo {
   capabilities: Partial<Record<DiscoverKind, readonly Capability[]>>;
   /** Sort values the hub understands, each with a label key under `discover.sort`. */
   sorts: Partial<Record<DiscoverKind, readonly { value: string; label: SortLabel }[]>>;
+  /** The hub tags NSFL (extreme) cards separately from 18+, behind its own toggle. */
+  nsfl?: boolean;
   /** Exclusion tags are ignored by this hub. */
   noExclude?: boolean;
   /** A note key under `discover.sourceNote` shown in the sources list. */
@@ -34,6 +36,7 @@ export const SOURCES: readonly SourceInfo[] = [
     url: "https://chub.ai",
     kinds: ["character", "lorebook"],
     capabilities: { character: all, lorebook: all },
+    nsfl: true,
     sorts: {
       character: [
         { value: "default", label: "trending" },
@@ -53,23 +56,6 @@ export const SOURCES: readonly SourceInfo[] = [
     },
   },
   {
-    id: "pygmalion",
-    name: "Pygmalion",
-    domain: "pygmalion.chat",
-    url: "https://pygmalion.chat",
-    kinds: ["character"],
-    capabilities: { character: all },
-    sorts: {
-      character: [
-        { value: "downloads", label: "downloads" },
-        { value: "stars", label: "stars" },
-        { value: "views", label: "views" },
-        { value: "approved_at", label: "newest" },
-      ],
-    },
-    note: "pygmalion",
-  },
-  {
     id: "character_tavern",
     name: "Character Tavern",
     domain: "character-tavern.com",
@@ -86,22 +72,6 @@ export const SOURCES: readonly SourceInfo[] = [
         { value: "hidden_gems", label: "hiddenGems" },
       ],
     },
-  },
-  {
-    id: "janny",
-    name: "JannyAI",
-    domain: "jannyai.com",
-    url: "https://jannyai.com",
-    kinds: ["character"],
-    capabilities: { character: ["search", "import"] },
-    sorts: {
-      character: [
-        { value: "", label: "relevance" },
-        { value: "newest", label: "newest" },
-        { value: "tokens", label: "tokens" },
-      ],
-    },
-    note: "janny",
   },
   {
     id: "wyvern",

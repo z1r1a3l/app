@@ -1,5 +1,5 @@
-// Fork: Discover browses public character-card hubs (Chub, Pygmalion,
-// Character Tavern, JannyAI, Wyvern, Botbooru, Illarin) through the Rust
+// Fork: Discover browses public character-card hubs (Chub, Character
+// Tavern, Wyvern, Botbooru, Illarin) through the Rust
 // side, so no hub page, script or ad is ever loaded. Import hands the
 // downloaded file to the regular import sheet.
 import { useState } from "react";
@@ -53,13 +53,14 @@ export function DiscoverPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [excludeTags, setExcludeTags] = useState<string[]>([]);
   const [nsfw, setNsfw] = useState(prefs.nsfw);
+  const [nsfl, setNsfl] = useState(prefs.nsfl);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [selected, setSelected] = useState<DiscoverCard | null>(null);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const debouncedQuery = useDebounced(query.trim());
 
-  const filters: Filters = { source, kind, query: debouncedQuery, tags, excludeTags: info.noExclude ? [] : excludeTags, sort: sort || null, nsfw };
+  const filters: Filters = { source, kind, query: debouncedQuery, tags, excludeTags: info.noExclude ? [] : excludeTags, sort: sort || null, nsfw, nsfl: Boolean(info.nsfl) && nsfw && nsfl };
   const results = useDiscoverSearch(api, filters);
   const seen = new Set<string>();
   const items = (results.data?.pages ?? []).flatMap((page) => page.items).filter((card) => !seen.has(card.id) && seen.add(card.id));
@@ -68,11 +69,15 @@ export function DiscoverPage() {
 
   const pickSource = (next: DiscoverSource) => {
     setChosen(next);
-    savePrefs({ source: next, nsfw });
+    savePrefs({ source: next, nsfw, nsfl });
   };
   const toggleNsfw = (next: boolean) => {
     setNsfw(next);
-    savePrefs({ source: chosen, nsfw: next });
+    savePrefs({ source: chosen, nsfw: next, nsfl });
+  };
+  const toggleNsfl = (next: boolean) => {
+    setNsfl(next);
+    savePrefs({ source: chosen, nsfw, nsfl: next });
   };
 
   const importing = useMutation({
@@ -211,10 +216,19 @@ export function DiscoverPage() {
           <label className="flex items-center justify-between gap-3 rounded-xl bg-fill px-3 py-2.5">
             <span className="text-sm">
               <span className="block font-medium">{t("discover.nsfw")}</span>
-              <span className="block text-xs text-fg-3">{t(source === "pygmalion" ? "discover.nsfwPygmalion" : "discover.nsfwHint")}</span>
+              <span className="block text-xs text-fg-3">{t("discover.nsfwHint")}</span>
             </span>
             <Switch checked={nsfw} onChange={toggleNsfw} aria-label={t("discover.nsfw")} />
           </label>
+          {info.nsfl && (
+            <label className="flex items-center justify-between gap-3 rounded-xl bg-fill px-3 py-2.5">
+              <span className="text-sm">
+                <span className={`block font-medium ${nsfw ? "" : "text-fg-3"}`}>{t("discover.nsfl")}</span>
+                <span className="block text-xs text-fg-3">{t(nsfw ? "discover.nsflHint" : "discover.nsflNeedsAdult")}</span>
+              </span>
+              <Switch checked={nsfw && nsfl} onChange={toggleNsfl} disabled={!nsfw} aria-label={t("discover.nsfl")} />
+            </label>
+          )}
           {activeFilters > 0 && (
             <Button variant="ghost" onClick={() => { setTags([]); setExcludeTags([]); }}>
               {t("discover.clearTags")}

@@ -142,7 +142,9 @@
     "clearTags": "Clear tags",
     "nsfw": "Show adult content",
     "nsfwHint": "Cards marked 18+ by the site.",
-    "nsfwPygmalion": "Pygmalion only shows adult cards to signed-in users, so this changes little here.",
+    "nsfl": "Show NSFL content",
+    "nsflHint": "Extreme cards (gore, violence) that Chub keeps apart from 18+. Off by default.",
+    "nsflNeedsAdult": "Turn on adult content first.",
     "tokensShort": "{{count}} tk",
     "tokens_one": "{{count}} token",
     "tokens_other": "{{count}} tokens",
@@ -166,7 +168,6 @@
       "preset": "Import preset"
     },
     "cannotImport": "Can't be imported",
-    "jannyPreview": "JannyAI hides card pages behind a bot check, so only the search summary is shown. Import may fail for the same reason.",
     "importPresetTitle": "Import preset",
     "presetEntries_one": "{{count}} prompt entry",
     "presetEntries_other": "{{count}} prompt entries",
@@ -189,8 +190,6 @@
       "footer": "Cards belong to their creators. Respect each site's rules when sharing them."
     },
     "sourceNote": {
-      "pygmalion": "Adult cards need a Pygmalion account.",
-      "janny": "Card pages and downloads sit behind a Cloudflare check, so import often fails.",
       "botbooru": "Searches are rate-limited; wait a minute if it stops answering.",
       "illarin": "Also hosts presets and lorebooks; SillyTavern presets import, Lumiverse ones don't."
     },

@@ -20,6 +20,8 @@ export interface Filters {
   excludeTags: string[];
   sort: string | null;
   nsfw: boolean;
+  /** NSFL cards (Chub only); only sent together with `nsfw`. */
+  nsfl: boolean;
 }
 
 const discoverKeys = {
@@ -42,6 +44,7 @@ export function useDiscoverSearch(api: ApiClient, filters: Filters) {
         sort: filters.sort,
         cursor: pageParam,
         nsfw: filters.nsfw,
+        nsfl: filters.nsfw && filters.nsfl,
       };
       return api.call("discoverSearch", request);
     },
@@ -56,7 +59,7 @@ export function useDiscoverDetail(api: ApiClient, card: DiscoverCard | null) {
   return useQuery({
     queryKey: item ? discoverKeys.detail(item) : ["fork-discover", "detail", "none"],
     queryFn: () => api.call("discoverDetail", item!),
-    enabled: item !== null && card?.source !== "janny",
+    enabled: item !== null,
     staleTime: 10 * 60_000,
     retry: 1,
   });
@@ -89,14 +92,19 @@ const PREFS_KEY = "lettuce.fork.discover";
 export interface Prefs {
   source: DiscoverSource;
   nsfw: boolean;
+  nsfl: boolean;
 }
+
+const KNOWN_SOURCES: readonly DiscoverSource[] = ["chub", "character_tavern", "wyvern", "botbooru", "illarin"];
 
 export function loadPrefs(): Prefs {
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>;
-    return { source: raw.source ?? "chub", nsfw: raw.nsfw ?? true };
+    // Sources that were dropped from the fork fall back to Chub.
+    const source = raw.source && KNOWN_SOURCES.includes(raw.source) ? raw.source : "chub";
+    return { source, nsfw: raw.nsfw ?? true, nsfl: raw.nsfl === true };
   } catch {
-    return { source: "chub", nsfw: true };
+    return { source: "chub", nsfw: true, nsfl: false };
   }
 }
 

@@ -57,6 +57,7 @@ fn search_request(source: Source, kind: Kind) -> DiscoverSearchRequest {
         sort: None,
         cursor: None,
         nsfw: true,
+        nsfl: false,
     }
 }
 
@@ -153,38 +154,20 @@ fn chub_refuses_paths_that_could_escape_the_api() {
     assert!(fake.seen().is_empty());
 }
 
-// ---------- Pygmalion ----------
-
 #[test]
-fn pygmalion_search_parse() {
-    let fake = Fake::new(vec![("https://server.pygmalion.chat/", fixture!("pygmalion_search.json").to_vec())]);
-    let page = run(search_with(&fake, &search_request(Source::Pygmalion, Kind::Character))).unwrap();
-    let sent = &fake.seen()[0];
-    let body: Value = serde_json::from_str(sent.body.as_deref().unwrap()).unwrap();
-    assert_eq!(body["query"], "elf");
-    assert_eq!(body["pageNumber"], 0);
-    assert!(sent.headers.contains(&("connect-protocol-version", "1")));
-    assert_eq!(page.items.len(), 2);
-    assert_eq!(page.items[0].name, "Frieren");
-    assert_eq!(page.total, Some(44));
-    assert_eq!(page.next_cursor.as_deref(), Some("2"));
-}
-
-#[test]
-fn pygmalion_detail_and_download() {
-    let id = "fac8ab89-019a-4bf5-b8bb-25f995ff28c5";
-    let fake = Fake::new(vec![
-        ("https://server.pygmalion.chat/galatea", fixture!("pygmalion_character.json").to_vec()),
-        ("https://server.pygmalion.chat/api/export", fixture!("pygmalion_export.json").to_vec()),
-        ("https://assets.pygmalion.chat/", tiny_png()),
-    ]);
-    let detail = run(detail_with(&fake, &item(Source::Pygmalion, Kind::Character, id))).unwrap();
-    assert_eq!(detail.card.name, "Frieren");
-    assert!(detail.greeting.is_some());
-    let file = run(download_with(&fake, &item(Source::Pygmalion, Kind::Character, id))).unwrap();
-    let card = read_card(&file.bytes).unwrap();
-    assert_eq!(card["spec"], "chara_card_v2");
-    assert!(!card["data"]["name"].as_str().unwrap().is_empty());
+fn chub_nsfl_is_separate_from_adult() {
+    let fake = Fake::new(vec![("https://gateway.chub.ai/search", fixture!("chub_search_synthetic.json").to_vec())]);
+    let mut request = search_request(Source::Chub, Kind::Character);
+    for (nsfw, nsfl, expect_nsfw, expect_nsfl) in
+        [(true, false, "true", "false"), (true, true, "true", "true"), (false, true, "false", "false")]
+    {
+        request.nsfw = nsfw;
+        request.nsfl = nsfl;
+        run(search_with(&fake, &request)).unwrap();
+        let sent = fake.seen().pop().unwrap();
+        assert_eq!(param(&sent, "nsfw"), Some(expect_nsfw));
+        assert_eq!(param(&sent, "nsfl"), Some(expect_nsfl));
+    }
 }
 
 // ---------- Character Tavern ----------
@@ -205,26 +188,6 @@ fn tavern_search_and_detail_parse_devalue() {
     assert!(!detail.card.name.is_empty());
     assert!(!detail.description.is_empty());
     assert!(detail.card.creator.is_some());
-}
-
-// ---------- JannyAI ----------
-
-#[test]
-fn janny_search_uses_meilisearch_filters() {
-    let fake = Fake::new(vec![("https://search.jannyai.com/", fixture!("janny_search.json").to_vec())]);
-    let mut request = search_request(Source::Janny, Kind::Character);
-    request.nsfw = false;
-    request.tags.clear();
-    request.exclude_tags.clear();
-    let page = run(search_with(&fake, &request)).unwrap();
-    let sent = &fake.seen()[0];
-    assert!(sent.bearer.is_some());
-    assert!(sent.body.as_deref().unwrap().contains("isNsfw = false"));
-    assert_eq!(page.items.len(), 2);
-    assert_eq!(page.items[0].name, "Elf extinction");
-    assert!(page.items[0].avatar_url.as_deref().unwrap().starts_with("https://image.jannyai.com/"));
-    let detail = run(detail_with(&fake, &item(Source::Janny, Kind::Character, "x")));
-    assert_eq!(detail.unwrap_err().code, ApiErrorCode::Unsupported);
 }
 
 // ---------- Wyvern ----------
@@ -359,7 +322,7 @@ fn statuses_map_to_explainable_errors() {
     assert!(check_status("X", response(200, "{}")).is_ok());
     assert_eq!(check_status("X", response(429, "")).err().unwrap().code, ApiErrorCode::Busy);
     assert_eq!(check_status("X", response(404, "")).err().unwrap().code, ApiErrorCode::NotFound);
-    let cloudflare = check_status("JannyAI", response(403, "<title>Just a moment...</title>")).err().unwrap();
+    let cloudflare = check_status("Some hub", response(403, "<title>Just a moment...</title>")).err().unwrap();
     assert_eq!(cloudflare.code, ApiErrorCode::Unavailable);
     assert!(cloudflare.message.contains("Cloudflare"));
     let region = check_status("Chub", response(403, "This service is not available in your country")).err().unwrap();
@@ -372,7 +335,7 @@ fn oversized_queries_are_refused() {
     let mut request = search_request(Source::Wyvern, Kind::Character);
     request.query = "x".repeat(500);
     assert_eq!(run(search_with(&fake, &request)).unwrap_err().code, ApiErrorCode::InvalidInput);
-    let request = search_request(Source::Pygmalion, Kind::Preset);
+    let request = search_request(Source::Wyvern, Kind::Preset);
     assert_eq!(run(search_with(&fake, &request)).unwrap_err().code, ApiErrorCode::Unsupported);
 }
 
@@ -381,7 +344,7 @@ fn oversized_queries_are_refused() {
 #[ignore = "talks to the live hubs"]
 fn live_search_detail_download() {
     let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
-    for source in [Source::Chub, Source::Pygmalion, Source::CharacterTavern, Source::Janny, Source::Wyvern, Source::Botbooru, Source::Illarin] {
+    for source in [Source::Chub, Source::CharacterTavern, Source::Wyvern, Source::Botbooru, Source::Illarin] {
         let mut request = search_request(source, Kind::Character);
         request.query.clear();
         request.tags.clear();
@@ -462,9 +425,7 @@ fn live_dump_for_screenshots() {
     std::fs::create_dir_all(&out).unwrap();
     let cases = [
         (Source::Chub, Kind::Character),
-        (Source::Pygmalion, Kind::Character),
         (Source::CharacterTavern, Kind::Character),
-        (Source::Janny, Kind::Character),
         (Source::Wyvern, Kind::Character),
         (Source::Botbooru, Kind::Character),
         (Source::Illarin, Kind::Character),

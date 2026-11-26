@@ -1,5 +1,5 @@
 //! Fork: DTOs for the Discover tab, a browser for public character-card
-//! hubs (Chub, Pygmalion, Character Tavern, JannyAI). Kept in its own file so
+//! hubs (Chub, Character Tavern, Wyvern, Botbooru, Illarin). Kept in its own file so
 //! upstream rebases only touch the one `mod` line in `lib.rs`.
 
 use serde::{Deserialize, Serialize};
@@ -12,9 +12,7 @@ use crate::FileSource;
 #[serde(rename_all = "snake_case")]
 pub enum DiscoverSource {
     Chub,
-    Pygmalion,
     CharacterTavern,
-    Janny,
     Wyvern,
     Botbooru,
     Illarin,
@@ -54,6 +52,10 @@ pub struct DiscoverSearchRequest {
     pub cursor: Option<String>,
     /// Include adult cards.
     pub nsfw: bool,
+    /// Also include NSFL (extreme) cards where the hub tags them (Chub);
+    /// only honoured together with `nsfw`.
+    #[serde(default)]
+    pub nsfl: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]

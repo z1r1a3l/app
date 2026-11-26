@@ -13,28 +13,17 @@ pub(crate) struct HttpRequest {
     /// `Some` makes it a POST with this JSON body.
     pub body: Option<String>,
     pub headers: Vec<(&'static str, &'static str)>,
-    pub bearer: Option<&'static str>,
 }
 
 impl HttpRequest {
     pub fn get(url: impl Into<String>) -> Self {
-        Self { url: url.into(), query: Vec::new(), body: None, headers: vec![("accept", "application/json")], bearer: None }
-    }
-
-    pub fn post(url: impl Into<String>, body: &Value) -> Self {
-        Self {
-            url: url.into(),
-            query: Vec::new(),
-            body: Some(body.to_string()),
-            headers: vec![("accept", "application/json")],
-            bearer: None,
-        }
+        Self { url: url.into(), query: Vec::new(), body: None, headers: vec![("accept", "application/json")] }
     }
 
     /// A binary download (image or card file). Image CDNs that negotiate
     /// formats are steered away from AVIF, which the card writer cannot read.
     pub fn file(url: impl Into<String>) -> Self {
-        Self { url: url.into(), query: Vec::new(), body: None, headers: vec![("accept", "image/png,image/webp,image/jpeg,application/json;q=0.9,*/*;q=0.5")], bearer: None }
+        Self { url: url.into(), query: Vec::new(), body: None, headers: vec![("accept", "image/png,image/webp,image/jpeg,application/json;q=0.9,*/*;q=0.5")] }
     }
 
     pub fn param(mut self, name: &str, value: impl ToString) -> Self {
@@ -44,12 +33,6 @@ impl HttpRequest {
 
     pub fn param_if(self, condition: bool, name: &str, value: impl ToString) -> Self {
         if condition { self.param(name, value) } else { self }
-    }
-
-    pub fn header(mut self, name: &'static str, value: &'static str) -> Self {
-        self.headers.retain(|(existing, _)| *existing != name);
-        self.headers.push((name, value));
-        self
     }
 }
 

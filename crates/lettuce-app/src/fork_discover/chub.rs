@@ -47,7 +47,7 @@ pub(crate) fn search(request: &dto::DiscoverSearchRequest) -> Result<HttpRequest
         .param("sort", request.sort.as_deref().filter(|s| !s.is_empty()).unwrap_or("default"))
         .param("asc", "false")
         .param("nsfw", request.nsfw)
-        .param("nsfl", request.nsfw)
+        .param("nsfl", request.nsfw && request.nsfl)
         .param("include_forks", "true")
         .param("chub", "true")
         .param_if(!tags.is_empty(), "topics", tags)
