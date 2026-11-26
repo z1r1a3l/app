@@ -1,0 +1,41 @@
+{
+  "title": "Chat variables",
+  "hint": "Values that prompt macros (setvar, getvar, setglobalvar) keep between replies",
+  "tool": "Variables",
+  "toolHint": "View and change macro variables",
+  "chat": "This chat",
+  "global": "Global",
+  "chatHint": "Only this chat sees these. Presets set them on every reply, for example dice rolls and switches.",
+  "globalHint": "Shared by all chats, for example a preset's theme. A change here affects every chat.",
+  "filter": "Search variables",
+  "empty": "No variables yet",
+  "emptyChatHint": "They appear after a reply whose prompt uses setvar. You can also add one yourself.",
+  "emptyGlobalHint": "They appear after a reply whose prompt uses setglobalvar. You can also add one yourself.",
+  "name": "Name",
+  "value": "Value",
+  "emptyValue": "Empty",
+  "add": "Add",
+  "delete": "Delete variable",
+  "save": "Save",
+  "saved": "Variables saved",
+  "saveFailed": "Variables could not be saved",
+  "loadFailed": "Variables could not be loaded",
+  "duplicate": "Two variables are named “{{name}}”",
+  "discard": "Discard changes?",
+  "discardBody": "Your edits to the variables will be lost.",
+  "discardConfirm": "Discard",
+  "keepEditing": "Keep editing",
+  "dice": {
+    "title": "Dice rolls",
+    "hint": "Rolled by the prompt's roll macros for this reply"
+  },
+  "preview": {
+    "title": "Variables after macros",
+    "hint": "What the prompt's macros would leave behind. Nothing is saved, dice are rolled anew each time.",
+    "chat": "Chat ({{count}})",
+    "global": "Global ({{count}})",
+    "rolls": "Dice",
+    "none": "The prompt sets no variables",
+    "changedHint": "Highlighted names are set or changed by this prompt."
+  }
+}

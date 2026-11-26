@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/api/use-api";
 import { RegexDisplayContext, type RegexDisplay } from "./display-context";
 import { regexQueryKeys } from "./queries";
+import { varRecord } from "@/features/macros";
 
 
 export function RegexDisplayProvider({
@@ -36,7 +37,7 @@ export function RegexDisplayProvider({
     if (!data || data.scripts.length === 0) return null;
     return {
       scripts: data.scripts,
-      macros: { user: data.user_name, char: data.character_name },
+      macros: { user: data.user_name, char: data.character_name, vars: varRecord(data.chat_vars), globalVars: varRecord(data.global_vars) },
       depthOf: (id) => depths.get(id),
     };
   }, [scripts.data, depths]);
