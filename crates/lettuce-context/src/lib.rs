@@ -8,6 +8,7 @@
 
 mod bindings;
 pub mod fork_aether;
+pub mod fork_helper;
 pub mod fork_macros;
 pub mod fork_regex;
 mod lorebook;
