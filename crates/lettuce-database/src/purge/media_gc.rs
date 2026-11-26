@@ -31,7 +31,8 @@ const UNSCANNED_TABLES: [&str; 11] = [
     "job_events",
     "api_operation_receipts",
 ];
-const UNSCANNED_PREFIXES: [&str; 2] = ["sync_", "legacy_import_"];
+// fork: `fork_` tables (regex scripts) never hold media asset ids.
+const UNSCANNED_PREFIXES: [&str; 3] = ["sync_", "legacy_import_", "fork_"];
 
 const FINISHED_JOB: &str = "('succeeded', 'failed', 'cancelled', 'interrupted')";
 

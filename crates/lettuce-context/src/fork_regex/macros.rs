@@ -65,7 +65,11 @@ fn roll(formula: &str) -> Option<String> {
         formula
     };
     let (count, rest) = formula.split_once('d')?;
-    let count: u64 = if count.is_empty() { 1 } else { count.parse().ok()? };
+    let count: u64 = if count.is_empty() {
+        1
+    } else {
+        count.parse().ok()?
+    };
     let (sides, modifier) = match rest.find(['+', '-']) {
         Some(pos) => (&rest[..pos], rest[pos..].parse::<i64>().ok()?),
         None => (rest, 0),
@@ -74,7 +78,10 @@ fn roll(formula: &str) -> Option<String> {
     if count == 0 || count > 1000 || sides == 0 {
         return None;
     }
-    let total: i64 = (0..count).map(|_| next_random(sides) as i64 + 1).sum::<i64>() + modifier;
+    let total: i64 = (0..count)
+        .map(|_| next_random(sides) as i64 + 1)
+        .sum::<i64>()
+        + modifier;
     Some(total.to_string())
 }
 

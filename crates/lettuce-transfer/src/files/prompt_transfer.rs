@@ -342,6 +342,19 @@ fn sillytavern_prompt(
         })
         .collect::<Vec<_>>();
     entries.sort_by_key(|(order, index, _)| (*order, *index));
+    // fork: blocks SillyTavern orders after chat history go right after it
+    // (in-chat depth 0) instead of joining the system prompt before it.
+    if let Some(history) = order_index.get("chatHistory").copied() {
+        for (order, _, entry) in &mut entries {
+            if *order != usize::MAX
+                && *order > history
+                && matches!(entry.injection_position, PromptEntryPosition::Relative)
+            {
+                entry.injection_position = PromptEntryPosition::InChat;
+                entry.depth = 0;
+            }
+        }
+    }
     if entries.is_empty() {
         return Err(PromptTransferError::NoImportablePrompts);
     }
@@ -566,6 +579,34 @@ mod tests {
             PromptEntryPosition::InChat
         );
         assert!(!imported.entries[0].system_prompt);
+    }
+
+    #[test]
+    fn fork_blocks_after_chat_history_go_in_chat_at_depth_zero() {
+        let preset = json!({
+            "prompts": [
+                {"identifier": "main", "name": "Main", "content": "Rules.", "role": "system"},
+                {"identifier": "chatHistory", "name": "Chat History", "marker": true},
+                {"identifier": "post", "name": "Post", "content": "Reply in Russian.", "role": "system"}
+            ],
+            "prompt_order": [{"character_id": 100_001, "order": [
+                {"identifier": "main", "enabled": true},
+                {"identifier": "chatHistory", "enabled": true},
+                {"identifier": "post", "enabled": true}
+            ]}]
+        });
+        let imported =
+            parse_prompt_import(&preset.to_string(), Some("p"), "Imported", "Set").expect("import");
+        assert_eq!(imported.entries.len(), 2);
+        assert!(matches!(
+            imported.entries[0].injection_position,
+            PromptEntryPosition::Relative
+        ));
+        assert!(matches!(
+            imported.entries[1].injection_position,
+            PromptEntryPosition::InChat
+        ));
+        assert_eq!(imported.entries[1].depth, 0);
     }
 
     #[test]

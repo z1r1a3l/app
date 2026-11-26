@@ -79,3 +79,37 @@ pub fn prompt_regex_for(
         )
     })
 }
+
+/// The last scope key and names prompt assembly used for each chat, so work
+/// that reads history outside the prompt (memory, summaries) cleans it the
+/// same way. Lost on restart; callers fall back to their own key.
+fn remembered()
+-> &'static RwLock<std::collections::HashMap<String, (RegexScopeKey, super::BasicMacroValues)>> {
+    static SLOT: std::sync::OnceLock<
+        RwLock<std::collections::HashMap<String, (RegexScopeKey, super::BasicMacroValues)>>,
+    > = std::sync::OnceLock::new();
+    SLOT.get_or_init(Default::default)
+}
+
+pub fn remember_scope(
+    conversation_id: &str,
+    key: &RegexScopeKey,
+    macros: &super::BasicMacroValues,
+) {
+    let mut map = remembered()
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if map.len() > 512 {
+        map.clear();
+    }
+    map.insert(conversation_id.to_owned(), (key.clone(), macros.clone()));
+}
+
+#[must_use]
+pub fn remembered_scope(conversation_id: &str) -> Option<(RegexScopeKey, super::BasicMacroValues)> {
+    remembered()
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(conversation_id)
+        .cloned()
+}

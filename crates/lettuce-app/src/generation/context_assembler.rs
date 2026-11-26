@@ -783,6 +783,7 @@ let mut private_items_used =
             .map(|(participant, body)| (participant.id, body.name.clone()))
             .collect::<HashMap<_, _>>();
         let mut transcript = Vec::new();
+        let mut fork_roles = Vec::new();
         for item in &selected_window {
             if let Some(message) = provider_message(
                 item,
@@ -795,8 +796,24 @@ let mut private_items_used =
                 request.prompt_runtime.time_awareness_enabled,
             )? {
                 transcript.push(message);
+                fork_roles.push(item.message.role);
             }
         }
+        // fork: prompt-side regex scripts (global, preset, character).
+        crate::generation::fork_prompt_regex::apply_for_chat(
+            &mut transcript,
+            &fork_roles,
+            &request.conversation_id.to_string(),
+            snapshot.prompt.as_ref().map(|prompt| prompt.id.to_string()),
+            match &aggregate.conversation.kind {
+                ConversationKind::Direct(details) => vec![details.character.source_id.to_string()],
+                ConversationKind::Group(_) => {
+                    speaker_character.iter().map(ToString::to_string).collect()
+                }
+            },
+            &names.user_name,
+            &names.character_name,
+        );
         let history_text = transcript
             .iter()
             .flat_map(|message| &message.parts)
@@ -958,7 +975,7 @@ where
     /// prompt of the starter it launched from while that starter exists, then
     /// the live character's direct prompt, then the app default chain; a
     /// prompt the chat disabled yields none.
-    fn live_direct_prompt(
+    pub(crate) fn live_direct_prompt(
         &self,
         conversation: &lettuce_conversations::Conversation,
     ) -> Result<Option<(PromptSnapshot, String)>, ContextAssemblyError> {

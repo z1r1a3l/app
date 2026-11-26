@@ -8,7 +8,8 @@ fn golden_macros(text: &str) -> String {
     let user = regress::Regex::with_flags(r"\{\{user\}\}", "i").expect("user");
     let char_re = regress::Regex::with_flags(r"\{\{char\}\}", "i").expect("char");
     let random = regress::Regex::with_flags(r"\{\{random::([^}]*?)\}\}", "i").expect("random");
-    let global = regress::Regex::with_flags(r"\{\{getglobalvar::([^}]*?)\}\}", "i").expect("global");
+    let global =
+        regress::Regex::with_flags(r"\{\{getglobalvar::([^}]*?)\}\}", "i").expect("global");
     let step = |re: &regress::Regex, text: &str, f: &dyn Fn(&regress::Match, &str) -> String| {
         let mut out = String::new();
         let mut last = 0;
@@ -152,7 +153,10 @@ fn global_flag_controls_how_many_matches_change() {
 #[test]
 fn groups_named_groups_and_match_macro_expand() {
     assert_eq!(
-        display(&[script(r"/(\w+)@(\w+)/g", "$2 at $1 ({{match}})")], "me@home"),
+        display(
+            &[script(r"/(\w+)@(\w+)/g", "$2 at $1 ({{match}})")],
+            "me@home"
+        ),
         "home at me (me@home)"
     );
     assert_eq!(
@@ -197,7 +201,10 @@ fn depth_limits_follow_sillytavern() {
             &|v: &str| v.to_owned(),
         )
     };
-    assert_eq!((at(1), at(2), at(3), at(4)), ("a".into(), "b".into(), "b".into(), "a".into()));
+    assert_eq!(
+        (at(1), at(2), at(3), at(4)),
+        ("a".into(), "b".into(), "b".into(), "a".into())
+    );
 }
 
 #[test]
@@ -209,14 +216,23 @@ fn targets_respect_display_and_prompt_flags() {
     prompt_only.prompt_only = true;
     let mut neither = script("/a/", "n");
     neither.markdown_only = false;
-    assert!(display_only.applies_to(RegexTarget::Display) && !display_only.applies_to(RegexTarget::Prompt));
-    assert!(!prompt_only.applies_to(RegexTarget::Display) && prompt_only.applies_to(RegexTarget::Prompt));
+    assert!(
+        display_only.applies_to(RegexTarget::Display)
+            && !display_only.applies_to(RegexTarget::Prompt)
+    );
+    assert!(
+        !prompt_only.applies_to(RegexTarget::Display)
+            && prompt_only.applies_to(RegexTarget::Prompt)
+    );
     assert!(neither.applies_to(RegexTarget::Display) && neither.applies_to(RegexTarget::Prompt));
 }
 
 #[test]
 fn invalid_patterns_leave_text_unchanged() {
-    assert_eq!(display(&[script("/(unclosed/g", "x")], "(unclosed"), "(unclosed");
+    assert_eq!(
+        display(&[script("/(unclosed/g", "x")], "(unclosed"),
+        "(unclosed"
+    );
     assert_eq!(display(&[script("", "x")], "abc"), "abc");
 }
 
@@ -227,16 +243,28 @@ fn basic_macros_resolve_and_nest() {
         char: "Шарлотта".into(),
         ..Default::default()
     };
-    assert_eq!(substitute_basic_macros("{{user}} и {{char}}", &values), "Алекс и Шарлотта");
-    assert_eq!(substitute_basic_macros("a{{// comment}}b{{noop}}c", &values), "abc");
+    assert_eq!(
+        substitute_basic_macros("{{user}} и {{char}}", &values),
+        "Алекс и Шарлотта"
+    );
+    assert_eq!(
+        substitute_basic_macros("a{{// comment}}b{{noop}}c", &values),
+        "abc"
+    );
     assert_eq!(substitute_basic_macros("x\n{{trim}}\ny", &values), "xy");
     let rolled = substitute_basic_macros("{{roll::1d6}}", &values);
     let n: u32 = rolled.parse().expect("number");
     assert!((1..=6).contains(&n));
     let picked = substitute_basic_macros("{{random::a::b}}", &values);
     assert!(picked == "a" || picked == "b");
-    assert_eq!(substitute_basic_macros("{{unknown::x}}", &values), "{{unknown::x}}");
-    assert_eq!(substitute_basic_macros("[{{random::{{user}}}}]", &values), "[Алекс]");
+    assert_eq!(
+        substitute_basic_macros("{{unknown::x}}", &values),
+        "{{unknown::x}}"
+    );
+    assert_eq!(
+        substitute_basic_macros("[{{random::{{user}}}}]", &values),
+        "[Алекс]"
+    );
 }
 
 #[test]
@@ -256,7 +284,10 @@ fn lumiverse_and_card_and_preset_imports_read_scripts() {
     assert_eq!(import.scripts.len(), 1);
 
     let preset = r#"{"prompts":[],"extensions":{"regex_scripts":[{"scriptName":"r","findRegex":"/x/g","replaceString":"y","placement":[2],"markdownOnly":true}]}}"#;
-    assert_eq!(parse_regex_import(preset).expect("preset").kind, "sillytavern_preset");
+    assert_eq!(
+        parse_regex_import(preset).expect("preset").kind,
+        "sillytavern_preset"
+    );
     assert!(parse_regex_import(r#"{"prompts":[]}"#).is_none());
 }
 

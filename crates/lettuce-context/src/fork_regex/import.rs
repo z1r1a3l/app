@@ -32,7 +32,10 @@ fn finish(mut scripts: Vec<RegexScript>) -> Vec<RegexScript> {
     let mut seen = std::collections::HashSet::new();
     for (index, script) in scripts.iter_mut().enumerate() {
         if script.id.trim().is_empty() || !seen.insert(script.id.clone()) {
-            script.id = stable_id(&format!("{}{}", script.script_name, script.find_regex), index);
+            script.id = stable_id(
+                &format!("{}{}", script.script_name, script.find_regex),
+                index,
+            );
             seen.insert(script.id.clone());
         }
         if script.script_name.trim().is_empty() {
@@ -127,10 +130,16 @@ fn lumi_script(item: &Value) -> Option<RegexScript> {
         } else {
             placements
         },
-        disabled: item.get("disabled").and_then(Value::as_bool).unwrap_or(false),
+        disabled: item
+            .get("disabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
         markdown_only: display,
         prompt_only: prompt,
-        run_on_edit: item.get("run_on_edit").and_then(Value::as_bool).unwrap_or(true),
+        run_on_edit: item
+            .get("run_on_edit")
+            .and_then(Value::as_bool)
+            .unwrap_or(true),
         substitute_regex: match item.get("substitute_macros").and_then(Value::as_str) {
             Some("raw") => 1,
             Some("escaped") => 2,
@@ -157,7 +166,8 @@ pub fn parse_regex_import(json: &str) -> Option<RegexImport> {
             "sillytavern_regex",
             finish(st_scripts(&Value::Array(vec![value.clone()]))),
         ))
-    } else if value.pointer("/extensions/regex_scripts").is_some() && value.get("prompts").is_some() {
+    } else if value.pointer("/extensions/regex_scripts").is_some() && value.get("prompts").is_some()
+    {
         Some(("sillytavern_preset", scripts_from_preset(&value)))
     } else if value.pointer("/data/extensions/regex_scripts").is_some() {
         Some(("character_card", scripts_from_card(&value)))
@@ -166,10 +176,10 @@ pub fn parse_regex_import(json: &str) -> Option<RegexImport> {
             "lumiverse_regex",
             finish(scripts.iter().filter_map(lumi_script).collect()),
         ))
-    } else if let Some(scripts) = value.pointer("/extensions/regex_scripts") {
-        Some(("sillytavern_regex", finish(st_scripts(scripts))))
     } else {
-        None
+        value
+            .pointer("/extensions/regex_scripts")
+            .map(|scripts| ("sillytavern_regex", finish(st_scripts(scripts))))
     };
     let (kind, scripts) = found?;
     (!scripts.is_empty()).then_some(RegexImport {

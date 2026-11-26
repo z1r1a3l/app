@@ -80,10 +80,7 @@ fn compile_uncached(input: &str) -> Option<CompiledFind> {
     // runs to the last slash that is followed only by letters.
     let (pattern, flags) = match input.strip_prefix('/') {
         Some(rest) => match rest.rfind('/') {
-            Some(end)
-                if end > 0
-                    && rest[end + 1..].chars().all(|c| c.is_ascii_alphabetic()) =>
-            {
+            Some(end) if end > 0 && rest[end + 1..].chars().all(|c| c.is_ascii_alphabetic()) => {
                 (&rest[..end], &rest[end + 1..])
             }
             _ => (input, ""),
@@ -248,16 +245,16 @@ where
                 copied = end;
                 continue;
             }
-            if next == b'<' {
-                if let Some(close) = template[index + 2..].find('>') {
-                    let name = &template[index + 2..index + 2 + close];
-                    if !name.is_empty() {
-                        out.push_str(&template[copied..index]);
-                        out.push_str(&value(GroupRef::Name(name)));
-                        index = index + 2 + close + 1;
-                        copied = index;
-                        continue;
-                    }
+            if next == b'<'
+                && let Some(close) = template[index + 2..].find('>')
+            {
+                let name = &template[index + 2..index + 2 + close];
+                if !name.is_empty() {
+                    out.push_str(&template[copied..index]);
+                    out.push_str(&value(GroupRef::Name(name)));
+                    index = index + 2 + close + 1;
+                    copied = index;
+                    continue;
                 }
             }
         }

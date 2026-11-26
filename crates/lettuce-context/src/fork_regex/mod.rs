@@ -19,8 +19,8 @@ pub use engine::{
 pub use import::{RegexImport, parse_regex_import, scripts_from_card, scripts_from_preset};
 pub use macros::{BasicMacroValues, substitute_basic_macros};
 pub use provider::{
-    RegexScriptSource, RegexScopeKey, clear_regex_source, prompt_regex_for, regex_source,
-    set_regex_source,
+    RegexScopeKey, RegexScriptSource, clear_regex_source, prompt_regex_for, regex_source,
+    remember_scope, remembered_scope, set_regex_source,
 };
 
 use serde::{Deserialize, Serialize};

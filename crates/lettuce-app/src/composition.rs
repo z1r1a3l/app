@@ -68,6 +68,10 @@ impl AppBackend {
             }
         }
         let database = Arc::new(database);
+        // fork: prompt-side regex scripts read from this database.
+        lettuce_context::fork_regex::set_regex_source(Arc::new(
+            lettuce_database::DatabaseRegexSource(database.clone()),
+        ));
         let backend = Self {
             whisper_runtime: Arc::new(WhisperCppRuntime::new(database.clone())),
             database,
