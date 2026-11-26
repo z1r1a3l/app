@@ -7,6 +7,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod bindings;
+pub mod fork_aether;
 pub mod fork_macros;
 pub mod fork_regex;
 mod lorebook;
