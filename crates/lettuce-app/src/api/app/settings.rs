@@ -35,12 +35,40 @@ pub(super) fn finish_committed<T>(result: T, refresh: impl FnOnce() -> Result<()
     result
 }
 
+/// Fork fix: core memory settings leave out chapter summary keys that hold
+/// their defaults, but the contract needs every key. Put the defaults back on
+/// any memory settings object before it is read as a contract.
+fn fork_fill_memory_defaults(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(map) => {
+            if map.contains_key("model_pinning_enabled")
+                && map.contains_key("summary_message_interval")
+            {
+                let defaults = lettuce_settings::DynamicMemorySettings::default();
+                map.entry("chapter_summaries_enabled")
+                    .or_insert(defaults.chapter_summaries_enabled.into());
+                map.entry("summary_token_budget")
+                    .or_insert(defaults.summary_token_budget.into());
+                map.entry("summary_chapter_size")
+                    .or_insert(defaults.summary_chapter_size.into());
+            }
+            map.values_mut().for_each(fork_fill_memory_defaults);
+        }
+        serde_json::Value::Array(items) => items.iter_mut().for_each(fork_fill_memory_defaults),
+        _ => {}
+    }
+}
+
 pub(in crate::api) fn convert<S: Serialize, T: DeserializeOwned>(
     value: S,
     field: &str,
 ) -> Result<T, ApiError> {
     serde_json::to_value(value)
         .map_err(|_| invalid_field(field, "setting cannot be represented"))
+        .map(|mut value| {
+            fork_fill_memory_defaults(&mut value);
+            value
+        })
         .and_then(|value| {
             serde_json::from_value(value)
                 .map_err(|_| invalid_field(field, "setting has an invalid value"))
