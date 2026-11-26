@@ -2068,6 +2068,8 @@ impl ProviderBackupSource for Database {
         let fork_regex = crate::fork_regex::read_backup_in(&transaction).map_err(backup_error)?;
         let fork_macros =
             crate::fork_macros::read_backup_in(&transaction).map_err(backup_error)?;
+        let fork_helper =
+            crate::fork_helper::read_backup_in(&transaction).map_err(backup_error)?;
         let fork_memory_turns =
             crate::fork_memory_turns::read_backup_in(&transaction).map_err(backup_error)?;
         let device = read_device_state(&transaction)?;
@@ -2078,6 +2080,7 @@ impl ProviderBackupSource for Database {
             playground_history,
             fork_regex,
             fork_macros,
+            fork_helper,
             fork_memory_turns,
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts,

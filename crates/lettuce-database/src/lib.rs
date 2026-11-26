@@ -332,6 +332,12 @@ const MIGRATION_9003: Migration = Migration {
     sql: include_str!("../migrations/9003_fork_memory_turns.sql"),
 };
 
+/// Fork-only migration; see migrations/9004_fork_helper.sql.
+const MIGRATION_9004: Migration = Migration {
+    id: 9004,
+    sql: include_str!("../migrations/9004_fork_helper.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -385,6 +391,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_9001,
     MIGRATION_9002,
     MIGRATION_9003,
+    MIGRATION_9004,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;
@@ -6344,6 +6351,9 @@ mod tests {
                 "dynamic_memory_summary_checkpoints",
                 "fork_chat_vars",
                 "fork_global_vars",
+                "fork_helper_config",
+                "fork_helper_deltas",
+                "fork_helper_scopes",
                 "fork_macro_rolls",
                 "fork_memory_turns",
                 "fork_regex_scopes",
@@ -6590,6 +6600,13 @@ pub use fork_regex::{DatabaseRegexSource, RegexScopeKind, RegexScopeState};
 
 mod fork_macros;
 pub use fork_macros::DatabaseMacroVarStore;
+
+mod fork_helper;
+pub use fork_helper::{
+    DEFAULT_HELPER_HISTORY, DatabaseHelperStateSource, HelperConfig as ForkHelperConfig,
+    HelperDeltaRow as ForkHelperDeltaRow, HelperScope as ForkHelperScope,
+    HelperScopeKind as ForkHelperScopeKind, MAX_HELPER_HISTORY,
+};
 mod fork_memory_turns;
 pub use fork_memory_turns::MemoryTurnRange as ForkMemoryTurnRange;
 
