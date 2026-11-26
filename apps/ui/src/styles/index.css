@@ -115,6 +115,21 @@ html:active-view-transition-type(page-back)::view-transition-new(mobile-page) {
   padding-bottom: var(--safe-bottom, 0px);
 }
 
+/* Inner overflow-y scrollers contain overscroll so a Page scroller does not chain
+   into AppShell's main. `contain` (not `none`) keeps rubber-banding inside the
+   scroller; chat's Timeline also uses overflow-y-auto and loads older messages
+   with an intersection observer, not document pull-to-refresh. */
+.overflow-y-auto,
+.overflow-y-scroll {
+  overscroll-behavior-y: contain;
+}
+
+/* Horizontal strips (library filters, etc.) should not chain sideways into the page. */
+.overflow-x-auto,
+.overflow-x-scroll {
+  overscroll-behavior-x: contain;
+}
+
 /* Crisp FilterBar: flex overflow-x-auto often drops padding-right from the scroll
    width, so the last chip sits flush with the edge. A trailing flex spacer is
    included in the scroll width. scroll-padding helps scrollIntoView. */
