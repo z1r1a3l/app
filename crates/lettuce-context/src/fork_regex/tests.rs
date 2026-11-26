@@ -299,3 +299,60 @@ fn scripts_round_trip_in_sillytavern_shape() {
     let back: Vec<RegexScript> = serde_json::from_str(&json).expect("back");
     assert_eq!(back, scripts);
 }
+
+/// The official Vexa downloads (ST regex, ST+Tavo preset, Lumiverse pack)
+/// all give SillyTavern's display output. The Lumiverse build ships
+/// unminified CSS, so for it only the markup outside `<style>` must match. Runs when `VEXA_OFFICIAL_DIR`
+/// points at the unpacked files; skipped otherwise.
+#[test]
+fn official_vexa_files_import_to_the_same_display_output() {
+    let Ok(dir) = std::env::var("VEXA_OFFICIAL_DIR") else {
+        return;
+    };
+    let cases: serde_json::Value = serde_json::from_str(GOLDEN).expect("golden");
+    for (file, kind) in [
+        ("ST.Vexa.v1.0.-.Regex.json", "sillytavern_regex"),
+        ("ST.+.Tavo.Vexa.v1.0.json", "sillytavern_preset"),
+        ("Lumi.Vexa.v1.0.-.Regex.json", "lumiverse_regex"),
+    ] {
+        let text = std::fs::read_to_string(std::path::Path::new(&dir).join(file)).expect(file);
+        let import = parse_regex_import(&text).expect(file);
+        assert_eq!(import.kind, kind, "{file}");
+        for case in cases.as_array().expect("cases") {
+            if case["target"] != "display" {
+                continue;
+            }
+            let depth = case["depth"].as_i64().expect("depth");
+            let actual = apply_regex_scripts(
+                &import.scripts,
+                fixture(case["file"].as_str().expect("file")),
+                RegexApplyContext {
+                    placement: placement::AI_OUTPUT,
+                    target: RegexTarget::Display,
+                    depth: Some(depth),
+                },
+                &golden_macros,
+            );
+            let expected = case["output"].as_str().expect("output");
+            let same = if kind == "lumiverse_regex" {
+                without_styles(&actual) == without_styles(expected)
+            } else {
+                actual == expected
+            };
+            assert!(same, "{file}: {} depth {depth} differs", case["file"]);
+        }
+    }
+}
+
+/// Markup with every `<style>…</style>` block and all whitespace removed.
+fn without_styles(html: &str) -> String {
+    let style = regress::Regex::with_flags(r"<style>[\s\S]*?</style>", "g").expect("style");
+    let mut out = String::new();
+    let mut last = 0;
+    for m in style.find_iter(html) {
+        out.push_str(&html[last..m.start()]);
+        last = m.end();
+    }
+    out.push_str(&html[last..]);
+    out.split_whitespace().collect()
+}
