@@ -255,10 +255,14 @@ pub async fn regex_conversation_scripts(
                 None => live_scope(database, conversation_id),
             };
             let scripts = database.fork_regex_effective(&key).map_err(storage)?;
+            let (chat_vars, global_vars) =
+                super::fork_macros::vars_dto(database, &conversation_id.to_string())?;
             Ok(dto::RegexConversationScripts {
                 user_name: macros.user,
                 character_name: macros.char,
                 scripts: scripts.into_iter().map(script_dto).collect(),
+                chat_vars,
+                global_vars,
             })
         })
         .await

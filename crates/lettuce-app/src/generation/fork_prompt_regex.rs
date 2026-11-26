@@ -24,11 +24,17 @@ pub(crate) fn apply_for_chat(
         prompt_id,
         character_ids,
     };
-    let macros = BasicMacroValues {
+    let mut macros = BasicMacroValues {
         user: user.to_owned(),
         char: char.to_owned(),
         ..Default::default()
     };
+    // `{{getvar}}` / `{{getglobalvar}}` in replacements read the stored
+    // variables (as they stood before this turn's macros ran).
+    if let Some(store) = lettuce_context::fork_macros::var_store() {
+        macros.vars = store.chat_vars(conversation_id).into_iter().collect();
+        macros.global_vars = store.global_vars().into_iter().collect();
+    }
     fork_regex::remember_scope(conversation_id, &key, &macros);
     let Some(rewrite) = fork_regex::prompt_regex_for(&key, macros) else {
         return;

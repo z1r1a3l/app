@@ -116,6 +116,10 @@ pub struct RegexConversationScripts {
     pub user_name: String,
     pub character_name: String,
     pub scripts: Vec<RegexScriptDto>,
+    /// The chat's and the global macro variables, for `{{getvar}}` in
+    /// display scripts.
+    pub chat_vars: Vec<crate::MacroVarDto>,
+    pub global_vars: Vec<crate::MacroVarDto>,
 }
 
 /// Runs scripts over a sample text (the editor's live tester).
