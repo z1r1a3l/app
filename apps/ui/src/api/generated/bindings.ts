@@ -6866,6 +6866,7 @@ export type MemoryAddRequest_Deserialize = {
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id?: string | null,
+	turns?: MemoryTurnRange | null,
 };
 
 export type MemoryAddRequest_Serialize = {
@@ -6876,6 +6877,7 @@ export type MemoryAddRequest_Serialize = {
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id: string | null,
+	turns: MemoryTurnRange | null,
 };
 
 /**  Why a chat's dynamic memory does not run. */
@@ -7134,6 +7136,10 @@ export type MemorySummaryView = {
 	token_count: number | null,
 };
 
+export type MemoryTurnRange = { start: number, end: number };
+
+export type MemoryTurnsChange = { type: "keep" } | { type: "set"; value?: MemoryTurnRange | null };
+
 export type MemoryTemperature = "hot" | "cold";
 
 export type MemoryTemperatureRequest = MemoryTemperatureRequest_Serialize | MemoryTemperatureRequest_Deserialize;
@@ -7169,6 +7175,7 @@ export type MemoryUpdateRequest_Deserialize = {
 	text: string | null,
 	category?: MemoryCategoryChange,
 	observed_at?: MemoryObservedAtChange,
+	turns?: MemoryTurnsChange,
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id?: string | null,
@@ -7180,6 +7187,7 @@ export type MemoryUpdateRequest_Serialize = {
 	text: string | null,
 	category: MemoryCategoryChange,
 	observed_at: MemoryObservedAtChange,
+	turns: MemoryTurnsChange,
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id: string | null,

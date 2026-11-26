@@ -1628,7 +1628,8 @@ async fn duplicate_activity_keeps_the_original_and_same_run_comparison_texts() {
             expected_revision: status_of(&harness, &chat).await.revision,
             client_operation_id: "duplicate-texts-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add original");
@@ -1664,7 +1665,8 @@ async fn duplicate_activity_keeps_the_original_and_same_run_comparison_texts() {
             expected_revision: status_of(&harness, &chat).await.revision,
             client_operation_id: "duplicate-texts-edit".into(),
             perspective_character_id: None,
-        },
+                    turns: Default::default(),
+},
     )
     .await
     .expect("edit original after the result");
@@ -1708,7 +1710,8 @@ async fn activity_keeps_what_a_skipped_or_deleted_memory_needs_to_come_back() {
             expected_revision: status_of(&harness, &chat).await.revision,
             client_operation_id: "restore-facts-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add original");
@@ -1773,7 +1776,8 @@ async fn a_user_edit_during_a_run_survives_the_models_delete_and_unpin() {
                 expected_revision: revision,
                 client_operation_id: format!("stale-add-{index}"),
                 perspective_character_id: None,
-            },
+                            turns: None,
+},
         )
         .await
         .expect("add");
@@ -1823,7 +1827,8 @@ async fn a_user_edit_during_a_run_survives_the_models_delete_and_unpin() {
             expected_revision: revision,
             client_operation_id: "stale-edit".into(),
             perspective_character_id: None,
-        },
+                    turns: Default::default(),
+},
     )
     .await
     .expect("edit during the run");
@@ -2048,7 +2053,8 @@ async fn a_manual_edit_emits_one_memory_changed_after_it_commits_and_a_rollback_
             expected_revision: revision,
             client_operation_id: "events-add".into(),
             perspective_character_id: None,
-        },
+                    turns: None,
+},
     )
     .await
     .expect("add");
@@ -2268,7 +2274,8 @@ async fn pooled_delete_after_preserves_retained_user_edits_when_undoing_model_to
                 observed_at: None, expected_revision: status_of(&harness, &a).await.revision,
                 client_operation_id: "tool-pool-add".into(),
                 perspective_character_id: None,
-            }).await.expect("existing target").memory_id.expect("id");
+                            turns: None,
+}).await.expect("existing target").memory_id.expect("id");
             if tool == "unpin_memory" {
                 memory_pin(&harness.context, dto::MemoryPinRequest {
                     conversation_id: a.clone(), memory_id: added.clone(), pinned: true,
@@ -2322,7 +2329,8 @@ async fn pooled_delete_after_preserves_retained_user_edits_when_undoing_model_to
                 category: dto::MemoryCategoryChange::Keep, observed_at: dto::MemoryObservedAtChange::Keep,
                 expected_revision: revision, client_operation_id: "tool-pool-retained-text".into(),
                 perspective_character_id: None,
-            }).await.expect("retained edit of model-created item"); }
+                            turns: Default::default(),
+}).await.expect("retained edit of model-created item"); }
         }
         messages_delete_after(&harness.context, dto::MessageDeleteRequest {
             conversation_id: a.clone(), message_id: first.message.id, expected_revision: later.revision,
@@ -2440,7 +2448,8 @@ async fn delete_after_removes_a_decayed_manual_add_unless_another_pool_chat_edit
             observed_at: None, expected_revision: status_of(&harness, &a).await.revision,
             client_operation_id: "decay-add".into(),
             perspective_character_id: None,
-        }).await.expect("manual add").memory_id.expect("id");
+                    turns: None,
+}).await.expect("manual add").memory_id.expect("id");
         let round = open_round_with_decay(&harness, &a, vec![("done", serde_json::json!({}))], true).await;
         let cold = status_of(&harness, &a).await;
         assert_eq!(cold.items.iter().find(|item| item.id == added).expect("added").temperature,
@@ -2464,7 +2473,8 @@ async fn delete_after_removes_a_decayed_manual_add_unless_another_pool_chat_edit
                 expected_revision: status_of(&harness, &b).await.revision,
                 client_operation_id: "decay-retained-edit".into(),
                 perspective_character_id: None,
-            }).await.expect("retained pooled edit");
+                            turns: Default::default(),
+}).await.expect("retained pooled edit");
         }
         messages_delete_after(&harness.context, dto::MessageDeleteRequest {
             conversation_id: a.clone(), message_id: first.message.id, expected_revision: later.revision,

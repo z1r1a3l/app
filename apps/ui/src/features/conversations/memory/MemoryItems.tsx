@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Bot, Download, Flame, Pin, Snowflake, Trash2, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button, cn, confirm, Field, icon, ListGroup, ListRow, relativeTime, Segmented, Select, Sheet, Switch, Textarea } from "@lettuceai/crisp";
+import { Button, cn, confirm, Field, icon, Input, ListGroup, ListRow, relativeTime, Segmented, Select, Sheet, Switch, Textarea } from "@lettuceai/crisp";
 import { DateTime24 } from "@/shared/ui/DateTime24";
 import type { MemoryCategory, MemoryItemView, MemoryOrigin, MemoryTemperature } from "@/api/generated/bindings";
 import { dateOf, sameInstant } from "../data/memory";
+import { inputsOf, parseTurnInputs, rangeOfLabel, sameRange, type TurnRange } from "./fork-turns";
 import { useWindowLabel } from "./window-label";
 
 const originIcon: Record<MemoryOrigin, typeof Bot> = { model: Bot, user: User, import: Download };
@@ -44,6 +45,7 @@ export interface MemoryDraft {
   observedAt: Date | null;
   temperature: MemoryTemperature;
   pinned: boolean;
+  turns: TurnRange | null;
 }
 
 export interface MemorySheetProps {
@@ -66,6 +68,13 @@ export function MemorySheet({ open, item, categories, busy, onClose, onSave, onD
   const [observedAt, setObservedAt] = useState<Date | null>(dateOf(item?.observed_at ?? null));
   const [temperature, setTemperature] = useState<MemoryTemperature>(item?.temperature ?? "hot");
   const [pinned, setPinned] = useState(item?.pinned ?? false);
+  const initialTurns = rangeOfLabel(item?.cycle_label ?? null);
+  const initialInputs = inputsOf(initialTurns);
+  const [turnFrom, setTurnFrom] = useState(initialInputs.from);
+  const [turnTo, setTurnTo] = useState(initialInputs.to);
+  const parsedTurns = parseTurnInputs(turnFrom, turnTo);
+  const turnsInvalid = "error" in parsedTurns;
+  const draftTurns = "range" in parsedTurns ? parsedTurns.range : initialTurns;
   const cycle = windowLabel(item?.cycle_label ?? null);
   const description = adding
     ? undefined
@@ -83,7 +92,8 @@ export function MemorySheet({ open, item, categories, busy, onClose, onSave, onD
     (category || null) !== item.category ||
     !sameInstant(observedAt, dateOf(item.observed_at)) ||
     temperature !== item.temperature ||
-    pinned !== item.pinned;
+    pinned !== item.pinned ||
+    !sameRange(draftTurns, initialTurns);
 
   const askDelete = async () => {
     const sure = await confirm({
@@ -119,8 +129,8 @@ export function MemorySheet({ open, item, categories, busy, onClose, onSave, onD
           </Button>
           <Button
             loading={busy}
-            disabled={busy || text.trim().length === 0 || !changed}
-            onClick={() => onSave({ text: text.trim(), category: category || null, observedAt, temperature, pinned })}
+            disabled={busy || text.trim().length === 0 || !changed || turnsInvalid}
+            onClick={() => onSave({ text: text.trim(), category: category || null, observedAt, temperature, pinned, turns: draftTurns })}
           >
             {adding ? t("memory.sheet.add") : t("memory.sheet.save")}
           </Button>
@@ -160,6 +170,39 @@ export function MemorySheet({ open, item, categories, busy, onClose, onSave, onD
             )}
           </div>
         </Field>}
+        <Field label={t("memory.sheet.turns")} hint={turnsInvalid ? t("memory.sheet.turnsInvalid") : t("memory.sheet.turnsHint")}>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              className="min-w-0 flex-1"
+              value={turnFrom}
+              placeholder={t("memory.sheet.turnsFrom")}
+              disabled={busy}
+              aria-label={t("memory.sheet.turnsFrom")}
+              onChange={(event) => setTurnFrom(event.target.value)}
+            />
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              className="min-w-0 flex-1"
+              value={turnTo}
+              placeholder={t("memory.sheet.turnsTo")}
+              disabled={busy}
+              aria-label={t("memory.sheet.turnsTo")}
+              onChange={(event) => setTurnTo(event.target.value)}
+            />
+            {(turnFrom || turnTo) && (
+              <Button variant="ghost" disabled={busy} onClick={() => { setTurnFrom(""); setTurnTo(""); }}>
+                {t("memory.sheet.turnsClear")}
+              </Button>
+            )}
+          </div>
+        </Field>
         {!adding && (
           <ListGroup>
             <ListRow

@@ -374,6 +374,16 @@ fn memory_view(
     let failure = latest.as_ref().and_then(failure);
     let mut labels = HashMap::new();
     let mut text_labels = HashMap::new();
+    let stored_turns = database
+        .fork_memory_turns_for_ids(
+            &scope
+                .memory
+                .items
+                .iter()
+                .map(|item| item.id.to_string())
+                .collect::<Vec<_>>(),
+        )
+        .map_err(|error| api_error(ApiErrorCode::Internal, error.to_string()))?;
     for cycle in &scope.cycles {
         if cycle.reverted {
             continue;
@@ -421,10 +431,11 @@ fn memory_view(
             .map(|item| dto::MemoryItemView {
                 id: item.id.to_string(),
                 short_id: item.short_id.to_string(),
-                cycle_label: labels
-                    .get(&item.id)
-                    .or_else(|| text_labels.get(&item.text))
-                    .cloned(),
+                cycle_label: stored_turns
+                    .get(&item.id.to_string())
+                    .map(|range| range.label())
+                    .or_else(|| labels.get(&item.id).cloned())
+                    .or_else(|| text_labels.get(&item.text).cloned()),
                 text: item.text,
                 category: item.category.map(category),
                 origin: origin(item.origin),
