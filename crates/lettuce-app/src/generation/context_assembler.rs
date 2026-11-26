@@ -855,6 +855,20 @@ let mut private_items_used =
             })
             .collect::<Vec<_>>()
             .join("\n");
+        // fork: AetherKit shorthand -> plugin vars (after history regex, before macros).
+        crate::generation::fork_prompt_aether::apply_for_prompt(
+            &mut messages,
+            &mut in_chat,
+            snapshot.prompt.as_ref().map(|prompt| prompt.id.to_string()),
+            match &aggregate.conversation.kind {
+                ConversationKind::Direct(details) => vec![details.character.source_id.to_string()],
+                ConversationKind::Group(_) => {
+                    speaker_character.iter().map(ToString::to_string).collect()
+                }
+            },
+            &names.user_name,
+            &names.character_name,
+        );
         // fork: SillyTavern macros over the non-history messages.
         let fork_macros = crate::generation::fork_prompt_macros::evaluate(
             &mut messages,
