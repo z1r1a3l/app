@@ -9,10 +9,20 @@
 //!
 //! If a card (or another script in the chat's scope) already ships a
 //! conversion regex, that pack wins (Option A) and this adapter stays out.
+//!
+//! [`KEEP_SPEC_BODIES_VISIBLE`] keeps authored spec, state and dice bodies
+//! in the prompt for Vexa v1.0; flip it off when a newer preset getvars
+//! those slots on its own.
 
 mod parser;
 
-pub use parser::{Declaration, adapt_text, declarations, setvar};
+/// When true, `[[spec]]` / `[[state]]` / `[[dice]]` bodies stay visible in
+/// the card text (via `{{getvar}}` after the matching `{{setvar}}`) because
+/// public Vexa v1.0 never reads those plugin slots. Set to `false` for v2
+/// once the preset injects them itself. Flags and hooks are always stripped.
+pub const KEEP_SPEC_BODIES_VISIBLE: bool = true;
+
+pub use parser::{Declaration, adapt_text, adapt_text_with, declarations, setvar};
 
 use crate::fork_regex::{RegexScript, RegexTarget, run_regex_script};
 

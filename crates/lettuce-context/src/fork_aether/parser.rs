@@ -25,8 +25,19 @@ struct Hit {
 /// Replaces every complete AetherKit shorthand in `text` with a silent
 /// `{{setvar::name::value}}`. Unrecognised or unclosed `[[…]]` is left as
 /// written. Nested `[[track]]` inside a tracks spec is kept in the body.
+///
+/// When [`super::KEEP_SPEC_BODIES_VISIBLE`] is on (Vexa v1.0), spec, state
+/// and dice bodies also stay in the sent text as `{{getvar::…}}` so the
+/// model can still read them; flags and hooks are always stripped.
 #[must_use]
 pub fn adapt_text(text: &str) -> String {
+    adapt_text_with(text, super::KEEP_SPEC_BODIES_VISIBLE)
+}
+
+/// Like [`adapt_text`], with an explicit visibility flag so v2 can turn
+/// the v1.0 card-text copy off without rewriting call sites.
+#[must_use]
+pub fn adapt_text_with(text: &str, keep_spec_bodies_visible: bool) -> String {
     let hits = find_hits(text);
     if hits.is_empty() {
         return text.to_owned();
@@ -36,10 +47,20 @@ pub fn adapt_text(text: &str) -> String {
     for hit in hits {
         out.push_str(&text[cursor..hit.start]);
         out.push_str(&setvar(&hit.declaration.var, &hit.declaration.value));
+        if keep_spec_bodies_visible && keeps_body_visible(&hit.declaration.var) {
+            out.push_str(&format!("{{{{getvar::{}}}}}", hit.declaration.var));
+        }
         cursor = hit.end;
     }
     out.push_str(&text[cursor..]);
     out
+}
+
+fn keeps_body_visible(var: &str) -> bool {
+    matches!(
+        var,
+        "pluginArcSpec" | "pluginTracksSpec" | "pluginStateTemplate"
+    ) || var.starts_with("pluginDice")
 }
 
 /// The declarations in `text`, left to right. Later writes to the same slot
