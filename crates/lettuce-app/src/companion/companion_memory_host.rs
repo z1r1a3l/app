@@ -170,6 +170,7 @@ pub trait CompanionMemoryHostSources:
     + lettuce_conversations::ConversationOverviewReader
     + lettuce_memory::MemoryRepository
     + lettuce_memory::MemorySummaryRepository
+    + lettuce_memory::MemorySummaryUnitRepository
     + lettuce_memory::MemoryTokenCountRepository
     + lettuce_memory::DynamicMemoryApprovalRepository
     + lettuce_embeddings::MemoryEmbeddingRepository
@@ -200,6 +201,7 @@ impl<T> CompanionMemoryHostSources for T where
         + lettuce_conversations::ConversationOverviewReader
         + lettuce_memory::MemoryRepository
         + lettuce_memory::MemorySummaryRepository
+        + lettuce_memory::MemorySummaryUnitRepository
         + lettuce_memory::MemoryTokenCountRepository
         + lettuce_memory::DynamicMemoryApprovalRepository
         + lettuce_embeddings::MemoryEmbeddingRepository
@@ -532,7 +534,40 @@ where
         update_default_on_success: bool,
         now: TimestampMillis,
     ) -> Result<crate::CompanionPostTurnMemoryAdmission, CompanionMemoryHostError> {
-        self.trigger_admit_inner(conversation_id, model_profile_id, update_default_on_success, now, None)
+        self.trigger_admit_inner(
+            conversation_id,
+            model_profile_id,
+            update_default_on_success,
+            now,
+            None,
+            true,
+            false,
+        )
+    }
+
+    /// Admits the next chunk of a user-triggered multi-cycle backlog when
+    /// unsummarized messages still remain past the cursor, without reopening
+    /// failed companion effects.
+    pub fn trigger_remaining_chunk_admit(
+        &self,
+        conversation_id: ConversationId,
+        model_profile_id: Option<lettuce_types::ModelProfileId>,
+        update_default_on_success: bool,
+        now: TimestampMillis,
+    ) -> Result<Option<crate::CompanionPostTurnMemoryAdmission>, CompanionMemoryHostError> {
+        match self.trigger_admit_inner(
+            conversation_id,
+            model_profile_id,
+            update_default_on_success,
+            now,
+            None,
+            false,
+            true,
+        ) {
+            Ok(admission) => Ok(Some(admission)),
+            Err(CompanionMemoryHostError::Gated(_)) => Ok(None),
+            Err(error) => Err(error),
+        }
     }
 
     pub(crate) fn trigger_admit_controlled(
@@ -543,9 +578,18 @@ where
         now: TimestampMillis,
         operation: &super::companion_memory_job::MemoryControlOperation,
     ) -> Result<crate::CompanionPostTurnMemoryAdmission, CompanionMemoryHostError> {
-        self.trigger_admit_inner(conversation_id, model_profile_id, update_default_on_success, now, Some(operation))
+        self.trigger_admit_inner(
+            conversation_id,
+            model_profile_id,
+            update_default_on_success,
+            now,
+            Some(operation),
+            true,
+            false,
+        )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn trigger_admit_inner(
         &self,
         conversation_id: ConversationId,
@@ -553,6 +597,8 @@ where
         update_default_on_success: bool,
         now: TimestampMillis,
         operation: Option<&super::companion_memory_job::MemoryControlOperation>,
+        reopen_failed: bool,
+        remaining_only: bool,
     ) -> Result<crate::CompanionPostTurnMemoryAdmission, CompanionMemoryHostError> {
         self.complete_pending_rewinds(conversation_id, now)?;
         let aggregate = ConversationReader::get(self.repository, conversation_id)
@@ -580,18 +626,20 @@ where
             None => admissions,
         };
         let admitted = if self.is_companion(&aggregate.conversation)? {
-            let reopened = lettuce_companions::CompanionTurnEffectRepository::reopen_failed(
-                self.repository,
-                conversation_id,
-                now,
-            )
-            .map_err(CompanionMemoryHostError::Effects)?;
-            if reopened > 0 {
-                tracing::info!(
-                    %conversation_id,
-                    reopened,
-                    "a user-triggered cycle retries failed turn effects"
-                );
+            if reopen_failed {
+                let reopened = lettuce_companions::CompanionTurnEffectRepository::reopen_failed(
+                    self.repository,
+                    conversation_id,
+                    now,
+                )
+                .map_err(CompanionMemoryHostError::Effects)?;
+                if reopened > 0 {
+                    tracing::info!(
+                        %conversation_id,
+                        reopened,
+                        "a user-triggered cycle retries failed turn effects"
+                    );
+                }
             }
             if lettuce_companions::CompanionTurnEffectRepository::list_processing_for_conversation(
                 self.repository,
@@ -601,12 +649,16 @@ where
             .map_err(CompanionMemoryHostError::Effects)?
             .is_empty()
             {
-                admissions.trigger_settled_companion_and_admit(
-                    conversation_id,
-                    interval,
-                    model_profile_id,
-                    update_default_on_success,
-                )
+                if remaining_only {
+                    Ok(None)
+                } else {
+                    admissions.trigger_settled_companion_and_admit(
+                        conversation_id,
+                        interval,
+                        model_profile_id,
+                        update_default_on_success,
+                    )
+                }
             } else if let Some(model_profile_id) = model_profile_id {
                 admissions.retry_direct_with_model_and_admit(
                     conversation_id,
@@ -623,6 +675,13 @@ where
                     crate::CompanionMemoryWindowSelection::Recent,
                 )
             }
+        } else if remaining_only {
+            admissions.trigger_remaining_plain_and_admit(
+                conversation_id,
+                interval,
+                model_profile_id,
+                update_default_on_success,
+            )
         } else {
             admissions.trigger_plain_and_admit(
                 conversation_id,

@@ -810,7 +810,8 @@
     "tabs": {
       "memories": "Paměti",
       "activity": "Aktivita",
-      "pinned": "Připnuté"
+      "pinned": "Připnuté",
+      "summary": "Shrnutí"
     },
     "loading": "Načítání paměti",
     "off": {
@@ -920,7 +921,77 @@
       "cancel": "Zrušit",
       "save": "Uložit",
       "saved": "Shrnutí uloženo",
-      "cleared": "Shrnutí vymazáno"
+      "cleared": "Shrnutí vymazáno",
+      "parts": {
+        "description": "Skládá se z částí, jedna za každou aktualizaci paměti",
+        "budget": "Rozpočet částí",
+        "budgetValue": "{{used}} / {{budget}} tokenů",
+        "list": "Části shrnutí",
+        "count_one": "{{count}} část",
+        "count_few": "{{count}} části",
+        "count_many": "{{count}} části",
+        "count_other": "{{count}} částí",
+        "chapters_one": "{{count}} kapitola",
+        "chapters_few": "{{count}} kapitoly",
+        "chapters_many": "{{count}} kapitoly",
+        "chapters_other": "{{count}} kapitol",
+        "seed": "Úvodní shrnutí",
+        "cycle": "Část",
+        "chapter": "Kapitola",
+        "edited": "Upraveno tebou",
+        "pending": "Použije se při další aktualizaci",
+        "seedNote": "Zůstává beze změny. Neslučuje se do kapitol a nepočítá se do rozpočtu.",
+        "edit": "Upravit",
+        "delete": "Smazat",
+        "deleteTitle": "Smazat tuto část?",
+        "deleteBody": "Shrnutí ji přestane obsahovat. Zprávy, které pokrývala, se znovu neshrnou.",
+        "deleteConfirm": "Smazat část",
+        "asText": "Upravit jako jeden text",
+        "asParts": "Zobrazit části",
+        "done": "Hotovo",
+        "textHint": "Tvoje změny se přiřadí k částem. Pokud text už částem neodpovídá, stane se úvodním shrnutím.",
+        "empty": "Zatím žádné části. První vznikne při další aktualizaci paměti.",
+        "writeStart": "Napsat úvodní shrnutí",
+        "overBudget": "Nad rozpočtem. Další aktualizace budou slučovat části, dokud se nevejdou.",
+        "lead": "Aktualizace paměti přidávají části. Staré části se slučují do kapitol, aby shrnutí zůstalo v rozpočtu.",
+        "coverage": "Co shrnutí pokrývá",
+        "messages_one": "{{count}} zpráva",
+        "messages_few": "{{count}} zprávy",
+        "messages_many": "{{count}} zprávy",
+        "messages_other": "{{count}} zpráv",
+        "legend": {
+          "seed": "Úvodní shrnutí",
+          "chapter": "Kapitola",
+          "cycle": "Část",
+          "unsummarized": "Zatím neshrnuto",
+          "arc": "Oblouk"
+        },
+        "nextMerge_few": "Další sloučení: označené části níže se sloučí, jakmile části přesáhnou {{budget}} tokenů.",
+        "nextMerge_many": "Další sloučení: označené části níže se sloučí, jakmile části přesáhnou {{budget}} tokenů.",
+        "nextMerge_one": "Další sloučení: označené části níže se sloučí, jakmile části přesáhnou {{budget}} tokenů.",
+        "nextMerge_other": "Další sloučení: označené části níže se sloučí, jakmile části přesáhnou {{budget}} tokenů.",
+        "mergesNext": "Sloučí se jako další",
+        "arc": "Oblouk",
+        "arcLevel": "Oblouk, úroveň {{level}}",
+        "arcs_one": "{{count}} oblouk",
+        "arcs_few": "{{count}} oblouky",
+        "arcs_many": "{{count}} oblouku",
+        "arcs_other": "{{count}} oblouků",
+        "sources": {
+          "madeFrom_few": "Vytvořeno z {{count}} částí",
+          "madeFrom_many": "Vytvořeno z {{count}} částí",
+          "madeFrom_one": "Vytvořeno z {{count}} částí",
+          "madeFrom_other": "Vytvořeno z {{count}} částí",
+          "replaced_few": "Nahradilo {{count}} částí",
+          "replaced_many": "Nahradilo {{count}} částí",
+          "replaced_one": "Nahradilo {{count}} částí",
+          "replaced_other": "Nahradilo {{count}} částí",
+          "failed": "Zdroje se nepodařilo načíst.",
+          "back": "Zpět",
+          "readOnly": "Originál jen pro čtení. Byl sloučen do pozdější části; shrnutí změníš úpravou té části."
+        },
+        "emptyTitle": "Zatím žádné části"
+      }
     },
     "status": {
       "approvalTitle": "Aktualizovat paměť?",
@@ -1051,6 +1122,43 @@
         "addBack": "Vrátit zpět do pamětí",
         "added": "Paměť přidána",
         "addedBack": "Paměť vrácena"
+      },
+      "steps": {
+        "title": "Shrnutí",
+        "cycle": {
+          "label": "Nová část",
+          "body": "Zprávy {{from}} až {{to}} shrnuty do nové části"
+        },
+        "chapter": {
+          "label": "Kapitola",
+          "body_few": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jedné kapitoly",
+          "body_many": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jedné kapitoly",
+          "body_one": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jedné kapitoly",
+          "body_other": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jedné kapitoly"
+        },
+        "edit": {
+          "label": "Tvoje úprava",
+          "body": "Převzata tvoje změna pro zprávy {{from}} až {{to}}"
+        },
+        "seedUser": {
+          "label": "Úvodní shrnutí",
+          "body": "Tvoje shrnutí se stalo úvodním shrnutím"
+        },
+        "seedExisting": {
+          "label": "Úvodní shrnutí",
+          "body": "Stávající shrnutí se stalo úvodním shrnutím"
+        },
+        "reset": {
+          "label": "Vymazáno",
+          "body": "Shrnutí jsi vymazal, takže části začínají znovu"
+        },
+        "arc": {
+          "label": "Oblouk",
+          "body_few": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jednoho oblouku",
+          "body_many": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jednoho oblouku",
+          "body_one": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jednoho oblouku",
+          "body_other": "{{count}} části pokrývající zprávy {{from}} až {{to}} sloučeny do jednoho oblouku"
+        }
       }
     },
     "pinnedTab": {

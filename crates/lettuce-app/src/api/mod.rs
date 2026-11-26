@@ -33,7 +33,7 @@ mod worker;
 #[cfg(test)]
 mod foundation_tests;
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use app::inspect::{
     conversation_participation_stats, conversation_speaker_selection_preview,
@@ -161,7 +161,8 @@ pub use speech::{
     microphone_devices, transcribe_file, tts_cache_clear, tts_cache_stats, tts_models,
     tts_synthesize, tts_voice_design_models, user_voice_create, user_voice_delete,
     user_voice_update, user_voices_list, voice_design_preview, whisper_catalog,
-    whisper_clear_cache, whisper_delete, whisper_dictation_model_set, whisper_download,
+    speech_cloud_models, whisper_clear_cache, whisper_delete, whisper_dictation_model_set,
+    whisper_download,
     whisper_models_list, whisper_preload,
 };
 pub use worker::ConversationGenerationWorker;
@@ -181,7 +182,7 @@ pub use memory::control::{
     memory_cycle_revert, memory_cycles, memory_error_dismiss, memory_retry, memory_skip,
     memory_trigger,
 };
-pub use memory::read::{group_companion_memory_get, memory_get};
+pub use memory::read::{group_companion_memory_get, memory_get, memory_summary_part_sources};
 
 mod serial_events;
 

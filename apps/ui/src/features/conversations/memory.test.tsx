@@ -2,7 +2,7 @@ import { act, cleanup, configure, fireEvent, render, screen, waitFor, within } f
 import { createMemoryHistory } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
-  ConversationSettingsView, ConversationView, JobView_Serialize, MemoryAddRequest, MemoryCategory, MemoryCyclePage, MemoryCycleView, MemoryItemView, MemoryMode, MemoryStatusView, MemorySummaryView, TimelineMessage,
+  ConversationSettingsView, ConversationView, JobView_Serialize, MemoryAddRequest, MemoryCategory, MemoryCyclePage, MemoryCycleView, MemoryItemView, MemoryMode, MemoryStatusView, MemorySummaryPartsView, MemorySummaryView, TimelineMessage,
 } from "@/api/generated/bindings";
 import { createMockTransport, mockAppStatus, type MockCallHandlers, type MockStreamHandlers } from "@/api/mock-transport";
 import { App } from "@/app/bootstrap/App";
@@ -62,7 +62,7 @@ const idleStatus: MemoryStatusView = {
 function cycle(id: string, patch: Partial<MemoryCycleView> = {}): MemoryCycleView {
   return {
     run_id: id, job_id: `job-${id}`, started_at: 1_700_000_000_000, label: "1-20", window_start: 1, window_end: 20, status: "complete", failure: null,
-    summary: null, actions: [], reverted: false, revertable: false, blocked_by: null, ...patch,
+    summary: null, summary_steps: [], actions: [], reverted: false, revertable: false, blocked_by: null, ...patch,
   };
 }
 
@@ -70,6 +70,7 @@ interface World {
   revision: number;
   items: MemoryItemView[];
   summary: MemorySummaryView | null;
+  summary_parts?: MemorySummaryPartsView | null;
   status: MemoryStatusView;
   cycles: MemoryCycleView[];
   pinned: TimelineMessage[];
@@ -108,7 +109,7 @@ async function open(setup: Setup = {}) {
         charactersList: () => ({ status: "ok", data: { items: [], next_cursor: null } }),
         conversationsLatestByCharacter: () => ({ status: "ok", data: { items: [], next_cursor: null } }),
         conversationsList: () => ({ status: "ok", data: { items: [], next_cursor: null } }),
-        memoryGet: () => ({ status: "ok", data: { items: world.items, summary: world.summary, status: world.status, revision: world.revision, allowed_categories: world.allowed_categories } }),
+        memoryGet: () => ({ status: "ok", data: { items: world.items, summary: world.summary, summary_parts: world.summary_parts ?? null, status: world.status, revision: world.revision, allowed_categories: world.allowed_categories } }),
         memoryCycles: (request: { cursor: string | null }) => {
           const second = world.cycles.length > 2;
           const page = request.cursor === null ? (second ? world.cycles.slice(0, 2) : world.cycles) : world.cycles.slice(2);
@@ -322,6 +323,131 @@ describe("chat memory page", () => {
     fireEvent.click(within(await screen.findByRole("dialog", { name: "Context summary" })).getByRole("button", { name: "Clear" }));
     await waitFor(() => expect(called("memorySummaryUpdate")).toHaveLength(2));
     expect(called("memorySummaryUpdate")[1]?.request).toMatchObject({ summary: { type: "clear" }, expected_revision: 6 });
+  });
+
+  it("shows the summary parts in their own tab and edits or deletes one part in a drawer", async () => {
+    const parts: MemorySummaryPartsView = {
+      token_budget: 300,
+      chapter_size: 2,
+      message_count: 24,
+      parts: [
+        { id: "u-chapter", kind: "chapter", level: 1, origin: "model", message_start: 0, message_end: 12, text: "Mira reached the harbor.", token_count: 40, pending: false, source_count: 0 },
+        { id: "u-cycle", kind: "cycle", level: 0, origin: "model", message_start: 12, message_end: 18, text: "She hired a boat.", token_count: 20, pending: false, source_count: 0 },
+      ],
+    };
+    const { called } = await open({ world: { summary: { text: "Mira reached the harbor.\n\nShe hired a boat.", origin: "model", token_count: 60 }, summary_parts: parts } });
+    expect(await screen.findByText("2 parts · 1 chapter")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Context summary/ }));
+    expect(await screen.findByText("60 / 300 tokens")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /^Summary/ }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("group", { name: "What the summary covers" })).toBeTruthy();
+    expect(screen.getByText("Not summarized yet")).toBeTruthy();
+    expect(screen.getAllByText("Merges next")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: /Mira reached the harbor\./ }));
+    const chapter = await screen.findByRole("dialog", { name: "Chapter" });
+    expect(within(chapter).getByText("Messages 0 to 12 · 40 tokens")).toBeTruthy();
+    fireEvent.click(within(chapter).getByRole("button", { name: "Edit" }));
+    fireEvent.change(within(chapter).getByDisplayValue("Mira reached the harbor."), { target: { value: "Mira reached the north harbor." } });
+    fireEvent.click(within(chapter).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(called("memorySummaryUpdate")).toHaveLength(1));
+    expect(called("memorySummaryUpdate")[0]?.request).toMatchObject({ summary: { type: "set", text: "Mira reached the north harbor.\n\nShe hired a boat." } });
+
+    fireEvent.click(screen.getByRole("button", { name: /She hired a boat\./ }));
+    const part = await screen.findByRole("dialog", { name: "Part" });
+    fireEvent.click(within(part).getByRole("button", { name: "Delete" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete part" }));
+    await waitFor(() => expect(called("memorySummaryUpdate")).toHaveLength(2));
+    expect(called("memorySummaryUpdate")[1]?.request).toMatchObject({ summary: { type: "set", text: "Mira reached the harbor." } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit as one text" }));
+    const sheet = await screen.findByRole("dialog", { name: "Context summary" });
+    expect(within(sheet).getByDisplayValue(/She hired a boat\./)).toBeTruthy();
+    expect(within(sheet).queryByRole("button", { name: "Show parts" })).toBeNull();
+  });
+
+  it("walks into the original parts a chapter was made from, read-only", async () => {
+    const asked: Record<string, unknown>[] = [];
+    const parts: MemorySummaryPartsView = {
+      token_budget: 300,
+      chapter_size: 2,
+      message_count: 12,
+      parts: [{ id: "u-chapter", kind: "chapter", level: 1, origin: "model", message_start: 0, message_end: 12, text: "Mira reached the harbor.", token_count: 40, pending: false, source_count: 2 }],
+    };
+    await open({
+      world: { summary: { text: "Mira reached the harbor.", origin: "model", token_count: 40 }, summary_parts: parts },
+      calls: {
+        memorySummaryPartSources: (request: Record<string, unknown>) => {
+          asked.push(request);
+          return {
+            status: "ok",
+            data: [
+              { id: "u-1", kind: "cycle", level: 0, origin: "model", message_start: 0, message_end: 6, text: "Mira left the village at dawn.", token_count: 20, pending: false, source_count: 0 },
+              { id: "u-2", kind: "cycle", level: 0, origin: "model", message_start: 6, message_end: 12, text: "She reached the harbor at noon.", token_count: 20, pending: false, source_count: 0 },
+            ],
+          };
+        },
+      } as never,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: /Context summary/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Mira reached the harbor\./ }));
+    const drawer = await screen.findByRole("dialog", { name: "Chapter" });
+    expect(await within(drawer).findByText("Made from 2 parts")).toBeTruthy();
+    fireEvent.click(within(drawer).getByRole("button", { name: /Mira left the village at dawn\./ }));
+    const original = await screen.findByRole("dialog", { name: "Part" });
+    expect(within(original).getByText(/Read-only original/)).toBeTruthy();
+    expect(within(original).queryByRole("button", { name: "Edit" })).toBeNull();
+    fireEvent.click(within(original).getByRole("button", { name: "Back" }));
+    expect(await screen.findByRole("dialog", { name: "Chapter" })).toBeTruthy();
+    expect(asked[0]).toMatchObject({ conversation_id: "c1", part_id: "u-chapter" });
+  });
+
+  it("marks a pending part edit and keeps the starting summary out of the budget", async () => {
+    const parts: MemorySummaryPartsView = {
+      token_budget: 300,
+      chapter_size: 2,
+      message_count: 24,
+      parts: [
+        { id: "u-seed", kind: "seed", level: 0, origin: "import", message_start: 0, message_end: 10, text: "An old recap.", token_count: 500, pending: false, source_count: 0 },
+        { id: null, kind: "cycle", level: 0, origin: "user", message_start: 10, message_end: 16, text: "She hired a boat, not a raft.", token_count: null, pending: true, source_count: 0 },
+      ],
+    };
+    await open({ world: { summary: { text: "An old recap.\n\nShe hired a boat, not a raft.", origin: "user", token_count: 510 }, summary_parts: parts } });
+    fireEvent.click(await screen.findByRole("button", { name: /Context summary/ }));
+    expect(await screen.findByText("0 / 300 tokens")).toBeTruthy();
+    expect(screen.getAllByText("Starting summary").length).toBeGreaterThan(0);
+    expect(screen.getByText("Edited by you")).toBeTruthy();
+    expect(screen.getByText("Applied at the next update")).toBeTruthy();
+  });
+});
+
+describe("memory activity summary steps", () => {
+  it("lists what a chapter-mode update did to the summary instead of the whole summary", async () => {
+    await open({
+      world: {
+        cycles: [
+          cycle("r1", {
+            window_start: 18,
+            window_end: 24,
+            label: "18-24",
+            summary: "The whole published summary.",
+            summary_steps: [
+              { kind: "cycle", level: 0, origin: "user", message_start: 12, message_end: 18, merged: 1, text: "She hired a boat, not a raft.", token_count: 9 },
+              { kind: "cycle", level: 0, origin: "model", message_start: 18, message_end: 24, merged: 0, text: "They sailed at dusk.", token_count: 5 },
+              { kind: "chapter", level: 1, origin: "model", message_start: 0, message_end: 12, merged: 2, text: "Mira reached the harbor.", token_count: 6 },
+            ],
+          }),
+        ],
+      },
+    });
+    fireEvent.click(await screen.findByRole("tab", { name: /^Activity/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Messages 18 to 24/ }));
+    const steps = await screen.findByRole("list", { name: "Summary" });
+    expect(within(steps).getByText("Your edit")).toBeTruthy();
+    expect(within(steps).getByText("Took in your change for messages 12 to 18")).toBeTruthy();
+    expect(within(steps).getByText("Summarized messages 18 to 24 into a new part")).toBeTruthy();
+    expect(within(steps).getByText("Merged 2 parts covering messages 0 to 12 into one chapter")).toBeTruthy();
+    expect(screen.queryByText("The whole published summary.")).toBeNull();
   });
 });
 
@@ -810,7 +936,7 @@ describe("group companion member memory", () => {
       groupCompanionStateGet: () => ({ status: "ok", data: companion ? { members } as never : null }),
       groupCompanionMemoryGet: (request: Record<string, unknown>) => {
         asked.push(request);
-        return { status: "ok", data: { items: perspective.items, summary: null, status: idleStatus, revision: perspective.revision, allowed_categories: ["profile", "preference"] } };
+        return { status: "ok", data: { items: perspective.items, summary: null, summary_parts: null, status: idleStatus, revision: perspective.revision, allowed_categories: ["profile", "preference"] } };
       },
     };
   }

@@ -300,6 +300,7 @@ export const commands = {
 	memoryPin: (request: MemoryPinRequest_Deserialize) => typedError<MemoryEditResult, ApiError_Serialize>(__TAURI_INVOKE("memory_pin", { request })),
 	memorySetTemperature: (request: MemoryTemperatureRequest_Deserialize) => typedError<MemoryEditResult, ApiError_Serialize>(__TAURI_INVOKE("memory_set_temperature", { request })),
 	memorySummaryUpdate: (request: MemorySummaryUpdateRequest) => typedError<MemoryEditResult, ApiError_Serialize>(__TAURI_INVOKE("memory_summary_update", { request })),
+	memorySummaryPartSources: (request: MemorySummaryPartSourcesRequest) => typedError<MemorySummaryPartView[], ApiError_Serialize>(__TAURI_INVOKE("memory_summary_part_sources", { request })),
 	memoryTrigger: (request: MemoryTriggerRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("memory_trigger", { request })),
 	memoryRetry: (request: MemoryRetryRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("memory_retry", { request })),
 	memorySkip: (request: MemorySkipRequest) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("memory_skip", { request })),
@@ -375,8 +376,8 @@ export const commands = {
 	voiceDesignPreview: (request: VoiceDesignPreviewRequest) => typedError<VoiceDesignPreviewView_Serialize[], ApiError_Serialize>(__TAURI_INVOKE("voice_design_preview", { request })),
 	voiceDesignCreate: (request: VoiceDesignCreateRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("voice_design_create", { request })),
 	audioProviderVoicesRefresh: (request: AudioProviderRequest) => typedError<AudioVoiceView[], ApiError_Serialize>(__TAURI_INVOKE("audio_provider_voices_refresh", { request })),
-	ttsModels: (request: TtsModelsRequest) => typedError<TtsModelView[], ApiError_Serialize>(__TAURI_INVOKE("tts_models", { request })),
-	ttsVoiceDesignModels: (request: TtsModelsRequest) => typedError<TtsModelView[], ApiError_Serialize>(__TAURI_INVOKE("tts_voice_design_models", { request })),
+	ttsModels: (request: TtsModelsRequest_Deserialize) => typedError<TtsModelView[], ApiError_Serialize>(__TAURI_INVOKE("tts_models", { request })),
+	ttsVoiceDesignModels: (request: TtsModelsRequest_Deserialize) => typedError<TtsModelView[], ApiError_Serialize>(__TAURI_INVOKE("tts_voice_design_models", { request })),
 	ttsCacheStats: () => typedError<TtsCacheStats, ApiError_Serialize>(__TAURI_INVOKE("tts_cache_stats")),
 	ttsCacheClear: () => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("tts_cache_clear")),
 	ttsSynthesize: (request: TtsSynthesizeRequest_Deserialize) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("tts_synthesize", { request })),
@@ -391,7 +392,8 @@ export const commands = {
 	whisperDelete: (request: WhisperModelRequest) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("whisper_delete", { request })),
 	whisperPreload: (request: WhisperPreloadRequest_Deserialize) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("whisper_preload", { request })),
 	whisperClearCache: () => typedError<WhisperCacheCleared, ApiError_Serialize>(__TAURI_INVOKE("whisper_clear_cache")),
-	whisperDictationModelSet: (request: DictationModelSetRequest) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("whisper_dictation_model_set", { request })),
+	whisperDictationModelSet: (request: DictationModelSetRequest_Deserialize) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("whisper_dictation_model_set", { request })),
+	speechCloudModels: (request: SpeechCloudModelsRequest) => typedError<SpeechCloudModelView[], ApiError_Serialize>(__TAURI_INVOKE("speech_cloud_models", { request })),
 	transcribeFile: (request: TranscribeFileRequest_Deserialize) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("transcribe_file", { request })),
 	dictationStart: (request: DictationStartRequest_Deserialize) => typedError<DictationStarted, ApiError_Serialize>(__TAURI_INVOKE("dictation_start", { request })),
 	dictationStop: (request: DictationStopRequest_Deserialize) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("dictation_stop", { request })),
@@ -892,7 +894,7 @@ export type AudioProviderApiKeyRotateRequest = {
 	expected_generation: number,
 };
 
-export type AudioProviderConfiguration = { type: "gemini"; project_id: string | null; location: string } | { type: "elevenlabs" } | { type: "fish_tts" } | { type: "fish_speech"; base_url: string | null; request_path: string | null } | { type: "open_ai_compatible"; base_url: string | null; request_path: string | null } | { type: "kokoro"; variant: string | null };
+export type AudioProviderConfiguration = { type: "gemini"; project_id: string | null; location: string } | { type: "elevenlabs" } | { type: "fish_tts" } | { type: "fish_speech"; base_url: string | null; request_path: string | null } | { type: "open_ai_compatible"; base_url: string | null; request_path: string | null } | { type: "open_router"; provider_account_id: string } | { type: "nano_gpt"; provider_account_id: string } | { type: "gemini_audio"; provider_account_id: string } | { type: "kokoro"; variant: string | null };
 
 export type AudioProviderCreateRequest = {
 	client_operation_id: string,
@@ -919,7 +921,7 @@ export type AudioProviderRequest = {
 	provider_id: string,
 };
 
-export type AudioProviderType = "gemini" | "elevenlabs" | "fish_tts" | "fish_speech" | "open_ai_compatible" | "kokoro";
+export type AudioProviderType = "gemini" | "elevenlabs" | "fish_tts" | "fish_speech" | "open_ai_compatible" | "open_router" | "nano_gpt" | "gemini_audio" | "kokoro";
 
 export type AudioProviderUpdateRequest = {
 	provider_id: string,
@@ -2682,9 +2684,31 @@ export type DictationCancelRequest = {
 	capture_id: string,
 };
 
-/**  The model dictation uses; `None` returns to the first installed one. */
-export type DictationModelSetRequest = {
+/**
+ *  The model dictation uses; `None` returns to the first installed one.
+ *  When `provider_account_id` is set, dictation routes to that cloud provider
+ *  account (OpenRouter or NanoGPT) using `model_id`.
+ */
+export type DictationModelSetRequest = DictationModelSetRequest_Serialize | DictationModelSetRequest_Deserialize;
+
+/**
+ *  The model dictation uses; `None` returns to the first installed one.
+ *  When `provider_account_id` is set, dictation routes to that cloud provider
+ *  account (OpenRouter or NanoGPT) using `model_id`.
+ */
+export type DictationModelSetRequest_Deserialize = {
 	model_id: string | null,
+	provider_account_id?: string | null,
+};
+
+/**
+ *  The model dictation uses; `None` returns to the first installed one.
+ *  When `provider_account_id` is set, dictation routes to that cloud provider
+ *  account (OpenRouter or NanoGPT) using `model_id`.
+ */
+export type DictationModelSetRequest_Serialize = {
+	model_id: string | null,
+	provider_account_id: string | null,
 };
 
 export type DictationStartRequest = DictationStartRequest_Serialize | DictationStartRequest_Deserialize;
@@ -6713,6 +6737,7 @@ export type MemoryCycleView = {
 	status: MemoryCycleStatus,
 	failure: MemoryFailureCode | null,
 	summary: string | null,
+	summary_steps: MemorySummaryStepView[],
 	actions: MemoryCycleAction[],
 	reverted: boolean,
 	revertable: boolean,
@@ -6862,6 +6887,46 @@ export type MemoryStatusView = {
 
 export type MemorySummaryEdit = { type: "set"; text: string } | { type: "clear" };
 
+export type MemorySummaryPartKind = "seed" | "cycle" | "chapter";
+
+export type MemorySummaryPartSourcesRequest = {
+	conversation_id: string,
+	part_id: string,
+};
+
+export type MemorySummaryPartView = {
+	id: string | null,
+	kind: MemorySummaryPartKind,
+	level: number,
+	origin: MemoryOrigin,
+	message_start: number,
+	message_end: number,
+	text: string,
+	token_count: number | null,
+	pending: boolean,
+	source_count: number,
+};
+
+export type MemorySummaryPartsView = {
+	parts: MemorySummaryPartView[],
+	token_budget: number,
+	chapter_size: number,
+	message_count: number,
+};
+
+export type MemorySummaryStepKind = "seed" | "cycle" | "chapter" | "reset";
+
+export type MemorySummaryStepView = {
+	kind: MemorySummaryStepKind,
+	level: number,
+	origin: MemoryOrigin,
+	message_start: number,
+	message_end: number,
+	merged: number,
+	text: string,
+	token_count: number,
+};
+
 export type MemorySummaryUpdateRequest = {
 	conversation_id: string,
 	summary: MemorySummaryEdit,
@@ -6930,6 +6995,7 @@ export type MemoryView = {
 	items: MemoryItemView[],
 	allowed_categories: MemoryCategory[],
 	summary: MemorySummaryView | null,
+	summary_parts: MemorySummaryPartsView | null,
 	status: MemoryStatusView,
 	revision: number,
 };
@@ -9106,6 +9172,7 @@ export type SettingsDeviceView = {
 	kokoro_keep_model_loaded: boolean,
 	llm_models_dir: string | null,
 	dictation_model_id: string | null,
+	dictation_provider_account_id: string | null,
 	trusted_certificates: TrustedCertificateView[],
 };
 
@@ -9134,6 +9201,9 @@ export type SettingsDynamicMemorySettings = {
 	recursive_memory_loop_hard_cap: number,
 	structured_fallback_format: SettingsMemoryStructuredFallbackFormat,
 	model_pinning_enabled: boolean,
+	chapter_summaries_enabled: boolean,
+	summary_token_budget: number,
+	summary_chapter_size: number,
 };
 
 export type SettingsEmbeddingSettings = {
@@ -9749,6 +9819,15 @@ export type SpeakerSelectionPreviewRequest = {
 	user_message: string | null,
 };
 
+export type SpeechCloudModelView = {
+	id: string,
+	name: string,
+};
+
+export type SpeechCloudModelsRequest = {
+	provider_account_id: string,
+};
+
 /**
  *  Why a speech call or job failed, where the user can act on it. Every
  *  variant but `RetriesExhausted` is terminal at once: retrying cannot fix it.
@@ -10116,8 +10195,16 @@ export type TtsModelView = {
 	name: string,
 };
 
-export type TtsModelsRequest = {
+export type TtsModelsRequest = TtsModelsRequest_Serialize | TtsModelsRequest_Deserialize;
+
+export type TtsModelsRequest_Deserialize = {
 	provider_type: AudioProviderType,
+	provider_id?: string | null,
+};
+
+export type TtsModelsRequest_Serialize = {
+	provider_type: AudioProviderType,
+	provider_id: string | null,
 };
 
 export type TtsSynthesizeRequest = TtsSynthesizeRequest_Serialize | TtsSynthesizeRequest_Deserialize;

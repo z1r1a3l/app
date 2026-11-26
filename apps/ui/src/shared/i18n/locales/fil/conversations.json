@@ -784,7 +784,8 @@
     "tabs": {
       "memories": "Mga Memory",
       "activity": "Activity",
-      "pinned": "Naka-pin"
+      "pinned": "Naka-pin",
+      "summary": "Summary"
     },
     "loading": "Naglo-load ng memory",
     "off": {
@@ -888,7 +889,63 @@
       "cancel": "Kanselahin",
       "save": "I-save",
       "saved": "Na-save ang summary",
-      "cleared": "Nabura ang summary"
+      "cleared": "Nabura ang summary",
+      "parts": {
+        "description": "Binubuo ng mga bahagi, isa bawat update ng memory",
+        "budget": "Budget ng mga bahagi",
+        "budgetValue": "{{used}} / {{budget}} token",
+        "list": "Mga bahagi ng summary",
+        "count_one": "{{count}} bahagi",
+        "count_other": "{{count}} bahagi",
+        "chapters_one": "{{count}} kabanata",
+        "chapters_other": "{{count}} kabanata",
+        "seed": "Panimulang summary",
+        "cycle": "Bahagi",
+        "chapter": "Kabanata",
+        "edited": "In-edit mo",
+        "pending": "Ilalapat sa susunod na update",
+        "seedNote": "Pinananatili kung ano ito. Hindi ito pinagsasama sa mga kabanata at hindi binibilang sa budget.",
+        "edit": "I-edit",
+        "delete": "Burahin",
+        "deleteTitle": "Burahin ang bahaging ito?",
+        "deleteBody": "Hindi na ito isasama sa summary. Hindi na muling isu-summarize ang mga mensaheng sakop nito.",
+        "deleteConfirm": "Burahin ang bahagi",
+        "asText": "I-edit bilang isang teksto",
+        "asParts": "Ipakita ang mga bahagi",
+        "done": "Tapos",
+        "textHint": "Itinutugma ang mga pagbabago mo sa mga bahagi. Kapag hindi na tumutugma ang teksto, ito na ang magiging panimulang summary.",
+        "empty": "Wala pang bahagi. Isusulat ang una sa susunod na update ng memory.",
+        "writeStart": "Sumulat ng panimulang summary",
+        "overBudget": "Lampas sa budget. Pagsasamahin ng mga susunod na update ang mga bahagi hanggang magkasya.",
+        "lead": "Nagdadagdag ng mga bahagi ang mga update ng memory. Pinagsasama ang mga lumang bahagi sa mga kabanata para manatili sa budget ang summary.",
+        "coverage": "Ang sakop ng summary",
+        "messages_one": "{{count}} mensahe",
+        "messages_other": "{{count}} mensahe",
+        "legend": {
+          "seed": "Panimulang summary",
+          "chapter": "Kabanata",
+          "cycle": "Bahagi",
+          "unsummarized": "Hindi pa naisu-summarize",
+          "arc": "Arko"
+        },
+        "nextMerge_one": "Susunod na pagsasama: pagsasamahin ang mga bahaging may marka sa ibaba kapag lumampas ang mga bahagi sa {{budget}} token.",
+        "nextMerge_other": "Susunod na pagsasama: pagsasamahin ang mga bahaging may marka sa ibaba kapag lumampas ang mga bahagi sa {{budget}} token.",
+        "mergesNext": "Susunod na isasama",
+        "arc": "Arko",
+        "arcLevel": "Arko, antas {{level}}",
+        "arcs_one": "{{count}} arko",
+        "arcs_other": "{{count}} arko",
+        "sources": {
+          "madeFrom_one": "Binuo mula sa {{count}} bahagi",
+          "madeFrom_other": "Binuo mula sa {{count}} bahagi",
+          "replaced_one": "Pinalitan ang {{count}} bahagi",
+          "replaced_other": "Pinalitan ang {{count}} bahagi",
+          "failed": "Hindi ma-load ang mga pinagmulan.",
+          "back": "Bumalik",
+          "readOnly": "Orihinal na basahin lang. Isinama ito sa isang mas huling bahagi; i-edit ang bahaging iyon para baguhin ang summary."
+        },
+        "emptyTitle": "Wala pang bahagi"
+      }
     },
     "status": {
       "approvalTitle": "I-update ang memory?",
@@ -1009,6 +1066,39 @@
         "addBack": "Ibalik",
         "added": "Naidagdag ang memory",
         "addedBack": "Naibalik ang memory"
+      },
+      "steps": {
+        "title": "Summary",
+        "cycle": {
+          "label": "Bagong bahagi",
+          "body": "Na-summarize ang mga mensahe {{from}} hanggang {{to}} sa isang bagong bahagi"
+        },
+        "chapter": {
+          "label": "Kabanata",
+          "body_one": "Pinagsama ang {{count}} bahagi na sakop ang mga mensahe {{from}} hanggang {{to}} sa isang kabanata",
+          "body_other": "Pinagsama ang {{count}} bahagi na sakop ang mga mensahe {{from}} hanggang {{to}} sa isang kabanata"
+        },
+        "edit": {
+          "label": "Edit mo",
+          "body": "Kinuha ang pagbabago mo para sa mga mensahe {{from}} hanggang {{to}}"
+        },
+        "seedUser": {
+          "label": "Panimulang summary",
+          "body": "Naging panimulang summary ang summary mo"
+        },
+        "seedExisting": {
+          "label": "Panimulang summary",
+          "body": "Naging panimulang summary ang dati nang summary"
+        },
+        "reset": {
+          "label": "Na-clear",
+          "body": "Na-clear mo ang summary kaya magsisimula ulit ang mga bahagi"
+        },
+        "arc": {
+          "label": "Arko",
+          "body_one": "Pinagsama ang {{count}} bahagi na sakop ang mga mensahe {{from}} hanggang {{to}} sa isang arko",
+          "body_other": "Pinagsama ang {{count}} bahagi na sakop ang mga mensahe {{from}} hanggang {{to}} sa isang arko"
+        }
       }
     },
     "pinnedTab": {

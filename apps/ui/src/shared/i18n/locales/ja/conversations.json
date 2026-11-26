@@ -771,7 +771,8 @@
     "tabs": {
       "memories": "メモリ",
       "activity": "アクティビティ",
-      "pinned": "固定済み"
+      "pinned": "固定済み",
+      "summary": "要約"
     },
     "loading": "メモリを読み込み中",
     "off": {
@@ -872,7 +873,56 @@
       "cancel": "キャンセル",
       "save": "保存",
       "saved": "要約を保存しました",
-      "cleared": "要約をクリアしました"
+      "cleared": "要約をクリアしました",
+      "parts": {
+        "description": "メモリ更新ごとに1つずつ追加されるパートで構成されます",
+        "budget": "パートの予算",
+        "budgetValue": "{{used}} / {{budget}}トークン",
+        "list": "要約のパート",
+        "count_other": "{{count}}パート",
+        "chapters_other": "{{count}}章",
+        "seed": "最初の要約",
+        "cycle": "パート",
+        "chapter": "章",
+        "edited": "あなたが編集",
+        "pending": "次回の更新で反映",
+        "seedNote": "そのまま保持されます。章にまとめられず、予算にも含まれません。",
+        "edit": "編集",
+        "delete": "削除",
+        "deleteTitle": "このパートを削除しますか？",
+        "deleteBody": "要約に含まれなくなります。このパートが扱っていたメッセージは再要約されません。",
+        "deleteConfirm": "パートを削除",
+        "asText": "1つのテキストとして編集",
+        "asParts": "パートを表示",
+        "done": "完了",
+        "textHint": "変更はパートと照合されます。テキストがパートと一致しなくなると、最初の要約になります。",
+        "empty": "まだパートはありません。最初のパートは次回のメモリ更新で書かれます。",
+        "writeStart": "最初の要約を書く",
+        "overBudget": "予算を超えています。収まるまで、次回以降の更新でパートがまとめられます。",
+        "lead": "メモリ更新のたびにパートが追加されます。要約が予算内に収まるよう、古いパートは章にまとめられます。",
+        "coverage": "要約がカバーしている範囲",
+        "messages_other": "{{count}}件のメッセージ",
+        "legend": {
+          "seed": "最初の要約",
+          "chapter": "章",
+          "cycle": "パート",
+          "unsummarized": "まだ要約されていない",
+          "arc": "編"
+        },
+        "nextMerge_other": "次のまとめ：パートの合計が{{budget}}トークンを超えると、下で印の付いたパートがまとめられます。",
+        "mergesNext": "次にまとめられる",
+        "arc": "編",
+        "arcLevel": "編(レベル{{level}})",
+        "arcs_other": "{{count}}編",
+        "sources": {
+          "madeFrom_other": "{{count}}個のパートから作成",
+          "replaced_other": "{{count}}個のパートを置き換え",
+          "failed": "元のパートを読み込めませんでした。",
+          "back": "戻る",
+          "readOnly": "読み取り専用のオリジナルです。後のパートにまとめられています。要約を変えるにはそのパートを編集してください。"
+        },
+        "emptyTitle": "まだパートはありません"
+      }
     },
     "status": {
       "approvalTitle": "メモリを更新しますか？",
@@ -988,6 +1038,37 @@
         "addBack": "元に戻す",
         "added": "メモリを追加しました",
         "addedBack": "メモリを戻しました"
+      },
+      "steps": {
+        "title": "要約",
+        "cycle": {
+          "label": "新しいパート",
+          "body": "メッセージ{{from}}〜{{to}}を新しいパートに要約"
+        },
+        "chapter": {
+          "label": "章",
+          "body_other": "メッセージ{{from}}〜{{to}}の{{count}}個のパートを1つの章にまとめました"
+        },
+        "edit": {
+          "label": "あなたの編集",
+          "body": "メッセージ{{from}}〜{{to}}への変更を取り込みました"
+        },
+        "seedUser": {
+          "label": "最初の要約",
+          "body": "あなたの要約が最初の要約になりました"
+        },
+        "seedExisting": {
+          "label": "最初の要約",
+          "body": "既存の要約が最初の要約になりました"
+        },
+        "reset": {
+          "label": "クリア",
+          "body": "要約をクリアしたため、パートは最初からになります"
+        },
+        "arc": {
+          "label": "編",
+          "body_other": "メッセージ{{from}}〜{{to}}の{{count}}個のパートを1つの編にまとめました"
+        }
       }
     },
     "pinnedTab": {

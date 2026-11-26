@@ -541,12 +541,59 @@
   "developer": {
     "group": "Mga test chat",
     "templates": {
-      "roleplay": { "title": "Roleplay chat", "description": "Isang karakter, isang persona at isang chat na may history" },
-      "companion": { "title": "Companion chat, may laman", "description": "Isang companion na may Soul, relasyon, history at mga alaala" },
-      "group": { "title": "Group chat", "description": "Tatlong karakter sa isang grupo na may history" },
-      "group_companion": { "title": "Companion group chat", "description": "Tatlong companion na may Soul sa isang companion group na may history" },
-      "roleplay_widgets": { "title": "Roleplay chat na may mga widget", "description": "Ang roleplay chat na may lahat ng widget sa tabi ng chat" },
-      "companion_widgets": { "title": "Companion chat na may mga widget", "description": "Ang companion chat na may lahat ng widget, kasama ang companion state at memory" }
+      "roleplay": {
+        "title": "Roleplay chat",
+        "description": "Isang karakter, isang persona at isang chat na may history"
+      },
+      "companion": {
+        "title": "Companion chat, may laman",
+        "description": "Isang companion na may Soul, relasyon, history at mga alaala"
+      },
+      "group": {
+        "title": "Group chat",
+        "description": "Tatlong karakter sa isang grupo na may history"
+      },
+      "group_companion": {
+        "title": "Companion group chat",
+        "description": "Tatlong companion na may Soul sa isang companion group na may history"
+      },
+      "roleplay_widgets": {
+        "title": "Roleplay chat na may mga widget",
+        "description": "Ang roleplay chat na may lahat ng widget sa tabi ng chat"
+      },
+      "companion_widgets": {
+        "title": "Companion chat na may mga widget",
+        "description": "Ang companion chat na may lahat ng widget, kasama ang companion state at memory"
+      },
+      "chapters_backlog": {
+        "title": "Mga kabanata: mahabang kasaysayan",
+        "description": "Isang kuwento ng ferry na may 42 mensahe at walang buod. Bawat mensaheng ipinapadala mo ay nagbubuod ng susunod na anim na luma."
+      },
+      "chapters_user_seed": {
+        "title": "Mga kabanata: nakasulat na buod",
+        "description": "Parehong kuwento na may maikling buod na isinulat ng kamay, na pinapanatili bilang panimula."
+      },
+      "chapters_large_seed": {
+        "title": "Mga kabanata: sobrang laking buod",
+        "description": "Parehong kuwento na may buod na isinulat ng kamay at mas malaki sa test budget. Ang mga bagong cycle lang ang pinagsasama."
+      },
+      "chapters_group": {
+        "title": "Mga kabanata: grupo",
+        "description": "Isang kuwento ng salvage crew na may 36 mensahe sa isang grupong may dynamic memory."
+      }
+    },
+    "chapters": {
+      "group": "Mga test ng buod ayon sa kabanata",
+      "apply": {
+        "title": "Gamitin ang test settings ng kabanata",
+        "description": "Binubuksan ang dynamic memory at buod ayon sa kabanata na may cycle na 6 na mensahe, budget na 800 token at 2 cycle bawat kabanata. Ise-save muna ang memory settings mo."
+      },
+      "restore": {
+        "title": "Ibalik ang memory settings",
+        "description": "Ibinabalik ang memory settings na na-save bago ang test settings."
+      },
+      "applied": "Naka-on ang test settings ng kabanata",
+      "restored": "Naibalik ang memory settings"
     }
   },
   "manage": {
@@ -608,11 +655,14 @@
     "verified": "Na-verify ang koneksyon",
     "audioKinds": {
       "elevenlabs": "ElevenLabs",
-      "gemini": "Gemini",
+      "gemini": "Google Gemini (Vertex AI)",
       "fish_tts": "Fish Audio",
       "fish_speech": "Fish Speech",
       "open_ai_compatible": "OpenAI compatible",
-      "kokoro": "Kokoro"
+      "kokoro": "Kokoro",
+      "open_router": "OpenRouter",
+      "nano_gpt": "NanoGPT",
+      "gemini_audio": "Google Gemini Audio"
     },
     "verifyFailed": "Hindi ma-verify ang koneksyon.",
     "saveBeforeVerify": "I-save ang mga pagbabago sa koneksyon bago mag-verify gamit ang naka-save na key.",
@@ -622,7 +672,10 @@
     "deleteWithModels_one": "Tanggalin ang provider at 1 modelo",
     "deleteWithModels_other": "Tanggalin ang provider at {{count}} modelo",
     "modelCount_one": "{{count}} modelo",
-    "modelCount_other": "{{count}} modelo"
+    "modelCount_other": "{{count}} modelo",
+    "linkedAccount": "Account ng provider",
+    "linkedAccountHint": "Ginagamit ang API key mula sa dati mong provider account",
+    "linkedAccountEmpty": "Magdagdag muna ng OpenRouter o NanoGPT account sa Mga Modelo"
   },
   "models": {
     "vision": "Vision",
@@ -1418,8 +1471,6 @@
       "balancedBody": "Magandang balanse ng pag-alala at bilis para sa karamihan ng chat.",
       "comprehensiveBody": "Pinakamaraming natatandaan. Pinakamainam para sa mahahaba at detalyadong kuwento.",
       "customBody": "Custom: sarili mong value. Pumili ng profile para magsimulang muli mula rito.",
-      "advanced": "Mga advanced na opsyon",
-      "advancedBody": "Bawat value na itinatakda ng profile",
       "interval": "Summary interval",
       "intervalBody": "Mga mensahe sa pagitan ng summary. Ito rin ang bilang ng kamakailang mensahe na kasama sa bawat tugon.",
       "maxEntries": "Max na memory entry",
@@ -1445,12 +1496,42 @@
       "similarityValue": "Threshold",
       "similarityValueBody": "Minimum na similarity para ma-retrieve ang isang memory"
     },
+    "groups": {
+      "saved": "Ano ang sine-save",
+      "reply": "Ano ang kasama sa bawat sagot",
+      "summary": "Summary ng context",
+      "forgetting": "Paglimot",
+      "manager": "Memory manager"
+    },
+    "pages": {
+      "group": "Iba pang setting",
+      "saved": {
+        "title": "Ano ang sine-save",
+        "body": "Pagitan ng buod, limitasyon ng alaala, mga duplikado, at pag-pin"
+      },
+      "recall": {
+        "title": "Pag-alala",
+        "body": "Ano ang kasama sa bawat sagot at paano pinipili ang mga alaala"
+      },
+      "summary": {
+        "title": "Summary ng context",
+        "body": "Mga summary na may kabanata at ang budget ng summary"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "body": "Paglimot at kung paano gumagana ang memory manager"
+      }
+    },
     "advanced": {
-      "title": "Advanced",
-      "body": "Context enrichment at gawi ng memory manager",
       "enrichment": "Context enrichment",
       "experimental": "Experimental",
       "enrichmentBody": "Ginagamit ang huling ilang mensahe para maghanap ng memory, hindi lang ang pinakabago",
+      "chapterSummaries": "Mga buod ng kabanata",
+      "chapterSummariesBody": "Binubuod ang bawat cycle ng memorya nang mag-isa at pinagsasama ang mga mas lumang cycle sa mga kabanata kapag lumampas na sa badyet ang buod. Pinananatili ang kasalukuyang buod bilang panimula.",
+      "summaryBudget": "Badyet ng buod",
+      "summaryBudgetBody": "Mga token na maaaring gamitin ng buod ng usapan bago pagsamahin ang mga mas lumang cycle sa mga kabanata.",
+      "chapterSize": "Mga cycle bawat kabanata",
+      "chapterSizeBody": "Ilang buod ang pinagsasama sa isang kabanata.",
       "loops": "Recursive memory loops",
       "loopsBody": "Ipinapadala pabalik ang tool result hanggang tawagin ng modelo ang done. Tumutulong sa mas mahihinang modelo, mas maraming token ang ginagamit.",
       "loopCap": "Recursive loop hard cap",
@@ -1794,7 +1875,13 @@
     "metadata": "{{left}} · {{right}}",
     "range": "{{start}}–{{end}}",
     "customScope": "Ibang scope",
-    "scopeName": "Pangalan ng scope"
+    "scopeName": "Pangalan ng scope",
+    "source": "Pinagmulan ng speech recognition",
+    "sourceLocal": "Lokal (Whisper)",
+    "sourceCloud": "Cloud",
+    "cloudModel": "Cloud speech model",
+    "cloudProvider": "Account ng provider",
+    "cloudProviderEmpty": "Magdagdag muna ng OpenRouter o NanoGPT account sa Mga Provider"
   },
   "hf": {
     "title": "Kumuha ng modelo",
@@ -2325,7 +2412,8 @@
       "previewFirst": "I-preview muna ang boses para magawa ito.",
       "fishVoiceIdRequired": "Kailangan ng Fish Audio ng voice ID.",
       "openaiModelIdRequired": "Ilagay ang model ID na inaasahan ng iyong endpoint.",
-      "openaiVoiceIdRequired": "Maglagay ng voice ID na sinusuportahan ng iyong endpoint."
+      "openaiVoiceIdRequired": "Maglagay ng voice ID na sinusuportahan ng iyong endpoint.",
+      "cloudVoice": "Boses"
     },
     "kokoro": {
       "studio": "Kokoro studio",

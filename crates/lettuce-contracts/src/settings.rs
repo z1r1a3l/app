@@ -225,6 +225,9 @@ pub struct SettingsDynamicMemorySettings {
     pub recursive_memory_loop_hard_cap: u32,
     pub structured_fallback_format: SettingsMemoryStructuredFallbackFormat,
     pub model_pinning_enabled: bool,
+    pub chapter_summaries_enabled: bool,
+    pub summary_token_budget: u32,
+    pub summary_chapter_size: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -748,6 +751,7 @@ pub struct SettingsDeviceView {
     pub kokoro_keep_model_loaded: bool,
     pub llm_models_dir: Option<String>,
     pub dictation_model_id: Option<String>,
+    pub dictation_provider_account_id: Option<String>,
     pub trusted_certificates: Vec<crate::TrustedCertificateView>,
 }
 

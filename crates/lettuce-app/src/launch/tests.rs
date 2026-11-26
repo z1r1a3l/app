@@ -2691,6 +2691,7 @@ async fn companion_effect_appears_once_with_the_finalized_assistant_message() {
         dispatch.attempt.id,
         work.admission.batch.window_selection,
         &summary_prompt,
+        crate::SummaryMode::Cumulative,
         &work.handle,
         None,
         TimestampMillis::new(NOW.get() + 12),
@@ -3547,6 +3548,7 @@ async fn companion_effect_appears_once_with_the_finalized_assistant_message() {
         },
         selected_model_profile_id: Some(failed_model_id),
         update_dynamic_memory_model_on_success: true,
+        chain_follow_up: false,
     };
     let failure_handle = JobHandle::new(failure_job_id);
     let failed = terminal
@@ -5674,6 +5676,15 @@ async fn a_manual_memory_send_adds_the_relevant_memories_block_like_legacy() {
     assert!(manual.contains(block));
     let (_, dynamic) = assembled_prompt_with_text(&database, request(true)).await;
     assert!(!dynamic.contains(block));
+    // The ordering note is confined to dynamic (relevance-ranked) memory.
+    assert!(
+        !manual.contains("ordered by estimated relevance"),
+        "{manual}"
+    );
+    assert!(
+        dynamic.contains("ordered by estimated relevance"),
+        "{dynamic}"
+    );
 }
 
 #[tokio::test]

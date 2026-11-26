@@ -537,12 +537,59 @@
   "developer": {
     "group": "Obrolan uji",
     "templates": {
-      "roleplay": { "title": "Obrolan roleplay", "description": "Satu karakter, satu persona, dan obrolan dengan riwayat" },
-      "companion": { "title": "Obrolan pendamping, terisi", "description": "Seorang pendamping dengan jiwa, hubungan, riwayat, dan kenangan" },
-      "group": { "title": "Obrolan grup", "description": "Tiga karakter dalam grup dengan riwayat" },
-      "group_companion": { "title": "Obrolan grup pendamping", "description": "Tiga pendamping dengan jiwa dalam grup pendamping dengan riwayat" },
-      "roleplay_widgets": { "title": "Obrolan roleplay dengan widget", "description": "Obrolan roleplay dengan semua widget di samping obrolan" },
-      "companion_widgets": { "title": "Obrolan pendamping dengan widget", "description": "Obrolan pendamping dengan semua widget, termasuk status pendamping dan memori" }
+      "roleplay": {
+        "title": "Obrolan roleplay",
+        "description": "Satu karakter, satu persona, dan obrolan dengan riwayat"
+      },
+      "companion": {
+        "title": "Obrolan pendamping, terisi",
+        "description": "Seorang pendamping dengan jiwa, hubungan, riwayat, dan kenangan"
+      },
+      "group": {
+        "title": "Obrolan grup",
+        "description": "Tiga karakter dalam grup dengan riwayat"
+      },
+      "group_companion": {
+        "title": "Obrolan grup pendamping",
+        "description": "Tiga pendamping dengan jiwa dalam grup pendamping dengan riwayat"
+      },
+      "roleplay_widgets": {
+        "title": "Obrolan roleplay dengan widget",
+        "description": "Obrolan roleplay dengan semua widget di samping obrolan"
+      },
+      "companion_widgets": {
+        "title": "Obrolan pendamping dengan widget",
+        "description": "Obrolan pendamping dengan semua widget, termasuk status pendamping dan memori"
+      },
+      "chapters_backlog": {
+        "title": "Bab: riwayat panjang",
+        "description": "Cerita feri 42 pesan tanpa ringkasan. Setiap pesan yang kamu kirim meringkas enam pesan lama berikutnya."
+      },
+      "chapters_user_seed": {
+        "title": "Bab: ringkasan tertulis",
+        "description": "Cerita yang sama dengan ringkasan pendek yang ditulis manual, dipertahankan sebagai titik awal."
+      },
+      "chapters_large_seed": {
+        "title": "Bab: ringkasan terlalu besar",
+        "description": "Cerita yang sama dengan ringkasan manual yang lebih besar dari anggaran uji. Hanya siklus baru yang digabung."
+      },
+      "chapters_group": {
+        "title": "Bab: grup",
+        "description": "Cerita kru penyelamat 36 pesan dalam grup dengan memori dinamis."
+      }
+    },
+    "chapters": {
+      "group": "Uji ringkasan per bab",
+      "apply": {
+        "title": "Gunakan pengaturan uji bab",
+        "description": "Menyalakan memori dinamis dan ringkasan per bab dengan siklus 6 pesan, anggaran 800 token, dan 2 siklus per bab. Pengaturan memorimu disimpan lebih dulu."
+      },
+      "restore": {
+        "title": "Pulihkan pengaturan memori",
+        "description": "Mengembalikan pengaturan memori yang disimpan sebelum pengaturan uji."
+      },
+      "applied": "Pengaturan uji bab aktif",
+      "restored": "Pengaturan memori dipulihkan"
     }
   },
   "manage": {
@@ -604,18 +651,24 @@
     "verified": "Koneksi terverifikasi",
     "audioKinds": {
       "elevenlabs": "ElevenLabs",
-      "gemini": "Gemini",
+      "gemini": "Google Gemini (Vertex AI)",
       "fish_tts": "Fish Audio",
       "fish_speech": "Fish Speech",
       "open_ai_compatible": "Kompatibel OpenAI",
-      "kokoro": "Kokoro"
+      "kokoro": "Kokoro",
+      "open_router": "OpenRouter",
+      "nano_gpt": "NanoGPT",
+      "gemini_audio": "Google Gemini Audio"
     },
     "verifyFailed": "Koneksi tidak dapat diverifikasi.",
     "saveBeforeVerify": "Simpan perubahan koneksi sebelum memverifikasi dengan kunci tersimpan.",
     "deleteWithModelsTitle": "Hapus {{name}} dan modelnya?",
     "deleteWithModelsBody_other": "Penyedia ini masih memiliki {{count}} model: {{names}}. Menghapus penyedia juga menghapusnya.",
     "deleteWithModels_other": "Hapus penyedia dan {{count}} model",
-    "modelCount_other": "{{count}} model"
+    "modelCount_other": "{{count}} model",
+    "linkedAccount": "Akun penyedia",
+    "linkedAccountHint": "Menggunakan kunci API dari akun penyedia yang sudah ada",
+    "linkedAccountEmpty": "Tambahkan akun OpenRouter atau NanoGPT di tab Model terlebih dahulu"
   },
   "models": {
     "vision": "Visi",
@@ -1406,8 +1459,6 @@
       "balancedBody": "Campuran recall dan kecepatan yang baik untuk sebagian besar obrolan.",
       "comprehensiveBody": "Mengingat paling banyak. Terbaik untuk cerita panjang dan detail.",
       "customBody": "Kustom: nilai Anda sendiri. Pilih profil untuk memulainya lagi.",
-      "advanced": "Opsi lanjutan",
-      "advancedBody": "Setiap nilai yang diatur profil",
       "interval": "Interval ringkasan",
       "intervalBody": "Pesan di antara ringkasan. Juga berapa banyak pesan terbaru yang ikut di setiap balasan.",
       "maxEntries": "Entri memori maksimal",
@@ -1433,12 +1484,42 @@
       "similarityValue": "Ambang",
       "similarityValueBody": "Kesamaan minimum agar memori diambil"
     },
+    "groups": {
+      "saved": "Apa yang disimpan",
+      "reply": "Apa yang ikut di setiap balasan",
+      "summary": "Ringkasan konteks",
+      "forgetting": "Melupakan",
+      "manager": "Pengelola memori"
+    },
+    "pages": {
+      "group": "Pengaturan lain",
+      "saved": {
+        "title": "Apa yang disimpan",
+        "body": "Interval ringkasan, batas memori, duplikat, dan penyematan"
+      },
+      "recall": {
+        "title": "Ingatan",
+        "body": "Apa yang ikut di setiap balasan dan cara memori dipilih"
+      },
+      "summary": {
+        "title": "Ringkasan konteks",
+        "body": "Ringkasan per bab dan anggaran ringkasan"
+      },
+      "advanced": {
+        "title": "Lanjutan",
+        "body": "Melupakan dan cara kerja pengelola memori"
+      }
+    },
     "advanced": {
-      "title": "Lanjutan",
-      "body": "Pengayaan konteks dan perilaku manajer memori",
       "enrichment": "Pengayaan konteks",
       "experimental": "Eksperimental",
       "enrichmentBody": "Menggunakan beberapa pesan terakhir untuk mencari memori, bukan hanya yang terbaru",
+      "chapterSummaries": "Ringkasan bab",
+      "chapterSummariesBody": "Meringkas setiap siklus memori secara terpisah dan menggabungkan siklus yang lebih lama menjadi bab saat ringkasan melampaui anggarannya. Ringkasan saat ini dipertahankan sebagai titik awal.",
+      "summaryBudget": "Anggaran ringkasan",
+      "summaryBudgetBody": "Token yang dapat digunakan ringkasan percakapan sebelum siklus lama digabungkan ke dalam bab.",
+      "chapterSize": "Siklus per bab",
+      "chapterSizeBody": "Berapa banyak ringkasan yang digabungkan menjadi satu bab.",
       "loops": "Pengulangan memori rekursif",
       "loopsBody": "Mengirim hasil alat kembali hingga model memanggil selesai. Membantu model lemah, memakai lebih banyak token.",
       "loopCap": "Batas keras pengulangan rekursif",
@@ -1781,7 +1862,13 @@
     "metadata": "{{left}} · {{right}}",
     "range": "{{start}}–{{end}}",
     "customScope": "Cakupan lain",
-    "scopeName": "Nama cakupan"
+    "scopeName": "Nama cakupan",
+    "source": "Sumber pengenalan suara",
+    "sourceLocal": "Lokal (Whisper)",
+    "sourceCloud": "Cloud",
+    "cloudModel": "Model suara cloud",
+    "cloudProvider": "Akun penyedia",
+    "cloudProviderEmpty": "Tambahkan akun OpenRouter atau NanoGPT di Penyedia terlebih dahulu"
   },
   "hf": {
     "title": "Dapatkan model",
@@ -1986,8 +2073,17 @@
     "mtpBundledBody": "Balasan lebih cepat, menggunakan lapisan prediksi di file ini",
     "systemRam": "RAM sistem",
     "vramShort": "VRAM",
-    "offloadChoices": { "auto": "Otomatis", "gpu": "GPU", "mixed": "Campuran", "cpu": "CPU" },
-    "placementChoices": { "auto": "Otomatis", "vram": "VRAM", "ram": "RAM" },
+    "offloadChoices": {
+      "auto": "Otomatis",
+      "gpu": "GPU",
+      "mixed": "Campuran",
+      "cpu": "CPU"
+    },
+    "placementChoices": {
+      "auto": "Otomatis",
+      "vram": "VRAM",
+      "ram": "RAM"
+    },
     "noRecommendation": "Tidak ada file yang dipastikan muat dengan 8.192 token dan KV Q8 atau Q6. Anda dapat memilih file secara manual.",
     "retryMove": "Coba lagi memindahkan file",
     "localProvider": "llama.cpp (Lokal)",
@@ -2174,10 +2270,22 @@
       "group": "Penyaringan konten",
       "title": "Pure mode",
       "levels": {
-        "off": { "label": "Mati", "description": "Semua konten diizinkan" },
-        "low": { "label": "Rendah", "description": "Memblokir konten seksual eksplisit dan kata kasar" },
-        "standard": { "label": "Standar", "description": "Memblokir NSFW dan kekerasan grafis" },
-        "strict": { "label": "Ketat", "description": "Penyaringan maksimal dan tanpa nada sugestif" }
+        "off": {
+          "label": "Mati",
+          "description": "Semua konten diizinkan"
+        },
+        "low": {
+          "label": "Rendah",
+          "description": "Memblokir konten seksual eksplisit dan kata kasar"
+        },
+        "standard": {
+          "label": "Standar",
+          "description": "Memblokir NSFW dan kekerasan grafis"
+        },
+        "strict": {
+          "label": "Ketat",
+          "description": "Penyaringan maksimal dan tanpa nada sugestif"
+        }
       }
     },
     "privacy": {
@@ -2285,7 +2393,8 @@
       "previewFirst": "Pratinjau suaranya dulu untuk membuatnya.",
       "fishVoiceIdRequired": "Fish Audio butuh ID suara.",
       "openaiModelIdRequired": "Masukkan ID model yang diharapkan endpoint-mu.",
-      "openaiVoiceIdRequired": "Masukkan ID suara yang didukung endpoint-mu."
+      "openaiVoiceIdRequired": "Masukkan ID suara yang didukung endpoint-mu.",
+      "cloudVoice": "Suara"
     },
     "kokoro": {
       "studio": "Studio Kokoro",
