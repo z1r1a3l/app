@@ -157,7 +157,7 @@ impl ForkMacroOutcome {
     }
 
     #[cfg(test)]
-    fn rolls(&self) -> &[DiceRoll] {
+    fn rolls(&self) -> &[fork_macros::DiceRoll] {
         self.run.as_ref().map_or(&[], MacroRun::rolls)
     }
 }
