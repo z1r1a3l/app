@@ -96,3 +96,21 @@ html:active-view-transition-type(page-back)::view-transition-new(mobile-page) {
   from { transform: translateX(-16%); filter: brightness(0.88); }
   to { transform: translateX(0); filter: brightness(1); }
 }
+
+/* Crisp defines --safe-top/bottom from env(safe-area-inset-*). Android 15+ WebView
+   often reports those as 0; MainActivity then overrides the same variables from
+   WindowInsets. Left/right are not in Crisp, so they live here for landscape cutouts. */
+:root {
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Crisp Page's default body padding (pb-10) does not include the system inset.
+   Settings and other full-screen sub-pages hide the tab bar, so the last row can
+   sit under the 3-button navigation bar with no further scroll. When a Page has a
+   pinned footer, the scroller is not :last-child and the footer already owns the
+   inset. Tabbed screens are marked data-nav="tabs" and are skipped: the tab bar
+   already includes --safe-bottom. */
+[data-nav="header"] .flex.h-full.min-h-0.flex-col > main.min-h-0.flex-1.overflow-y-auto:last-child {
+  padding-bottom: var(--safe-bottom, 0px);
+}

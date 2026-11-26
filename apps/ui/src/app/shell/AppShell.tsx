@@ -140,6 +140,7 @@ export function AppShell() {
       >
         <div
           data-mobile-route-page={mobile || undefined}
+          data-nav={welcome || navigationHidden ? "header" : tabs ? "tabs" : "side"}
           className={cn(
             "relative flex h-full min-h-0 flex-col overflow-clip bg-surface text-fg",
             desktop && !expanded && "rounded-2xl ring-1 ring-inset ring-line",
