@@ -1,5 +1,6 @@
 //! Fork-only storage for SillyTavern macro variables (migration 9002): chat
 //! variables per conversation, global variables, and each generation's dice.
+//! All three tables go into backups and sync row by row.
 
 use std::sync::Arc;
 
@@ -30,7 +31,8 @@ fn apply(
         match (conversation_id, value) {
             (Some(chat), Some(value)) => transaction.execute(
                 "INSERT INTO fork_chat_vars (conversation_id, name, value, updated_at) VALUES (?1, ?2, ?3, ?4)
-                 ON CONFLICT (conversation_id, name) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+                 ON CONFLICT (conversation_id, name) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+                 WHERE value IS NOT excluded.value",
                 params![chat, name, value, now],
             )?,
             (Some(chat), None) => transaction.execute(
@@ -39,7 +41,8 @@ fn apply(
             )?,
             (None, Some(value)) => transaction.execute(
                 "INSERT INTO fork_global_vars (name, value, updated_at) VALUES (?1, ?2, ?3)
-                 ON CONFLICT (name) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+                 ON CONFLICT (name) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+                 WHERE value IS NOT excluded.value",
                 params![name, value, now],
             )?,
             (None, None) => {
@@ -102,17 +105,34 @@ impl Database {
     ) -> Result<(), DatabaseError> {
         let mut connection = self.connection()?;
         let transaction = connection.transaction()?;
-        match conversation_id {
-            Some(chat) => transaction.execute(
-                "DELETE FROM fork_chat_vars WHERE conversation_id = ?1",
-                params![chat],
-            )?,
-            None => transaction.execute("DELETE FROM fork_global_vars", [])?,
+        // Only what differs is written, so unchanged rows keep their
+        // `updated_at` and sync sees no change.
+        let current = match conversation_id {
+            Some(chat) => {
+                let mut statement = transaction
+                    .prepare("SELECT name, value FROM fork_chat_vars WHERE conversation_id = ?1")?;
+                statement
+                    .query_map(params![chat], |row| Ok((row.get(0)?, row.get(1)?)))?
+                    .collect::<rusqlite::Result<Vars>>()?
+            }
+            None => {
+                let mut statement =
+                    transaction.prepare("SELECT name, value FROM fork_global_vars")?;
+                statement
+                    .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+                    .collect::<rusqlite::Result<Vars>>()?
+            }
         };
-        let changes: VarChanges = vars
-            .iter()
-            .map(|(name, value)| (name.clone(), Some(value.clone())))
+        let mut changes: VarChanges = current
+            .keys()
+            .filter(|name| !vars.contains_key(*name))
+            .map(|name| (name.clone(), None))
             .collect();
+        for (name, value) in vars {
+            if current.get(name) != Some(value) {
+                changes.insert(name.clone(), Some(value.clone()));
+            }
+        }
         apply(&transaction, conversation_id, &changes, now_millis())?;
         transaction.commit()?;
         Ok(())
@@ -176,6 +196,99 @@ impl Database {
         Ok(vars + rolls)
     }
 }
+
+const CHAT_VAR_COLUMNS: &[&str] = &["conversation_id", "name", "value", "updated_at"];
+const GLOBAL_VAR_COLUMNS: &[&str] = &["name", "value", "updated_at"];
+const ROLL_COLUMNS: &[&str] = &["conversation_id", "fingerprint", "rolls_json", "created_at"];
+
+/// The macro tables as backup rows.
+pub(crate) fn read_backup_in(
+    transaction: &rusqlite::Transaction<'_>,
+) -> rusqlite::Result<lettuce_transfer::ForkMacrosBackup> {
+    use crate::legacy::legacy_import_backup_adapter::read_rows;
+    Ok(lettuce_transfer::ForkMacrosBackup {
+        chat_vars: read_rows(transaction, "fork_chat_vars", CHAT_VAR_COLUMNS, None)?,
+        global_vars: read_rows(transaction, "fork_global_vars", GLOBAL_VAR_COLUMNS, None)?,
+        rolls: read_rows(transaction, "fork_macro_rolls", ROLL_COLUMNS, None)?,
+    })
+}
+
+/// Writes restored macro rows into the (empty) restore target.
+pub(crate) fn insert_restored_in(
+    transaction: &rusqlite::Transaction<'_>,
+    backup: &lettuce_transfer::ForkMacrosBackup,
+) -> rusqlite::Result<()> {
+    use crate::legacy::legacy_import_backup_adapter::insert_rows;
+    insert_rows(
+        transaction,
+        "fork_chat_vars",
+        CHAT_VAR_COLUMNS,
+        &backup.chat_vars,
+    )?;
+    insert_rows(
+        transaction,
+        "fork_global_vars",
+        GLOBAL_VAR_COLUMNS,
+        &backup.global_vars,
+    )?;
+    insert_rows(transaction, "fork_macro_rolls", ROLL_COLUMNS, &backup.rolls)
+}
+
+/// Sync kinds for the macro tables (fork-only; both devices run the fork).
+pub(crate) const CHAT_VAR_SYNC_KIND: &str = "fork_chat_var";
+pub(crate) const CHAT_VAR_SYNC_SCHEMA: &str = "fork.chat_var";
+pub(crate) const GLOBAL_VAR_SYNC_KIND: &str = "fork_global_var";
+pub(crate) const GLOBAL_VAR_SYNC_SCHEMA: &str = "fork.global_var";
+pub(crate) const ROLL_SYNC_KIND: &str = "fork_macro_roll";
+pub(crate) const ROLL_SYNC_SCHEMA: &str = "fork.macro_roll";
+pub(crate) const SYNC_VERSION: u32 = 1;
+
+const CONVERSATION: &[crate::sync::row_sync_adapter::RowReference] =
+    &[crate::sync::row_sync_adapter::RowReference {
+        column: "conversation_id",
+        table: "conversations",
+        required: true,
+    }];
+
+/// Chat variables sync row by row, keyed `conversation:name` (the name
+/// comes last, so it may hold `:`), after their conversation.
+pub(crate) const CHAT_VAR_ROWS: crate::sync::row_sync_adapter::RowTable =
+    crate::sync::row_sync_adapter::RowTable {
+        table: "fork_chat_vars",
+        key: &["conversation_id", "name"],
+        immutable: false,
+        columns: &["value", "updated_at"],
+        revision: false,
+        identity: &[],
+        references: CONVERSATION,
+        scan_filter: None,
+    };
+
+/// Global variables sync row by row, keyed by name.
+pub(crate) const GLOBAL_VAR_ROWS: crate::sync::row_sync_adapter::RowTable =
+    crate::sync::row_sync_adapter::RowTable {
+        table: "fork_global_vars",
+        key: &["name"],
+        immutable: false,
+        columns: &["value", "updated_at"],
+        revision: false,
+        identity: &[],
+        references: &[],
+        scan_filter: None,
+    };
+
+/// Dice logs sync row by row, keyed `conversation:fingerprint`.
+pub(crate) const ROLL_ROWS: crate::sync::row_sync_adapter::RowTable =
+    crate::sync::row_sync_adapter::RowTable {
+        table: "fork_macro_rolls",
+        key: &["conversation_id", "fingerprint"],
+        immutable: false,
+        columns: &["rolls_json", "created_at"],
+        revision: false,
+        identity: &[],
+        references: CONVERSATION,
+        scan_filter: None,
+    };
 
 /// Lets context assembly read and write variables through
 /// `lettuce_context::fork_macros::set_var_store`.
@@ -259,6 +372,95 @@ mod tests {
 
         // c1 is no real conversation, so pruning drops it.
         assert_eq!(database.fork_vars_prune().expect("prune"), 1);
+    }
+
+    #[test]
+    fn variables_and_dice_survive_a_backup_round_trip() {
+        let database = Database::open_in_memory().expect("database");
+        let mut chat = VarChanges::new();
+        chat.insert("hp".into(), Some("10".into()));
+        chat.insert("a:b".into(), Some("colon".into()));
+        let mut global = VarChanges::new();
+        global.insert("frankenSIM.mainTheme".into(), Some("Sola".into()));
+        database
+            .fork_vars_apply("c1", &chat, &global)
+            .expect("apply");
+        let rolls = vec![DiceRoll {
+            formula: "2d6+1".into(),
+            dice: vec![3, 4],
+            modifier: 1,
+            total: 8,
+        }];
+        database
+            .fork_rolls_record("c1", "fp", &rolls)
+            .expect("rolls");
+        let (graph, restored) =
+            crate::backup::restore_writer::tests::backup_round_trip(&database, |_| {});
+        assert_eq!(graph.fork_macros.chat_vars.len(), 2);
+        assert_eq!(graph.fork_macros.global_vars.len(), 1);
+        assert_eq!(graph.fork_macros.rolls.len(), 1);
+        let vars = restored.fork_chat_vars("c1").expect("vars");
+        assert_eq!(vars.get("hp").map(String::as_str), Some("10"));
+        assert_eq!(vars.get("a:b").map(String::as_str), Some("colon"));
+        assert_eq!(
+            restored.fork_global_vars().expect("globals")["frankenSIM.mainTheme"],
+            "Sola"
+        );
+        assert_eq!(
+            restored.fork_rolls_for("c1", "fp").expect("rolls"),
+            Some(rolls)
+        );
+        let json = serde_json::to_value(&graph).expect("graph json");
+        assert!(json.get("fork_macros").is_some());
+    }
+
+    #[test]
+    fn a_backup_without_variables_leaves_the_field_out() {
+        let database = Database::open_in_memory().expect("database");
+        let graph = crate::backup::restore_writer::tests::assert_backup_round_trip(&database);
+        let json = serde_json::to_value(&graph).expect("graph json");
+        assert!(
+            json.get("fork_macros").is_none(),
+            "upstream builds can still read it"
+        );
+    }
+
+    #[test]
+    fn unchanged_values_keep_their_timestamps() {
+        let database = Database::open_in_memory().expect("database");
+        let stamps = || {
+            database
+                .connection()
+                .expect("connection")
+                .prepare("SELECT name, updated_at FROM fork_global_vars ORDER BY name")
+                .expect("prepare")
+                .query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+                })
+                .expect("query")
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .expect("rows")
+        };
+        let mut global = VarChanges::new();
+        global.insert("a".into(), Some("1".into()));
+        global.insert("b".into(), Some("2".into()));
+        database
+            .fork_vars_apply("c1", &VarChanges::new(), &global)
+            .expect("first");
+        let before = stamps();
+        std::thread::sleep(std::time::Duration::from_millis(5));
+        database
+            .fork_vars_apply("c1", &VarChanges::new(), &global)
+            .expect("same again");
+        let same: Vars = [
+            ("a".to_owned(), "1".to_owned()),
+            ("b".to_owned(), "2".to_owned()),
+        ]
+        .into();
+        database
+            .fork_vars_replace(None, &same)
+            .expect("replace same");
+        assert_eq!(stamps(), before);
     }
 
     #[test]
