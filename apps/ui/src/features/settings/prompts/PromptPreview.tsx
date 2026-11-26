@@ -10,6 +10,7 @@ import { useSettingsApi } from "../data";
 import { usePromptText } from "./copy";
 import { toInput, usePromptDraft } from "./data";
 import { ROLE_LABEL } from "./presentation";
+import { PromptPreviewMacrosPanel, useMacroPreview } from "@/features/macros";
 import type { Entry, PreviewSelection, Prompt } from "./types";
 
 export function PromptPreview({ phone, prompt, dirty, onOpenEntry, onPickerChange }: { phone: boolean; prompt: Prompt; dirty: boolean; onOpenEntry: (entry: Entry) => void; onPickerChange: (open: boolean) => void }) {
@@ -44,7 +45,10 @@ export function PromptPreview({ phone, prompt, dirty, onOpenEntry, onPickerChang
   const selectionReady = character !== undefined && persona !== undefined;
   const canPreview = !!debounced.name && debounced.entries.some((entry) => !!entry.content.trim() || entry.image_slot !== null);
   const preview = useQuery({ queryKey: [...queryKeys.prompts.all, "preview", prompt.id, debounced, chosenCharacter?.id, chosenPersona?.id], queryFn: () => api.call("promptPreview", { prompt_id: prompt.id, draft: debounced, conversation_id: null, character_id: chosenCharacter?.id ?? null, persona_id: chosenPersona?.id ?? null }), enabled: selectionReady && canPreview, placeholderData: keepPreviousData, retry: false });
-  const shown = useClosingValue(preview.data ?? null).shown;
+  const rendered = useClosingValue(preview.data ?? null).shown;
+  // fork: entries after SillyTavern macros, and the variables they leave.
+  const { shown, result: macroResult } = useMacroPreview(rendered, { user: chosenPersona?.name ?? null, char: chosenCharacter?.name ?? null });
+  const macros = <PromptPreviewMacrosPanel result={macroResult} defaultOpen={!phone} />;
   const before = shown?.entries.filter((entry) => entry.position === "relative") ?? [];
   const inside = shown?.entries.filter((entry) => entry.position !== "relative").toSorted((a, b) => b.depth - a.depth) ?? [];
   const skipped = shown?.skipped_entry_ids.flatMap((id) => { const entry = prompt.entries.find((value) => value.id === id); return entry ? [entry] : []; }) ?? [];
@@ -67,7 +71,7 @@ export function PromptPreview({ phone, prompt, dirty, onOpenEntry, onPickerChang
   const options = picker === "persona" ? personaOptions : characterOptions;
   const result = picker === "persona" ? personas : characters;
   return <>
-    {phone ? <div className="space-y-5">{controls}{order}{left}</div> : <div className="grid grid-cols-[minmax(300px,380px)_minmax(0,1fr)] items-start gap-8"><div className="min-w-0 space-y-5">{controls}{left}</div><div className="min-w-0">{order}</div></div>}
+    {phone ? <div className="space-y-5">{controls}{order}{left}{macros}</div> : <div className="grid grid-cols-[minmax(300px,380px)_minmax(0,1fr)] items-start gap-8"><div className="min-w-0 space-y-5">{controls}{left}{macros}</div><div className="min-w-0">{order}</div></div>}
     <Sheet open={picker !== null} onClose={() => setPicker(null)} title={t(picker === "persona" ? "Preview with persona" : "Preview with character")}><div className="space-y-4"><SearchField value={query} onChange={setQuery} placeholder={t("Search")} />{result.isError && <FailureState error={result.error} onRetry={() => void result.refetch()} />}<ListGroup><ListRowButton icon={<UserRound size={icon.lg} />} title={t(picker === "persona" ? "No persona" : "No character")} description={t("Its entries render empty")} chevron={false} onClick={() => { if (picker === "persona") setPersona(null); else setCharacter(null); setPicker(null); }} />{options.map((option) => <ListRowButton key={option.id} icon={<Avatar className="h-full w-full rounded-lg border-0" name={option.name} src={option.image ?? null} size="sm" />} title={option.name} description={option.description} chevron={false} trailing={(picker === "persona" ? chosenPersona?.id : chosenCharacter?.id) === option.id ? <Badge tone="accent" dot>{t("Chosen")}</Badge> : undefined} onClick={() => { if (picker === "persona") setPersona(option); else setCharacter(option); setPicker(null); }} />)}</ListGroup>{!result.isPending && !result.isError && options.length === 0 && <EmptyState size="sm" icon={<Search size={icon.lg} />} title={t("No results")} />}{result.isPending && <Skeleton className="h-20 w-full" />}{result.hasNextPage && <Button variant="ghost" loading={result.isFetchingNextPage} onClick={() => void result.fetchNextPage()}>{t("Load more")}</Button>}</div></Sheet>
   </>;
 }

@@ -6,6 +6,7 @@ import { icon, ListGroup, ListRow, ListRowButton, PartitionBar, Sheet, Skeleton,
 import type { ApiClient } from "@/api/client";
 import type { PromptSectionKind } from "@/api/generated/bindings";
 import { promptSnapshotQuery, usageQuery } from "../data/queries";
+import { MessageDice } from "@/features/macros";
 
 /** One legend line: a colour swatch, the name (with any muted suffix) and the
  *  right-aligned amount. Rendered one per row so every category keeps its line. */
@@ -202,6 +203,8 @@ function Details({ api, conversationId, messageId }: { api: ApiClient; conversat
 
   return (
     <div className="space-y-5">
+      {/* fork: dice rolled by the prompt's macros */}
+      <MessageDice api={api} messageId={messageId} />
       {overflow > 0 && (
         <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
           {t("menu.details.overReserved")}

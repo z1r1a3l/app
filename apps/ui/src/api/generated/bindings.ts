@@ -324,6 +324,10 @@ export const commands = {
 	regexConversationScripts: (request: RegexConversationRequest) => typedError<RegexConversationScripts, ApiError_Serialize>(__TAURI_INVOKE("regex_conversation_scripts", { request })),
 	regexPendingScopes: () => typedError<RegexScopeRef[], ApiError_Serialize>(__TAURI_INVOKE("regex_pending_scopes")),
 	regexScopesList: () => typedError<RegexScopeSummary[], ApiError_Serialize>(__TAURI_INVOKE("regex_scopes_list")),
+	macroVarsGet: (request: MacroVarsRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_get", { request })),
+	macroVarsReplace: (request: MacroVarsReplaceRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_replace", { request })),
+	macroPreview: (request: MacroPreviewRequest) => typedError<MacroPreviewResult, ApiError_Serialize>(__TAURI_INVOKE("macro_preview", { request })),
+	macroMessageRolls: (request: MacroRollsRequest) => typedError<MacroRollsView, ApiError_Serialize>(__TAURI_INVOKE("macro_message_rolls", { request })),
 	characterNotesList: (request: CharacterNotesRequest) => typedError<CharacterNoteView[], ApiError_Serialize>(__TAURI_INVOKE("character_notes_list", { request })),
 	characterNotesUpsert: (request: CharacterNoteUpsertRequest) => typedError<CharacterNoteView, ApiError_Serialize>(__TAURI_INVOKE("character_notes_upsert", { request })),
 	characterNotesDelete: (request: CharacterNoteDeleteRequest) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("character_notes_delete", { request })),
@@ -2685,6 +2689,14 @@ export type DevSeedRelationship = {
 };
 
 export type DevSeedTarget = { type: "direct"; character_id: string } | { type: "group"; group_id: string };
+
+/**  One `{{roll}}`. */
+export type DiceRollDto = {
+	formula: string,
+	dice: number[],
+	modifier: number,
+	total: number,
+};
 
 export type DictationCancelRequest = {
 	capture_id: string,
@@ -6547,6 +6559,56 @@ export type LorebooksListRequest = {
 	limit: number | null,
 };
 
+/**  Evaluates prompt texts in order without saving anything. */
+export type MacroPreviewRequest = {
+	conversation_id: string | null,
+	texts: string[],
+	user_name: string | null,
+	character_name: string | null,
+};
+
+export type MacroPreviewResult = {
+	texts: string[],
+	rolls: DiceRollDto[],
+	/**  Variables after the texts ran. */
+	vars: MacroVarsView,
+	/**  Names the texts set or deleted. */
+	changed: string[],
+};
+
+export type MacroRollsRequest = {
+	message_id: string,
+};
+
+/**  The dice a reply's prompt rolled (empty when it rolled none). */
+export type MacroRollsView = {
+	rolls: DiceRollDto[],
+};
+
+/**  One variable. */
+export type MacroVarDto = {
+	name: string,
+	value: string,
+};
+
+/**  Replaces one list: the chat's (`global` false) or the global one. */
+export type MacroVarsReplaceRequest = {
+	conversation_id: string | null,
+	global: boolean,
+	vars: MacroVarDto[],
+};
+
+export type MacroVarsRequest = {
+	conversation_id: string | null,
+};
+
+/**  A chat's variables (empty without a chat) and the global ones. */
+export type MacroVarsView = {
+	conversation_id: string | null,
+	chat: MacroVarDto[],
+	global: MacroVarDto[],
+};
+
 export type MediaFailureReason = "host_unavailable" | "asset_missing" | "blob_missing" | "object_missing" | "not_ready" | "invalid_metadata" | "protected_target" | "storage";
 
 export type MediaLibraryAssetKind = "avatar_original" | "background_image" | "illustration" | "lorebook_icon" | "message_image" | "message_audio" | "generated_image" | "synthesized_speech" | "other_image" | "other_audio" | "source_document";
@@ -8496,6 +8558,12 @@ export type RegexConversationScripts = {
 	user_name: string,
 	character_name: string,
 	scripts: RegexScriptDto[],
+	/**
+	 *  The chat's and the global macro variables, for `{{getvar}}` in
+	 *  display scripts.
+	 */
+	chat_vars: MacroVarDto[],
+	global_vars: MacroVarDto[],
 };
 
 /**
