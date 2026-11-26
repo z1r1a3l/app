@@ -8,7 +8,7 @@
 //! from the fork store; a real generation saves the writes and logs the
 //! dice, a preview does not.
 
-use lettuce_context::fork_macros::{self, DiceRoll, MacroEnv, MacroRun, Vars};
+use lettuce_context::fork_macros::{self, MacroEnv, MacroRun, Vars};
 use lettuce_conversations::{MessageRole, ProviderContextPart, ProviderNeutralMessage};
 
 /// One assembly's macro run, kept until the final prompt exists.
