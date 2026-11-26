@@ -42,7 +42,9 @@
     "body": "{{name}} came with {{count}} regex scripts. They can change how messages look and what is sent to the model. Allow them?",
     "allow": "Allow",
     "keepOff": "Keep off",
-    "review": "Review"
+    "review": "Review",
+    "presetTitle": "A prompt preset has scripts",
+    "presetBody": "The preset {{name}} came with {{count}} regex scripts. They can change how messages look and what is sent to the model. Allow them?"
   },
   "editor": {
     "new": "New script",

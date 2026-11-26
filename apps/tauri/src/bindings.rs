@@ -338,7 +338,7 @@ pub fn specta_builder<R: Runtime>() -> tauri_specta::Builder<R> {
             commands::fork_regex::regex_import_parse,
             commands::fork_regex::regex_test,
             commands::fork_regex::regex_conversation_scripts,
-            commands::fork_regex::regex_pending_characters,
+            commands::fork_regex::regex_pending_scopes,
             commands::fork_regex::regex_scopes_list,
             commands::character_notes::character_notes_list,
             commands::character_notes::character_notes_upsert,

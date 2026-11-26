@@ -154,14 +154,7 @@ pub async fn regex_scopes_list(
             Ok(scopes
                 .into_iter()
                 .map(|(kind, id, count)| dto::RegexScopeSummary {
-                    scope: dto::RegexScopeRef {
-                        kind: match kind {
-                            RegexScopeKind::Preset => dto::RegexScopeKindDto::Preset,
-                            RegexScopeKind::Character => dto::RegexScopeKindDto::Character,
-                            RegexScopeKind::Global => dto::RegexScopeKindDto::Global,
-                        },
-                        id: Some(id),
-                    },
+                    scope: scope_ref(kind, id),
                     scripts: u32::try_from(count).unwrap_or(u32::MAX),
                 })
                 .collect())
@@ -169,15 +162,32 @@ pub async fn regex_scopes_list(
         .await
 }
 
-/// Characters whose card scripts wait for the user to allow them.
-pub async fn regex_pending_characters(context: &ApiContext) -> Result<Vec<String>, ApiError> {
+fn scope_ref(kind: RegexScopeKind, id: String) -> dto::RegexScopeRef {
+    dto::RegexScopeRef {
+        kind: match kind {
+            RegexScopeKind::Preset => dto::RegexScopeKindDto::Preset,
+            RegexScopeKind::Character => dto::RegexScopeKindDto::Character,
+            RegexScopeKind::Global => dto::RegexScopeKindDto::Global,
+        },
+        id: Some(id),
+    }
+}
+
+/// Imported presets and character cards whose scripts wait for the user to
+/// allow them.
+pub async fn regex_pending_scopes(
+    context: &ApiContext,
+) -> Result<Vec<dto::RegexScopeRef>, ApiError> {
     context
         .blocking(|context| {
-            context
+            Ok(context
                 .backend()
                 .database()
-                .fork_regex_pending_characters()
-                .map_err(storage)
+                .fork_regex_pending_scopes()
+                .map_err(storage)?
+                .into_iter()
+                .map(|(kind, id)| scope_ref(kind, id))
+                .collect())
         })
         .await
 }
@@ -298,8 +308,8 @@ fn live_scope(
 }
 
 /// After an entity import: a SillyTavern preset's scripts join the new
-/// prompt's list; a character card's scripts join the character's list and
-/// wait for the user to allow them (as SillyTavern asks). Failures only log;
+/// prompt's list and a character card's scripts join the character's list;
+/// both wait for the user to allow them (as SillyTavern asks for cards). Failures only log;
 /// the import itself already succeeded.
 pub(crate) fn after_entity_import(
     database: &lettuce_database::Database,
@@ -333,7 +343,7 @@ pub(crate) fn after_entity_import(
                 id,
                 RegexScopeState {
                     enabled: true,
-                    pending: scope_kind == RegexScopeKind::Character,
+                    pending: true,
                 },
             )
         });
@@ -351,7 +361,7 @@ mod tests {
         include_str!("../../../lettuce-context/tests/fixtures/vexa/vexa-v1.0-regex.json");
 
     #[test]
-    fn a_preset_import_keeps_its_scripts_and_a_card_waits_for_permission() {
+    fn imported_preset_and_card_scripts_wait_for_permission() {
         let backend = crate::AppBackend::open_in_memory(lettuce_types::TimestampMillis::new(1))
             .expect("backend");
         let database = backend.database();
@@ -373,7 +383,7 @@ mod tests {
             143
         );
         assert!(
-            !database
+            database
                 .fork_regex_scope_state(RegexScopeKind::Preset, &prompt)
                 .expect("state")
                 .pending
@@ -396,16 +406,37 @@ mod tests {
                 .expect("state")
                 .pending
         );
+        let mut pending = database.fork_regex_pending_scopes().expect("pending");
+        pending.sort_by_key(|(kind, _)| *kind == RegexScopeKind::Character);
         assert_eq!(
-            database.fork_regex_pending_characters().expect("pending"),
-            vec![character.clone()]
+            pending,
+            vec![
+                (RegexScopeKind::Preset, prompt.clone()),
+                (RegexScopeKind::Character, character.clone())
+            ]
         );
-        let effective = database
-            .fork_regex_effective(&RegexScopeKey {
-                prompt_id: Some(prompt),
-                character_ids: vec![character],
-            })
-            .expect("effective");
-        assert_eq!(effective.len(), 143, "a pending card's scripts do not run");
+        let key = RegexScopeKey {
+            prompt_id: Some(prompt.clone()),
+            character_ids: vec![character],
+        };
+        let effective = database.fork_regex_effective(&key).expect("effective");
+        assert!(effective.is_empty(), "pending scripts do not run");
+
+        database
+            .fork_regex_set_scope_state(
+                RegexScopeKind::Preset,
+                &prompt,
+                RegexScopeState {
+                    enabled: true,
+                    pending: false,
+                },
+            )
+            .expect("allow");
+        let effective = database.fork_regex_effective(&key).expect("effective");
+        assert_eq!(
+            effective.len(),
+            143,
+            "an allowed preset runs, the card still waits"
+        );
     }
 }

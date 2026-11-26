@@ -66,11 +66,11 @@ pub async fn regex_conversation_scripts(
 
 #[tauri::command]
 #[specta::specta]
-pub async fn regex_pending_characters(
+pub async fn regex_pending_scopes(
     context: State<'_, ApiContextSlot>,
-) -> Result<Vec<String>, ApiError> {
+) -> Result<Vec<dto::RegexScopeRef>, ApiError> {
     let context = context.snapshot()?;
-    api::regex_pending_characters(&context).await
+    api::regex_pending_scopes(&context).await
 }
 
 #[tauri::command]

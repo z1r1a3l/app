@@ -880,6 +880,7 @@ impl ProviderBackupRestoreWriter for Database {
             &graph.playground_history,
         )
         .map_err(invalid)?;
+        crate::fork_regex::insert_restored_in(&transaction, &graph.fork_regex).map_err(invalid)?;
         for (conversation_id, message_id) in tombstoned {
             transaction
                 .execute(

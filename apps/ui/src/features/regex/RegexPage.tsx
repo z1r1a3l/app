@@ -205,18 +205,22 @@ export function RegexScopeList({ scope, title, hint, switchLabel }: { scope: Sco
   );
 }
 
-function PendingCard({ id, onReview }: { id: string; onReview: () => void }) {
+/** An imported preset's or card's scripts, waiting for the user's decision. */
+function PendingCard({ scope, onReview }: { scope: Scope; onReview: () => void }) {
   const { t } = useTranslation("regex");
-  const scope: Scope = { kind: "character", id };
+  const api = useApi();
   const view = useRegexScope(scope);
   const { state } = useRegexWrite(scope);
-  const name = useCharacterName(id) ?? "";
+  const preset = scope.kind === "preset";
+  const prompts = useQuery({ ...promptsQuery(api, "direct_chat"), enabled: preset });
+  const characterName = useCharacterName(preset ? null : scope.id) ?? "";
+  const name = preset ? (prompts.data?.find((prompt) => prompt.id === scope.id)?.name ?? "") : characterName;
   if (!view.data?.pending) return null;
   return (
     <Alert
       tone="warning"
-      title={t("pending.title")}
-      description={t("pending.body", { name, count: view.data.scripts.length })}
+      title={t(preset ? "pending.presetTitle" : "pending.title")}
+      description={t(preset ? "pending.presetBody" : "pending.body", { name, count: view.data.scripts.length })}
       action={
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="primary" onClick={() => void state.mutateAsync({ pending: false, enabled: true })}>
@@ -255,7 +259,7 @@ export function RegexPage({ layout }: { layout: RegexPageLayout }) {
   const [open, setOpen] = useState<Scope | null>(null);
   const prompts = useQuery(promptsQuery(api, "direct_chat"));
   const scopes = useQuery({ queryKey: [...regexQueryKeys.all, "scopes"], queryFn: () => api.call("regexScopesList") });
-  const pending = useQuery({ queryKey: regexQueryKeys.pending(), queryFn: () => api.call("regexPendingCharacters") });
+  const pending = useQuery({ queryKey: regexQueryKeys.pending(), queryFn: () => api.call("regexPendingScopes") });
   const counts = new Map((scopes.data ?? []).map((item) => [`${item.scope.kind}:${item.scope.id}`, item.scripts]));
   const characterScopes = (scopes.data ?? []).filter((item) => item.scope.kind === "character");
   const refresh = () => void client.invalidateQueries({ queryKey: regexQueryKeys.all });
@@ -280,8 +284,8 @@ export function RegexPage({ layout }: { layout: RegexPageLayout }) {
   return (
     <Page title={t("title")} meta={phone ? undefined : t("meta")} {...back} contentClassName="max-w-3xl space-y-7">
       <Text variant="secondary">{t("intro")}</Text>
-      {(pending.data ?? []).map((id) => (
-        <PendingCard key={id} id={id} onReview={() => setOpen({ kind: "character", id })} />
+      {(pending.data ?? []).map((scope) => (
+        <PendingCard key={`${scope.kind}:${scope.id}`} scope={scope} onReview={() => setOpen(scope)} />
       ))}
       <RegexScopeList scope={globalScope} title={t("global")} hint={t("globalHint")} switchLabel={t("globalSwitch")} />
       <ListGroup label={t("presets")}>

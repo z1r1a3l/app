@@ -116,6 +116,8 @@ struct ProviderMetadata {
     #[serde(default)]
     playground_history: crate::PlaygroundHistoryBackup,
     #[serde(default)]
+    fork_regex: crate::ForkRegexBackup,
+    #[serde(default)]
     device: crate::BackupDeviceState,
 }
 
@@ -330,6 +332,7 @@ pub fn decode_provider_backup_restore_plan(
         creation: metadata.creation,
         legacy_imports: metadata.legacy_imports,
         playground_history: metadata.playground_history,
+        fork_regex: metadata.fork_regex,
         version: metadata.version,
         accounts: metadata.accounts.into_iter().map(Into::into).collect(),
         profiles: metadata.profiles.into_iter().map(Into::into).collect(),
