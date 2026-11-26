@@ -879,6 +879,12 @@ let mut private_items_used =
             &names.user_name,
             &names.character_name,
         );
+        // fork: the helper model's tracked state, one compact block.
+        crate::generation::fork_prompt_helper::inject(
+            &mut in_chat,
+            &request,
+            &crate::generation::fork_prompt_helper::character_ids(&aggregate.conversation),
+        );
         insert_in_chat_messages(&mut transcript, in_chat);
         messages.append(&mut transcript);
         if direct {

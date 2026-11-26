@@ -328,6 +328,13 @@ export const commands = {
 	regexConversationScripts: (request: RegexConversationRequest) => typedError<RegexConversationScripts, ApiError_Serialize>(__TAURI_INVOKE("regex_conversation_scripts", { request })),
 	regexPendingScopes: () => typedError<RegexScopeRef[], ApiError_Serialize>(__TAURI_INVOKE("regex_pending_scopes")),
 	regexScopesList: () => typedError<RegexScopeSummary[], ApiError_Serialize>(__TAURI_INVOKE("regex_scopes_list")),
+	helperConfigGet: () => typedError<HelperConfigView, ApiError_Serialize>(__TAURI_INVOKE("helper_config_get")),
+	helperConfigSet: (request: HelperConfigUpdate) => typedError<HelperConfigView, ApiError_Serialize>(__TAURI_INVOKE("helper_config_set", { request })),
+	helperChatGet: (request: HelperChatRequest) => typedError<HelperChatView, ApiError_Serialize>(__TAURI_INVOKE("helper_chat_get", { request })),
+	helperStatus: (request: HelperChatRequest) => typedError<HelperStatusDto | null, ApiError_Serialize>(__TAURI_INVOKE("helper_status", { request })),
+	helperScopeSet: (request: HelperScopeUpdate) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("helper_scope_set", { request })),
+	helperStateSet: (request: HelperStateUpdate) => typedError<HelperChatView, ApiError_Serialize>(__TAURI_INVOKE("helper_state_set", { request })),
+	helperMessage: (request: HelperMessageRequest) => typedError<HelperMessageView, ApiError_Serialize>(__TAURI_INVOKE("helper_message", { request })),
 	macroVarsGet: (request: MacroVarsRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_get", { request })),
 	macroVarsReplace: (request: MacroVarsReplaceRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_replace", { request })),
 	macroPreview: (request: MacroPreviewRequest) => typedError<MacroPreviewResult, ApiError_Serialize>(__TAURI_INVOKE("macro_preview", { request })),
@@ -3390,6 +3397,158 @@ export type GroupsListRequest = {
 };
 
 export type HelpMeReplyMode = "new" | "enrich";
+
+/**  One change line as the app understood it. */
+export type HelperChangeDto = {
+	/**  `scene`, `characters`, `bonds`, `inventory`, `npcs` or `notebook`. */
+	tracker: string,
+	/**
+	 *  `set`, `remove`, `item_add`, `item_remove`, `truth`, `clue`,
+	 *  `reveal` or `truth_remove`.
+	 */
+	kind: string,
+	/**  Character / NPC / owner name or truth id; empty for scene fields. */
+	subject: string,
+	field: string,
+	/**  The new value, item, truth or clue text (empty: removed). */
+	value: string,
+	found: boolean | null,
+};
+
+export type HelperChatRequest = {
+	conversation_id: string,
+};
+
+/**  A chat's helper switches, state and latest run. */
+export type HelperChatView = {
+	conversation_id: string,
+	/**  The direct chat's character (none for groups). */
+	character_id: string | null,
+	character_name: string | null,
+	/**  The chat's own switch; `None` when it follows the character. */
+	chat: HelperScopeDto | null,
+	character: HelperScopeDto | null,
+	enabled: boolean,
+	/**  The trackers that run (or would run once switched on). */
+	trackers: HelperTrackersDto,
+	state: HelperStateDto,
+	status: HelperStatusDto | null,
+};
+
+export type HelperClueDto = {
+	text: string,
+	message_id: string,
+	/**  `false`: the clue's words were not found in its reply. */
+	found: boolean | null,
+};
+
+export type HelperConfigUpdate = {
+	model_profile_id: string | null,
+	prompt: string | null,
+	history: number,
+};
+
+export type HelperConfigView = {
+	model_profile_id: string | null,
+	/**  `None`: the default prompt is used. */
+	prompt: string | null,
+	default_prompt: string,
+	/**  Earlier messages the helper reads. */
+	history: number,
+};
+
+export type HelperEntityDto = {
+	name: string,
+	fields: HelperFieldDto[],
+};
+
+export type HelperFieldDto = {
+	name: string,
+	value: string,
+};
+
+export type HelperHolderDto = {
+	owner: string,
+	items: string[],
+};
+
+export type HelperMessageRequest = {
+	conversation_id: string,
+	message_id: string,
+};
+
+/**  What the helper read for the shown variant of one reply. */
+export type HelperMessageView = {
+	/**  `false` when the helper has not read this variant. */
+	read: boolean,
+	changes: HelperChangeDto[],
+	raw: string,
+	/**  Manual edits saved while this variant was the latest reply. */
+	edits: number,
+};
+
+export type HelperRunState = "queued" | "running" | "done" | "failed" | "cancelled";
+
+export type HelperScopeDto = {
+	enabled: boolean,
+	trackers: HelperTrackersDto,
+};
+
+/**
+ *  Sets a chat's or a character's switch; `scope` is `conversation` or
+ *  `character`.
+ */
+export type HelperScopeUpdate = {
+	scope: string,
+	id: string,
+	enabled: boolean,
+	trackers: HelperTrackersDto,
+};
+
+/**  The full tracked state of the shown path. */
+export type HelperStateDto = {
+	scene: HelperFieldDto[],
+	characters: HelperEntityDto[],
+	bonds: HelperEntityDto[],
+	inventory: HelperHolderDto[],
+	npcs: HelperEntityDto[],
+	notebook: HelperTruthDto[],
+};
+
+/**
+ *  Saves the state editor: the difference becomes a manual edit anchored
+ *  to the latest reply.
+ */
+export type HelperStateUpdate = {
+	conversation_id: string,
+	state: HelperStateDto,
+};
+
+/**  The latest helper run of a chat (kept while the app runs). */
+export type HelperStatusDto = {
+	job_id: string,
+	message_id: string,
+	state: HelperRunState,
+	error: string | null,
+};
+
+/**  Which trackers run. */
+export type HelperTrackersDto = {
+	scene: boolean,
+	characters: boolean,
+	bonds: boolean,
+	inventory: boolean,
+	npcs: boolean,
+	notebook: boolean,
+};
+
+export type HelperTruthDto = {
+	id: string,
+	truth: string,
+	hidden_from: string,
+	revealed: boolean,
+	clues: HelperClueDto[],
+};
 
 export type HfAuthSaveRequest = {
 	token: string,
@@ -6866,6 +7025,7 @@ export type MemoryAddRequest_Deserialize = {
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id?: string | null,
+	/**  Optional message range, same format as a model memory's cycle label. */
 	turns?: MemoryTurnRange | null,
 };
 
@@ -6877,6 +7037,7 @@ export type MemoryAddRequest_Serialize = {
 	expected_revision: number,
 	client_operation_id: string,
 	perspective_character_id: string | null,
+	/**  Optional message range, same format as a model memory's cycle label. */
 	turns: MemoryTurnRange | null,
 };
 
@@ -7136,10 +7297,6 @@ export type MemorySummaryView = {
 	token_count: number | null,
 };
 
-export type MemoryTurnRange = { start: number, end: number };
-
-export type MemoryTurnsChange = { type: "keep" } | { type: "set"; value?: MemoryTurnRange | null };
-
 export type MemoryTemperature = "hot" | "cold";
 
 export type MemoryTemperatureRequest = MemoryTemperatureRequest_Serialize | MemoryTemperatureRequest_Deserialize;
@@ -7166,6 +7323,14 @@ export type MemoryTriggerRequest = {
 	conversation_id: string,
 	client_operation_id: string,
 };
+
+/**  Inclusive 1-based message numbers, shown as `"{start}-{end}"`. */
+export type MemoryTurnRange = {
+	start: number,
+	end: number,
+};
+
+export type MemoryTurnsChange = { type: "keep" } | { type: "set"; value?: MemoryTurnRange | null };
 
 export type MemoryUpdateRequest = MemoryUpdateRequest_Serialize | MemoryUpdateRequest_Deserialize;
 

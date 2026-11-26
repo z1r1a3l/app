@@ -80,6 +80,13 @@ impl AppBackend {
         lettuce_context::fork_macros::set_var_store(Arc::new(
             lettuce_database::DatabaseMacroVarStore(database.clone()),
         ));
+        // fork: helper model state (trackers, Notebook) lives in this database.
+        if let Err(error) = database.fork_helper_prune() {
+            tracing::warn!(%error, "helper state of deleted chats could not be pruned");
+        }
+        lettuce_context::fork_helper::set_state_source(Arc::new(
+            lettuce_database::DatabaseHelperStateSource(database.clone()),
+        ));
         let backend = Self {
             whisper_runtime: Arc::new(WhisperCppRuntime::new(database.clone())),
             database,

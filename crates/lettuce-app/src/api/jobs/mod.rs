@@ -15,6 +15,8 @@ mod runner;
 pub(crate) mod speech;
 mod state;
 mod text;
+// Fork-only: helper model reads.
+pub(crate) mod fork_helper;
 pub(crate) mod voice_creation;
 
 #[cfg(test)]

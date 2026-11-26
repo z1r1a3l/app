@@ -213,6 +213,8 @@ impl ConversationGenerationWorker {
                                 lettuce_conversations::SceneFollowUpTarget::Candidate(candidate_id),
                             )?;
                         }
+                        // Fork-only: helper model read of the new reply.
+                        super::fork_helper::start_auto(context, conversation_id);
                         Ok(())
                     })
                     .await?;
