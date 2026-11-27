@@ -14,6 +14,8 @@ pub struct ForkHelperBackup {
     pub scopes: Vec<BackupSqlRow>,
     #[serde(default)]
     pub deltas: Vec<BackupSqlRow>,
+    #[serde(default)]
+    pub locks: Vec<BackupSqlRow>,
 }
 
 impl ForkHelperBackup {
@@ -21,6 +23,9 @@ impl ForkHelperBackup {
     /// without helper data stays readable by upstream builds.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.config.is_empty() && self.scopes.is_empty() && self.deltas.is_empty()
+        self.config.is_empty()
+            && self.scopes.is_empty()
+            && self.deltas.is_empty()
+            && self.locks.is_empty()
     }
 }

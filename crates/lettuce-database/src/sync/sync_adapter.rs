@@ -1568,6 +1568,11 @@ fn supported_change(change: &CanonicalChange) -> Result<bool, IncomingChangeErro
             crate::fork_helper::DELTA_SYNC_SCHEMA,
             crate::fork_helper::SYNC_VERSION,
         )
+        | (
+            crate::fork_helper::LOCK_SYNC_KIND,
+            crate::fork_helper::LOCK_SYNC_SCHEMA,
+            crate::fork_helper::SYNC_VERSION,
+        )
         // fork: user-set memory turn ranges.
         | (
             crate::fork_memory_turns::SYNC_KIND,
@@ -3205,6 +3210,15 @@ row_codec!(
     no_assets
 );
 
+row_codec!(
+    FORK_HELPER_LOCK_CODEC,
+    crate::fork_helper::LOCK_SYNC_KIND,
+    crate::fork_helper::LOCK_SYNC_SCHEMA,
+    crate::fork_helper::SYNC_VERSION,
+    crate::fork_helper::LOCK_ROWS,
+    no_assets
+);
+
 fn creation_apply_error(error: lettuce_creation::CreationRepositoryError) -> ApplyOneError {
     match error {
         lettuce_creation::CreationRepositoryError::Storage { .. } => ApplyOneError::Storage,
@@ -3423,7 +3437,7 @@ const CONVERSATION_MESSAGE_CODEC: SnapshotCodec = SnapshotCodec {
 
 /// Aggregates journaled by comparing their current state with the latest
 /// journaled snapshot, in dependency order (deletes run in reverse).
-const SCANNED_CODECS: [&SnapshotCodec; 48] = [
+const SCANNED_CODECS: [&SnapshotCodec; 49] = [
     &PROVIDER_ACCOUNT_CODEC,
     &MODEL_PROFILE_CODEC,
     &PERSONA_CODEC,
@@ -3472,6 +3486,7 @@ const SCANNED_CODECS: [&SnapshotCodec; 48] = [
     &FORK_HELPER_CONFIG_CODEC,
     &FORK_HELPER_SCOPE_CODEC,
     &FORK_HELPER_DELTA_CODEC,
+    &FORK_HELPER_LOCK_CODEC,
 ];
 
 fn snapshot_codec(kind: &str) -> Option<&'static SnapshotCodec> {

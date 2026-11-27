@@ -441,6 +441,13 @@ const DELTA_COLUMNS: &[&str] = &[
     "created_at",
     "updated_at",
 ];
+const LOCK_COLUMNS: &[&str] = &[
+    "conversation_id",
+    "bond_key",
+    "bond_name",
+    "fields_json",
+    "updated_at",
+];
 
 /// The helper tables as backup rows.
 pub(crate) fn read_backup_in(
@@ -451,6 +458,7 @@ pub(crate) fn read_backup_in(
         config: read_rows(transaction, "fork_helper_config", CONFIG_COLUMNS, None)?,
         scopes: read_rows(transaction, "fork_helper_scopes", SCOPE_COLUMNS, None)?,
         deltas: read_rows(transaction, "fork_helper_deltas", DELTA_COLUMNS, None)?,
+        locks: read_rows(transaction, "fork_helper_locks", LOCK_COLUMNS, None)?,
     })
 }
 
@@ -477,6 +485,12 @@ pub(crate) fn insert_restored_in(
         "fork_helper_deltas",
         DELTA_COLUMNS,
         &backup.deltas,
+    )?;
+    insert_rows(
+        transaction,
+        "fork_helper_locks",
+        LOCK_COLUMNS,
+        &backup.locks,
     )
 }
 
@@ -487,6 +501,8 @@ pub(crate) const SCOPE_SYNC_KIND: &str = "fork_helper_scope";
 pub(crate) const SCOPE_SYNC_SCHEMA: &str = "fork.helper_scope";
 pub(crate) const DELTA_SYNC_KIND: &str = "fork_helper_delta";
 pub(crate) const DELTA_SYNC_SCHEMA: &str = "fork.helper_delta";
+pub(crate) const LOCK_SYNC_KIND: &str = "fork_helper_lock";
+pub(crate) const LOCK_SYNC_SCHEMA: &str = "fork.helper_lock";
 pub(crate) const SYNC_VERSION: u32 = 1;
 
 pub(crate) const CONFIG_ROWS: crate::sync::row_sync_adapter::RowTable =
@@ -530,6 +546,23 @@ pub(crate) const DELTA_ROWS: crate::sync::row_sync_adapter::RowTable =
             "created_at",
             "updated_at",
         ],
+        revision: false,
+        identity: &[],
+        references: &[crate::sync::row_sync_adapter::RowReference {
+            column: "conversation_id",
+            table: "conversations",
+            required: true,
+        }],
+        scan_filter: None,
+    };
+
+/// Locks sync row by row after their conversation.
+pub(crate) const LOCK_ROWS: crate::sync::row_sync_adapter::RowTable =
+    crate::sync::row_sync_adapter::RowTable {
+        table: "fork_helper_locks",
+        key: &["conversation_id", "bond_key"],
+        immutable: false,
+        columns: &["bond_name", "fields_json", "updated_at"],
         revision: false,
         identity: &[],
         references: &[crate::sync::row_sync_adapter::RowReference {
@@ -716,11 +749,15 @@ mod tests {
         database
             .fork_helper_put_read("chat", "m1", "c:1", &outfit("платье"), "raw")
             .expect("read");
+        database
+            .fork_helper_locks_set("chat", &[enemy("Кассиан")])
+            .expect("lock");
         let (graph, restored) =
             crate::backup::restore_writer::tests::backup_round_trip(&database, |_| {});
         assert_eq!(graph.fork_helper.config.len(), 1);
         assert_eq!(graph.fork_helper.scopes.len(), 1);
         assert_eq!(graph.fork_helper.deltas.len(), 1);
+        assert_eq!(graph.fork_helper.locks.len(), 1);
         assert_eq!(restored.fork_helper_config().expect("config").history, 4);
         assert!(
             restored
@@ -731,6 +768,8 @@ mod tests {
         let rows = restored.fork_helper_deltas("chat").expect("rows");
         assert_eq!(rows[0].delta.ops, outfit("платье"));
         assert_eq!(rows[0].raw, "raw");
+        let locks = restored.fork_helper_locks("chat").expect("locks");
+        assert_eq!(locks[0].name, "Кассиан");
     }
 
     fn enemy(name: &str) -> BondLock {
