@@ -3460,6 +3460,8 @@ export type HelperConfigView = {
 export type HelperEntityDto = {
 	name: string,
 	fields: HelperFieldDto[],
+	/** Set on bonds the user froze; ignored on other entities. */
+	locked: boolean,
 };
 
 export type HelperFieldDto = {

@@ -1,6 +1,6 @@
 /** Fork-only: small list editors for the helper's state and notebook. */
 import { useTranslation } from "react-i18next";
-import { Plus, Trash2 } from "lucide-react";
+import { Lock, LockOpen, Plus, Trash2 } from "lucide-react";
 import { Button, IconButton, Input, Switch, Text, Textarea, icon } from "@lettuceai/crisp";
 import type { HelperEntityDto, HelperFieldDto, HelperHolderDto, HelperTruthDto } from "@/api/generated/bindings";
 
@@ -27,7 +27,7 @@ export function FieldsEditor({ fields, onChange }: { fields: HelperFieldDto[]; o
   );
 }
 
-export function EntitiesEditor({ label, entities, onChange }: { label: string; entities: HelperEntityDto[]; onChange: (next: HelperEntityDto[]) => void }) {
+export function EntitiesEditor({ label, entities, onChange, lockable }: { label: string; entities: HelperEntityDto[]; onChange: (next: HelperEntityDto[]) => void; lockable?: boolean }) {
   const { t } = useTranslation("helper");
   return (
     <section className="space-y-2">
@@ -36,14 +36,20 @@ export function EntitiesEditor({ label, entities, onChange }: { label: string; e
         <div key={index} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
           <div className="flex items-center gap-2">
             <Input aria-label={t("name")} className="font-medium" value={entity.name} placeholder={t("name")} onChange={(e) => onChange(replace(entities, index, { ...entity, name: e.target.value }))} />
+            {lockable && (
+              <IconButton label={entity.locked ? t("unlock") : t("lock")} variant="ghost" size="sm" onClick={() => onChange(replace(entities, index, { ...entity, locked: !entity.locked }))}>
+                {entity.locked ? <Lock size={icon.sm} /> : <LockOpen size={icon.sm} />}
+              </IconButton>
+            )}
             <IconButton label={t("delete")} variant="ghost" size="sm" onClick={() => onChange(replace(entities, index, null))}>
               <Trash2 size={icon.sm} />
             </IconButton>
           </div>
+          {lockable && entity.locked && <Text variant="hint">{t("lockedHint")}</Text>}
           <FieldsEditor fields={entity.fields} onChange={(fields) => onChange(replace(entities, index, { ...entity, fields }))} />
         </div>
       ))}
-      <Button size="sm" variant="ghost" leading={<Plus size={icon.sm} />} onClick={() => onChange([...entities, { name: "", fields: [{ name: "", value: "" }] }])}>
+      <Button size="sm" variant="ghost" leading={<Plus size={icon.sm} />} onClick={() => onChange([...entities, { name: "", fields: [{ name: "", value: "" }], locked: false }])}>
         {t("add")}
       </Button>
     </section>
