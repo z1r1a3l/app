@@ -91,18 +91,34 @@ export function ProposalReview({
           </div>
         );
       })}
-      {unchanged.length > 0 && (
-        <Collapsible variant="plain" title={t("review.unchanged", { count: unchanged.length })}>
-          <ul className="space-y-1 text-sm">
-            {unchanged.map((item) => (
-              <li key={item.entry.id} className="text-fg-2">
-                <span className="font-medium">{item.entry.title || t("untitled")}</span>
-                {item.reason ? <span className="text-fg-3">{t("review.reasonSuffix", { reason: item.reason })}</span> : null}
-              </li>
-            ))}
-          </ul>
-        </Collapsible>
-      )}
+      {unchanged.length > 0 &&
+        (() => {
+          const list = (
+            <ul className="space-y-1 text-sm">
+              {unchanged.map((item) => (
+                <li key={item.entry.id} className="text-fg-2">
+                  <span className="font-medium">{item.entry.title || t("untitled")}</span>
+                  {item.reason ? (
+                    <span className="text-fg-3">{t("review.reasonSuffix", { reason: item.reason })}</span>
+                  ) : (
+                    <span className="text-fg-3">{t("review.sameText")}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          );
+          // Nothing to review: show why each entry stayed as it is instead of hiding it behind a fold.
+          return proposals.length === 0 ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-fg-2">{t("review.unchanged", { count: unchanged.length })}</p>
+              {list}
+            </div>
+          ) : (
+            <Collapsible variant="plain" title={t("review.unchanged", { count: unchanged.length })}>
+              {list}
+            </Collapsible>
+          );
+        })()}
       {failed.length > 0 && (
         <Collapsible variant="plain" title={t("review.failed", { count: failed.length })}>
           <ul className="space-y-1 text-sm">

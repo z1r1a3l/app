@@ -139,6 +139,17 @@ impl<R: LorebookEntryRunRepository + ?Sized, J: JobStore + ?Sized>
         let at = now.max(work.job.updated_at);
         match result {
             Ok(result) => {
+                // Fork (z1r1a3l): log which answer the writer settled on, so a
+                // "nothing changed" report can be told apart from a failure.
+                tracing::info!(
+                    job_id = %work.job.id,
+                    attempts = result.attempts,
+                    outcome = match &result.result {
+                        lettuce_creation::LorebookEntryGenerationResult::Entry { .. } => "entry",
+                        lettuce_creation::LorebookEntryGenerationResult::None { .. } => "no_entry",
+                    },
+                    "lorebook entry job succeeded"
+                );
                 self.jobs.append_and_transition(JobMutation::Progress {
                     claim: work.claim.claim.clone(),
                     progress: ProgressSnapshot {

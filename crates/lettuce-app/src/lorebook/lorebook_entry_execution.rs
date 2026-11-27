@@ -155,7 +155,10 @@ where
                         PortError::Unavailable,
                     ));
                 }
-                Err(_) => {
+                Err(error) => {
+                    // Fork (z1r1a3l): say why the native attempt failed (e.g. a
+                    // provider 400) instead of falling back silently.
+                    tracing::warn!(request_id = %request_id, ?error, "native lorebook entry request failed");
                     attempts = self
                         .repository
                         .commit_lorebook_entry_attempt(
@@ -301,6 +304,11 @@ fn fallback_checkpoint(
         || matches!(outcome.finish_reason, FinishReason::Error)
         || outcome.candidates.len() != 1
     {
+        tracing::warn!(
+            finish_reason = ?outcome.finish_reason,
+            candidates = outcome.candidates.len(),
+            "structured fallback lorebook entry outcome was invalid"
+        );
         LorebookEntryAttemptDecision::Invalid
     } else {
         let text = outcome.candidates[0]
@@ -313,7 +321,16 @@ fn fallback_checkpoint(
             .collect::<String>();
         match parse_lorebook_entry_fallback(&text, run.fallback_format, run.force) {
             Ok(result) => LorebookEntryAttemptDecision::Result(result),
-            Err(_) => LorebookEntryAttemptDecision::Invalid,
+            Err(error) => {
+                // Fork (z1r1a3l): the reply shape, never its text.
+                tracing::warn!(
+                    %error,
+                    text_chars = text.chars().count(),
+                    provider_finish_reason = ?outcome.provider_finish_reason,
+                    "structured fallback lorebook entry reply was unusable"
+                );
+                LorebookEntryAttemptDecision::Invalid
+            }
         }
     };
     checkpoint(

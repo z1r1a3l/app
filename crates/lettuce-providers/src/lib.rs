@@ -2779,6 +2779,65 @@ mod integration_tests {
         );
     }
 
+    /// Fork (z1r1a3l): DeepSeek V4 thinks by default and answers a forced
+    /// tool_choice with HTTP 400 "Thinking mode does not support this
+    /// tool_choice", which made every lorebook writer job fall back or fail.
+    #[tokio::test]
+    async fn deepseek_forced_tool_requests_turn_thinking_off_and_parse_the_call() {
+        let store = Arc::new(RecordingSecretStore::default());
+        let owner = lettuce_settings::SecretOwnerId::new();
+        let key_ref = SecretRef::new();
+        store
+            .put(
+                SecretRecord::new(key_ref, SecretPurpose::ProviderApiKey { owner }),
+                SecretValue::new("key").expect("secret"),
+                None,
+            )
+            .await
+            .expect("store key");
+        // Captured from api.deepseek.com (deepseek-flash, thinking disabled), ids shortened.
+        let response = http_json(
+            r#"{"id":"r-1","object":"chat.completion","created":1795776510,"model":"deepseek-flash","choices":[{"index":0,"message":{"role":"assistant","content":"","tool_calls":[{"index":0,"id":"call_00_x","type":"function","function":{"name":"write_lorebook_entry","arguments":"{\"title\": \"Портовый квартал\", \"content\": \"{{user}} часто бывает здесь.\", \"keywords\": [\"порт\"]}"}}]},"logprobs":null,"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":270,"completion_tokens":33,"total_tokens":303,"prompt_tokens_details":{"cached_tokens":0},"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":270}}"#,
+        );
+        let (endpoint, captured) = test_server(response).await;
+        let adapter = RemoteProviders::new(store, Arc::new(JsonClient::new().expect("client")));
+        let mut resolved = profile(
+            "deepseek",
+            endpoint,
+            ProviderConfig::Standard,
+            Some(key_ref),
+            owner,
+        );
+        resolved.chat_profile.capabilities.tools = CapabilityStatus::Supported;
+        resolved.tool_policy = ToolPolicy::Required;
+        let mut inference = request(resolved);
+        inference.tools = Some(ToolRequest {
+            definitions: vec![ToolDefinition {
+                name: "write_lorebook_entry".to_owned(),
+                description: Some("Write one entry".to_owned()),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {"title": {"type": "string"}, "content": {"type": "string"}},
+                    "required": ["title", "content"]
+                }),
+                version: 1,
+            }],
+            choice: ToolChoice::Required,
+        });
+
+        let outcome = adapter.run(inference).await.expect("tool outcome");
+        let call = &outcome.candidates[0].tool_calls[0];
+        assert_eq!(call.name, "write_lorebook_entry");
+        assert_eq!(call.arguments["content"], "{{user}} часто бывает здесь.");
+
+        let captured = captured_request(captured.await.expect("request"));
+        assert_eq!(captured.body["tool_choice"], "required");
+        assert_eq!(
+            captured.body["thinking"],
+            serde_json::json!({"type": "disabled"})
+        );
+    }
+
     fn account(
         kind: &str,
         protocol: ProviderProtocol,
