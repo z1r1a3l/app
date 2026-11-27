@@ -536,7 +536,9 @@ fn normalize_entry_draft(
 }
 
 pub(crate) fn normalize_fallback_text(raw: &str) -> String {
-    let trimmed = raw.trim();
+    // Fork (z1r1a3l): drop reasoning blocks and prose around a fenced reply.
+    let cleaned = crate::fork_fallback_clean::clean(raw);
+    let trimmed = cleaned.trim();
     if trimmed.starts_with("```") {
         let mut lines = trimmed.lines();
         let _ = lines.next();

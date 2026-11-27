@@ -4,6 +4,7 @@
 
 mod attempt;
 mod fallback;
+mod fork_fallback_clean;
 mod lorebook_entry;
 mod lorebook_keyword;
 mod model;

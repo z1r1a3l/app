@@ -7,6 +7,7 @@ pub(crate) mod feature_parameters;
 pub(crate) mod feature_prompt_entries;
 pub(crate) mod fork_chapter_recall;
 pub(crate) mod fork_helper_run;
+pub(crate) mod fork_forced_tool_retry;
 pub(crate) mod fork_prompt_aether;
 pub(crate) mod fork_prompt_helper;
 pub(crate) mod fork_prompt_macros;

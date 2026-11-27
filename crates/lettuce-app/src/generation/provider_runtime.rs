@@ -197,7 +197,8 @@ impl<S: SecretStore + ?Sized> InferencePort for ProviderRuntime<S> {
             .apply_settings(generation, enabled, level)
             .map_err(|_| PortError::Unavailable)?;
         let sink = request.stream_sink;
-        let result = self.remote.run(request).await;
+        // Fork (z1r1a3l): retry a rejected forced tool_choice once with auto.
+        let result = super::fork_forced_tool_retry::run(&self.remote, request).await;
         self.pure_mode.settle(sink, result)
     }
 }
