@@ -4,6 +4,7 @@ use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
+use super::locks::BondLock;
 use super::model::{HelperState, Op, Trackers, apply};
 
 /// Who wrote a stored change.
@@ -61,6 +62,10 @@ pub trait HelperStateSource: Send + Sync {
     fn trackers(&self, conversation_id: &str, character_ids: &[String]) -> Option<Trackers>;
     /// Every stored change of the chat.
     fn deltas(&self, conversation_id: &str) -> Vec<StoredDelta>;
+    /// User-locked bonds of the chat (empty when there are none).
+    fn bond_locks(&self, _conversation_id: &str) -> Vec<BondLock> {
+        Vec::new()
+    }
     /// `false` once its database is closed; it is then forgotten.
     fn alive(&self) -> bool {
         true
@@ -107,6 +112,15 @@ impl HelperStateSource for Sources {
             .filter(|source| source.alive())
             .map(|source| source.deltas(conversation_id))
             .find(|rows| !rows.is_empty())
+            .unwrap_or_default()
+    }
+
+    fn bond_locks(&self, conversation_id: &str) -> Vec<BondLock> {
+        self.0
+            .iter()
+            .filter(|source| source.alive())
+            .map(|source| source.bond_locks(conversation_id))
+            .find(|locks| !locks.is_empty())
             .unwrap_or_default()
     }
 }

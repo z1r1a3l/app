@@ -57,6 +57,8 @@ pub struct HelperInput {
     pub latest: Vec<HelperLine>,
     pub trackers: Trackers,
     pub live_truths: usize,
+    /// Bonds the user froze; the helper must not change them.
+    pub locked_bonds: Vec<String>,
 }
 
 const MAX_CARD_CHARS: usize = 4000;
@@ -137,6 +139,13 @@ pub fn helper_user_message(input: &HelperInput) -> String {
             out,
             "Notebook: {} unrevealed truth(s) now (keep 2-{}).",
             input.live_truths, MAX_LIVE_TRUTHS
+        );
+    }
+    if !input.locked_bonds.is_empty() {
+        let _ = writeln!(
+            out,
+            "Locked bonds (do not change or remove): {}.",
+            input.locked_bonds.join(", ")
         );
     }
     let _ = write!(out, "Write the change lines now.");
