@@ -7,7 +7,7 @@
 //! Old tracker blocks never enter the prompt, because the helper's answers
 //! are stored apart from the messages.
 
-use lettuce_context::fork_helper::{self as helper, HelperState, StoredDelta};
+use lettuce_context::fork_helper::{self as helper, HelperState, StoredDelta, apply_bond_locks};
 use lettuce_conversations::{
     ContextRequest, MessageRenderSource, MessageRole, ProviderContextPart, ProviderNeutralMessage,
     TimelineItem,
@@ -69,11 +69,15 @@ pub(crate) fn inject(
         return;
     };
     let rows = source.deltas(&conversation_id);
-    if rows.is_empty() {
+    let locks = source.bond_locks(&conversation_id);
+    if rows.is_empty() && locks.is_empty() {
         return;
     }
-    let state = state_for_request(request, &rows);
-    if let Some(block) = helper::render_state_block(&state, &trackers, STATE_HEADER) {
+    let mut state = state_for_request(request, &rows);
+    apply_bond_locks(&mut state, &locks);
+    if let Some(block) =
+        helper::render_state_block_with_locks(&state, &trackers, STATE_HEADER, &locks)
+    {
         in_chat.push((
             STATE_DEPTH,
             ProviderNeutralMessage {
