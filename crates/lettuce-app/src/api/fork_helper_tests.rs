@@ -6,16 +6,17 @@ use std::sync::Arc;
 use lettuce_contracts as dto;
 use lettuce_conversations::{InferenceRequest, MessagePart, ProviderContextPart};
 
-use super::conversations::turns_tests::{regenerate_request, replied_chat, run_generation};
-use super::jobs::{JobHandlers, JobRunner};
-use super::tests::{Harness, RecordingStream, Reply, harness, send};
+use crate::api::conversations::turns_tests::{regenerate_request, replied_chat, run_generation};
+use crate::api::jobs::{JobHandlers, JobRunner};
+use crate::api::tests::{Harness, RecordingStream, Reply, harness, send};
 use super::*;
+use crate::api::*;
 
 const HELPER_ANSWER: &str = "<state_update>\n[Scene]\nМесто: таверна\n[Characters]\nAqua · Одежда: синее платье\n[Inventory]\n+ Traveller: посох\n[Notebook]\n+ T1: Аква — богиня | hidden from: Traveller\nClue T1: smiles warmly\n</state_update>";
 
 fn text_of(request: &InferenceRequest) -> String {
     request
-        .messages
+        .context.messages
         .iter()
         .flat_map(|message| &message.parts)
         .filter_map(|part| match part {
@@ -79,7 +80,7 @@ async fn admit(harness: &Harness, chat: &str) -> Option<lettuce_types::JobId> {
     let id: lettuce_types::ConversationId = chat.parse().expect("chat");
     harness
         .context
-        .blocking(move |context| super::jobs::fork_helper::admit_latest(context, id))
+        .blocking(move |context| crate::api::jobs::fork_helper::admit_latest(context, id))
         .await
         .expect("admit")
 }
