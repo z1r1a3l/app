@@ -113,6 +113,9 @@ pub struct ProviderBackupGraph {
     /// fork: macro variables and dice logs; left out when empty.
     #[serde(default, skip_serializing_if = "crate::ForkMacrosBackup::is_empty")]
     pub fork_macros: crate::ForkMacrosBackup,
+    /// fork: helper model settings, switches and tracker changes; left out when empty.
+    #[serde(default, skip_serializing_if = "crate::ForkHelperBackup::is_empty")]
+    pub fork_helper: crate::ForkHelperBackup,
     /// fork: user-set memory turn ranges; left out when empty.
     #[serde(default, skip_serializing_if = "crate::ForkMemoryTurnsBackup::is_empty")]
     pub fork_memory_turns: crate::ForkMemoryTurnsBackup,
@@ -1924,6 +1927,7 @@ mod tests {
             playground_history: crate::PlaygroundHistoryBackup::default(),
             fork_regex: crate::ForkRegexBackup::default(),
             fork_macros: crate::ForkMacrosBackup::default(),
+            fork_helper: crate::ForkHelperBackup::default(),
             fork_memory_turns: crate::ForkMemoryTurnsBackup::default(),
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts: vec![ProviderAccount {

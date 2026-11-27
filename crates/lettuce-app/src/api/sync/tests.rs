@@ -1387,3 +1387,71 @@ async fn fork_global_macro_vars_sync_both_ways() {
     std::fs::remove_dir_all(host_root).expect("host cleanup");
     std::fs::remove_dir_all(client_root).expect("client cleanup");
 }
+
+// fork: helper model settings and switches reach the other device, and
+// edits made there come back.
+#[tokio::test(flavor = "multi_thread")]
+async fn fork_helper_settings_and_switches_sync_both_ways() {
+    let (host, host_root) = device();
+    let (client, client_root) = device();
+    let trackers = dto::HelperTrackersDto {
+        scene: true,
+        characters: true,
+        bonds: false,
+        inventory: true,
+        npcs: true,
+        notebook: true,
+    };
+    helper_config_set(
+        &host.context,
+        dto::HelperConfigUpdate {
+            model_profile_id: None,
+            prompt: Some("Свой промпт.".into()),
+            history: 12,
+        },
+    )
+    .await
+    .expect("host config");
+    let character = host.character_id.to_string();
+    helper_scope_set(
+        &host.context,
+        dto::HelperScopeUpdate {
+            scope: "character".into(),
+            id: character.clone(),
+            enabled: true,
+            trackers,
+        },
+    )
+    .await
+    .expect("host switch");
+    complete(&host.context, &client.context).await;
+    let config = helper_config_get(&client.context).await.expect("client config");
+    assert_eq!((config.prompt.as_deref(), config.history), (Some("Свой промпт."), 12));
+    let scope = client
+        .context
+        .backend()
+        .database()
+        .fork_helper_scope(lettuce_database::ForkHelperScopeKind::Character, &character)
+        .expect("client scope")
+        .expect("synced switch");
+    assert!(scope.enabled && !scope.trackers.bonds);
+
+    helper_config_set(
+        &client.context,
+        dto::HelperConfigUpdate {
+            model_profile_id: None,
+            prompt: None,
+            history: 4,
+        },
+    )
+    .await
+    .expect("client edit");
+    complete(&host.context, &client.context).await;
+    let config = helper_config_get(&host.context).await.expect("host config");
+    assert_eq!((config.prompt, config.history), (None, 4));
+
+    sync_stop(&host.context).await.expect("stop host");
+    sync_stop(&client.context).await.expect("stop client");
+    std::fs::remove_dir_all(host_root).expect("host cleanup");
+    std::fs::remove_dir_all(client_root).expect("client cleanup");
+}

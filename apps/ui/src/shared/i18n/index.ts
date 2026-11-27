@@ -23,6 +23,7 @@ import onboarding from "./locales/en/onboarding.json";
 import prompts from "./locales/en/prompts.json";
 import regex from "./locales/en/regex.json";
 import macros from "./locales/en/macros.json";
+import helper from "./locales/en/helper.json";
 import personas from "./locales/en/personas.json";
 import playground from "./locales/en/playground.json";
 import settings from "./locales/en/settings.json";
@@ -49,6 +50,7 @@ const english = {
     prompts,
     regex,
     macros,
+    helper,
     characters,
     common,
     conversations,

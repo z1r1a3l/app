@@ -3,7 +3,7 @@ import { useCallback, useEffect, type RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { pickImages } from "@/entities/image-input";
-import { ArrowLeftRight, Dices, FileAudio, Image as ImageIcon, NotebookPen, Sparkles, User, Variable } from "lucide-react";
+import { ArrowLeftRight, BrainCircuit, Dices, FileAudio, Image as ImageIcon, NotebookPen, Sparkles, User, Variable } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { icon, ListGroup, ListRowButton, Sheet, toast } from "@lettuceai/crisp";
 import type { ApiClient, ApiFailure } from "@/api/client";
@@ -16,10 +16,11 @@ import { attachmentScopes } from "../data/attachment-scopes";
 import type { ComposerHandle } from "./ChatComposer";
 import { DiceSheet } from "./DiceSheet";
 import { VariablesSheet } from "@/features/macros";
+import { HelperSheet, useHelperChat } from "@/features/fork-helper";
 import { HelpChoiceSheet, HelpResultSheet } from "./HelpReplySheets";
 import { BackgroundSheet, NoteSheet } from "./ToolSheets";
 
-export type ToolPanel = "menu" | "persona" | "background" | "note" | "dice" | "variables" | "helpChoice" | "helpResult";
+export type ToolPanel = "menu" | "persona" | "background" | "note" | "dice" | "variables" | "helper" | "helpChoice" | "helpResult";
 
 export interface ChatToolsProps {
   api: ApiClient;
@@ -46,6 +47,8 @@ function fileName(uri: string): string {
 export function ChatTools({ api, services, conversationId, settings, panel, setPanel, composer, swap, onSwap, onFailure }: ChatToolsProps) {
   const { t } = useTranslation("conversations");
   const { t: tm } = useTranslation("macros");
+  const { t: th } = useTranslation("helper");
+  const helper = useHelperChat(conversationId, panel === "menu");
   const [saving, setSaving] = useState(false);
   const helpEnabled = useQuery(helpMeReplyEnabledQuery(api)).data ?? true;
   const models = useQuery(modelsQuery(api));
@@ -141,6 +144,8 @@ export function ChatTools({ api, services, conversationId, settings, panel, setP
           <ListRowButton icon={<Dices size={icon.lg} />} title={t("tools.dice")} description={t("tools.diceHint")} onClick={() => setPanel("dice")} />
           {/* fork: macro variable inspector */}
           <ListRowButton icon={<Variable size={icon.lg} />} title={tm("tool")} description={tm("toolHint")} onClick={() => setPanel("variables")} />
+          {/* fork: helper model (trackers, notebook) */}
+          <ListRowButton icon={<BrainCircuit size={icon.lg} />} title={th("tool")} description={helper.data?.enabled ? th("toolOn") : th("toolHint")} onClick={() => setPanel("helper")} />
           {settings?.kind !== "group" && (
             <ListRowButton
               icon={<ArrowLeftRight size={icon.lg} />}
@@ -196,6 +201,7 @@ export function ChatTools({ api, services, conversationId, settings, panel, setP
       />
 
       <VariablesSheet open={panel === "variables"} conversationId={conversationId} onClose={() => setPanel(null)} />
+      <HelperSheet open={panel === "helper"} conversationId={conversationId} onClose={() => setPanel(null)} />
 
       <HelpChoiceSheet open={panel === "helpChoice"} onClose={() => setPanel(null)} onChoose={runHelp} />
 

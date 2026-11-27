@@ -1552,6 +1552,22 @@ fn supported_change(change: &CanonicalChange) -> Result<bool, IncomingChangeErro
             crate::fork_macros::ROLL_SYNC_SCHEMA,
             crate::fork_macros::SYNC_VERSION,
         )
+        // fork: helper model settings, switches and tracker changes.
+        | (
+            crate::fork_helper::CONFIG_SYNC_KIND,
+            crate::fork_helper::CONFIG_SYNC_SCHEMA,
+            crate::fork_helper::SYNC_VERSION,
+        )
+        | (
+            crate::fork_helper::SCOPE_SYNC_KIND,
+            crate::fork_helper::SCOPE_SYNC_SCHEMA,
+            crate::fork_helper::SYNC_VERSION,
+        )
+        | (
+            crate::fork_helper::DELTA_SYNC_KIND,
+            crate::fork_helper::DELTA_SYNC_SCHEMA,
+            crate::fork_helper::SYNC_VERSION,
+        )
         // fork: user-set memory turn ranges.
         | (
             crate::fork_memory_turns::SYNC_KIND,
@@ -3161,6 +3177,34 @@ row_codec!(
     no_assets
 );
 
+// fork: helper model settings, switches and tracker changes.
+row_codec!(
+    FORK_HELPER_CONFIG_CODEC,
+    crate::fork_helper::CONFIG_SYNC_KIND,
+    crate::fork_helper::CONFIG_SYNC_SCHEMA,
+    crate::fork_helper::SYNC_VERSION,
+    crate::fork_helper::CONFIG_ROWS,
+    no_assets
+);
+
+row_codec!(
+    FORK_HELPER_SCOPE_CODEC,
+    crate::fork_helper::SCOPE_SYNC_KIND,
+    crate::fork_helper::SCOPE_SYNC_SCHEMA,
+    crate::fork_helper::SYNC_VERSION,
+    crate::fork_helper::SCOPE_ROWS,
+    no_assets
+);
+
+row_codec!(
+    FORK_HELPER_DELTA_CODEC,
+    crate::fork_helper::DELTA_SYNC_KIND,
+    crate::fork_helper::DELTA_SYNC_SCHEMA,
+    crate::fork_helper::SYNC_VERSION,
+    crate::fork_helper::DELTA_ROWS,
+    no_assets
+);
+
 fn creation_apply_error(error: lettuce_creation::CreationRepositoryError) -> ApplyOneError {
     match error {
         lettuce_creation::CreationRepositoryError::Storage { .. } => ApplyOneError::Storage,
@@ -3379,7 +3423,7 @@ const CONVERSATION_MESSAGE_CODEC: SnapshotCodec = SnapshotCodec {
 
 /// Aggregates journaled by comparing their current state with the latest
 /// journaled snapshot, in dependency order (deletes run in reverse).
-const SCANNED_CODECS: [&SnapshotCodec; 45] = [
+const SCANNED_CODECS: [&SnapshotCodec; 48] = [
     &PROVIDER_ACCOUNT_CODEC,
     &MODEL_PROFILE_CODEC,
     &PERSONA_CODEC,
@@ -3425,6 +3469,9 @@ const SCANNED_CODECS: [&SnapshotCodec; 45] = [
     &FORK_GLOBAL_VAR_CODEC,
     &FORK_MACRO_ROLL_CODEC,
     &FORK_MEMORY_TURNS_CODEC,
+    &FORK_HELPER_CONFIG_CODEC,
+    &FORK_HELPER_SCOPE_CODEC,
+    &FORK_HELPER_DELTA_CODEC,
 ];
 
 fn snapshot_codec(kind: &str) -> Option<&'static SnapshotCodec> {
