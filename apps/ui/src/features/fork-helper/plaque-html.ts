@@ -18,7 +18,8 @@ export interface PlaqueLabels {
   truthRemoved: string;
 }
 
-const ORDER = ["scene", "characters", "bonds", "inventory", "npcs", "notebook"];
+/** The author's notebook stays out of the plaque: it is spoilers, shown only on its own tab. */
+const ORDER = ["scene", "characters", "bonds", "inventory", "npcs"];
 
 export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
@@ -53,7 +54,8 @@ function line(change: HelperChangeDto, labels: PlaqueLabels): string {
 }
 
 /** One line of HTML (no blank lines, so markdown keeps it as one block). */
-export function plaqueHtml(changes: readonly HelperChangeDto[], labels: PlaqueLabels): string {
+export function plaqueHtml(all: readonly HelperChangeDto[], labels: PlaqueLabels): string {
+  const changes = all.filter((change) => ORDER.includes(change.tracker));
   const summary = `<summary>${escapeHtml(labels.title)} · ${changes.length || escapeHtml(labels.noChanges)}</summary>`;
   if (changes.length === 0) return `<details class="helper-plaque">${summary}</details>`;
   const sections = ORDER.flatMap((tracker) => {

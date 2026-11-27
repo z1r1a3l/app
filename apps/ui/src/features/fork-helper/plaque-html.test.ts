@@ -49,18 +49,27 @@ describe("plaqueHtml", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
-  it("marks removals, clues missing from the reply and reveals", () => {
+  it("marks removals and leaves the notebook out", () => {
     const html = plaqueHtml(
       [
         change({ field: "Одежда", subject: "Аква" }),
+        change({ tracker: "notebook", kind: "truth", subject: "T1", value: "Аква — богиня", field: "Traveller" }),
         change({ tracker: "notebook", kind: "clue", subject: "T1", value: "тень", found: false }),
         change({ tracker: "notebook", kind: "reveal", subject: "T2", value: "1" }),
       ],
       labels,
     );
     expect(html).toContain("Одежда: <s>removed</s>");
-    expect(html).toContain("⚠ not in the reply");
-    expect(html).toContain("<b>T2</b> — revealed");
+    expect(html).toContain("<summary>State · 1</summary>");
+    expect(html).not.toContain("Notebook");
+    expect(html).not.toContain("T1");
+    expect(html).not.toContain("богиня");
+    expect(html).not.toContain("тень");
+  });
+
+  it("shows a notebook-only read as no changes", () => {
+    const html = plaqueHtml([change({ tracker: "notebook", kind: "clue", subject: "T1", value: "тень" })], labels);
+    expect(html).toBe('<details class="helper-plaque"><summary>State · no changes</summary></details>');
   });
 
   it("shows an empty read as no changes", () => {
