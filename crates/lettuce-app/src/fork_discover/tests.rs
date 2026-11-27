@@ -502,3 +502,12 @@ fn live_dump_for_screenshots() {
         println!("{tag}: {} items, {} details", page.items.len(), details.len());
     }
 }
+
+#[test]
+fn hub_image_urls_must_be_public_https() {
+    use super::common::public_https;
+    assert!(public_https("https://avatars.charhub.io/a.webp").is_some());
+    for url in ["http://avatars.charhub.io/a.webp", "https://127.0.0.1/a", "https://192.168.1.2/a", "https://[::1]/a", "https://localhost/a", "https://router/a", "file:///etc/passwd"] {
+        assert!(public_https(url).is_none(), "{url}");
+    }
+}

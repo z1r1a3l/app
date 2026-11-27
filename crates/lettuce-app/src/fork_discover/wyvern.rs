@@ -6,7 +6,7 @@ use lettuce_contracts::{self as dto, ApiError, DiscoverKind as Kind, DiscoverSou
 use serde_json::{Value, json};
 
 use super::card_png::write_card_png;
-use super::common::{
+use super::common::{public_https, 
     HttpRequest, array_len, clip, comma_list, count, file_name, html_to_text, json, malformed, next_page, opt_text,
     page_of, strings, text, unsupported,
 };
@@ -207,7 +207,7 @@ pub(crate) async fn download(fetch: &impl Fetch, kind: Kind, id: &str) -> Result
         }
     }
     let card = card_v2(&node, &books);
-    let image = match opt_text(&node, "avatar") {
+    let image = match opt_text(&node, "avatar").and_then(|url| public_https(&url)) {
         Some(url) => fetch.fetch(NAME, HttpRequest::file(url)).await.ok().map(|file| file.body),
         None => None,
     };

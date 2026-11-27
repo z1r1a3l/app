@@ -51,17 +51,6 @@ fn helper_harness_with(answer: &'static str) -> Harness {
     harness
 }
 
-fn set_helper_answer(harness: &Harness, answer: &'static str) {
-    *harness.provider.response_hook.lock().expect("hook") =
-        Some(Arc::new(move |request, outcome| {
-            if is_helper(request) {
-                outcome.candidates[0].parts = vec![MessagePart::Text {
-                    text: answer.into(),
-                }];
-            }
-        }));
-}
-
 async fn run_jobs(harness: &Harness) {
     let runner = JobRunner::new(harness.context.clone(), JobHandlers::standard());
     // Reads of one chat share a lane: wait for each before the next.

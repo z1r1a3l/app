@@ -99,6 +99,18 @@ pub(crate) fn absolute(origin: &str, path: &str) -> String {
     if path.starts_with("http://") || path.starts_with("https://") { path.to_owned() } else { format!("{origin}{path}") }
 }
 
+/// Image URLs that hubs return in JSON: only public `https` hosts, never an
+/// IP literal or `localhost`, so a hub cannot point the app at the LAN.
+pub(crate) fn public_https(url: &str) -> Option<String> {
+    let parsed = url::Url::parse(url).ok()?;
+    let host = match parsed.host()? {
+        url::Host::Domain(domain) => domain.to_ascii_lowercase(),
+        url::Host::Ipv4(_) | url::Host::Ipv6(_) => return None,
+    };
+    let local = host == "localhost" || host.ends_with(".localhost") || host.ends_with(".local") || !host.contains('.');
+    (parsed.scheme() == "https" && !local).then(|| url.to_owned())
+}
+
 /// Plain text from the light HTML hubs use for descriptions: block tags
 /// become line breaks, other tags are dropped, common entities decoded.
 /// `<style>` and `<script>` elements are removed entirely, including their
