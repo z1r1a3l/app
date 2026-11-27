@@ -106,7 +106,10 @@ export function SettingsRoot({ ctx, name, avatar, onOpenMemories, onBranches, on
   };
   const archive = async () => {
     const done = await ctx.run(() => setArchived(api, queryClient, conversationId, !view.archived).then(() => true));
-    if (done && !view.archived) onHome();
+    if (done && !view.archived) {
+      toast.info(i18n.t("archive.hint", { ns: "fork-ui" }));
+      onHome();
+    }
   };
   const remove = async () => {
     const sure = await confirm({

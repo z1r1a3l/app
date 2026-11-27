@@ -31,6 +31,7 @@ import sync from "./locales/en/sync.json";
 import tour from "./locales/en/tour.json";
 import welcomeBack from "./locales/en/welcome-back.json";
 import forkLorebook from "./locales/en/fork-lorebook.json";
+import forkUi from "./locales/en/fork-ui.json";
 
 export const defaultNamespace = "common";
 
@@ -67,6 +68,7 @@ const english = {
     tour,
     "welcome-back": welcomeBack,
     "fork-lorebook": forkLorebook,
+    "fork-ui": forkUi,
   },
 } as const;
 

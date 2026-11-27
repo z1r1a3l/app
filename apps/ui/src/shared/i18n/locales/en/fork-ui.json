@@ -1,0 +1,11 @@
+{
+  "archive": {
+    "open": "Archived chats",
+    "title": "Archive",
+    "empty": "No archived chats",
+    "restore": "Restore {{title}}",
+    "restored": "Chat restored",
+    "untitled": "Untitled chat",
+    "hint": "Archived. Find it under Chats → Archive."
+  }
+}

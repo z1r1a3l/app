@@ -32,6 +32,7 @@ import { HomeCharacterCard } from "./components/HomeCharacterCard";
 import { LayoutSheet } from "./components/LayoutSheet";
 import { layoutIcons } from "./components/layout-icons";
 import { RecentList } from "./components/RecentList";
+import { ForkArchiveButton } from "./components/ForkArchiveButton";
 import { homeCharactersQuery, matchesSearch, type HomeCharacter } from "./data/home-characters";
 import { desktopViews, useDesktopView, usePhoneLayout, type DesktopView } from "./data/layout";
 
@@ -89,6 +90,7 @@ export function HomePage() {
   const recent = (
     <RecentList api={api} characters={byId} search={query} onOpen={(chat) => chats.openConversation(chat.id)} heldId={chatMenu?.chat.id ?? null} onMenu={(chat, character) => setChatMenu({ chat, character })} />
   );
+  const archive = <ForkArchiveButton api={api} characters={byId} onOpen={(chat) => chats.openConversation(chat.id)} />;
   const menus = (
     <>
       <CharacterMenu api={api} home={menuFor} onClose={() => setMenuFor(null)} />
@@ -185,7 +187,7 @@ export function HomePage() {
         searchValue={query}
         onSearchChange={setQuery}
         searchPlaceholder={t("searchCharacters")}
-        actions={<>{viewSwitch}<MobileSettingsButton /></>}
+        actions={<>{archive}{viewSwitch}<MobileSettingsButton /></>}
         mainRef={mainRef}
         padding="none"
         contentClassName="space-y-8 px-6 pb-10 pt-2"
@@ -227,7 +229,7 @@ export function HomePage() {
       padding="none"
       contentClassName={cn("pb-10 pt-1", phone ? "px-3" : "px-6")}
       actions={
-        <>{phone ? (
+        <>{archive}{phone ? (
           <IconButton label={t("layout.current", { layout: t(`layout.${phoneLayout}.title`) })} onClick={() => setLayoutSheet(true)}>
             {layoutIcons[phoneLayout]}
           </IconButton>
