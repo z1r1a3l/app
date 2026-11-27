@@ -887,6 +887,8 @@ impl ProviderBackupRestoreWriter for Database {
             .map_err(invalid)?;
         crate::fork_memory_turns::insert_restored_in(&transaction, &graph.fork_memory_turns)
             .map_err(invalid)?;
+        crate::fork_chapter_recall::insert_restored_in(&transaction, &graph.fork_chapter_recall)
+            .map_err(invalid)?;
         for (conversation_id, message_id) in tombstoned {
             transaction
                 .execute(

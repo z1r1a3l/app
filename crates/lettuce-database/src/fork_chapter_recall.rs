@@ -444,4 +444,21 @@ mod tests {
         assert!(!folded.iter().any(|chapter| chapter.text.contains("Cycle")));
         assert!(!folded.iter().any(|chapter| chapter.text.contains("Arc of")));
     }
+
+    #[test]
+    fn config_survives_a_backup_round_trip() {
+        let database = Database::open_in_memory().expect("db");
+        database
+            .fork_chapter_recall_config_set(&ChapterRecallConfig {
+                enabled: true,
+                limit: 1,
+            })
+            .expect("set");
+        let (graph, restored) =
+            crate::backup::restore_writer::tests::backup_round_trip(&database, |_| {});
+        assert_eq!(graph.fork_chapter_recall.config.len(), 1);
+        let stored = restored.fork_chapter_recall_config().expect("get");
+        assert!(stored.enabled);
+        assert_eq!(stored.limit, 1);
+    }
 }

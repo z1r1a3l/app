@@ -119,6 +119,9 @@ pub struct ProviderBackupGraph {
     /// fork: user-set memory turn ranges; left out when empty.
     #[serde(default, skip_serializing_if = "crate::ForkMemoryTurnsBackup::is_empty")]
     pub fork_memory_turns: crate::ForkMemoryTurnsBackup,
+    /// fork: folded-chapter recall settings; left out when empty.
+    #[serde(default, skip_serializing_if = "crate::ForkChapterRecallBackup::is_empty")]
+    pub fork_chapter_recall: crate::ForkChapterRecallBackup,
     pub accounts: Vec<ProviderAccount>,
     pub profiles: Vec<ModelProfile>,
     pub prompts: Vec<PromptDocument>,
@@ -1929,6 +1932,7 @@ mod tests {
             fork_macros: crate::ForkMacrosBackup::default(),
             fork_helper: crate::ForkHelperBackup::default(),
             fork_memory_turns: crate::ForkMemoryTurnsBackup::default(),
+            fork_chapter_recall: crate::ForkChapterRecallBackup::default(),
             version: PROVIDER_BACKUP_GRAPH_VERSION,
             accounts: vec![ProviderAccount {
                 id: ProviderAccountId::new(),
