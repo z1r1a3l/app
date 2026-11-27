@@ -20,6 +20,7 @@ import type { PanelCtx } from "./context";
 import { MembersSection } from "./MembersSection";
 import { SpeakerSelectionGroup } from "./SpeakerSelectionGroup";
 import { SettingRow } from "./SettingRow";
+import { ChatRegexGroup } from "@/features/regex";
 
 export interface SettingsRootProps {
   ctx: PanelCtx;
@@ -291,6 +292,8 @@ export function SettingsRoot({ ctx, name, avatar, onOpenMemories, onBranches, on
           />
         )}
       </ListGroup>
+
+      <ChatRegexGroup conversationId={conversationId} />
 
       <section className="space-y-3">
         {view.memory_blocked && (

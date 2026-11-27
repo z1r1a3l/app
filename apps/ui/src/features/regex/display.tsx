@@ -37,7 +37,7 @@ export function RegexDisplayProvider({
     if (!data || data.scripts.length === 0) return null;
     return {
       scripts: data.scripts,
-      macros: { user: data.user_name, char: data.character_name, vars: varRecord(data.chat_vars), globalVars: varRecord(data.global_vars) },
+      macros: { user: data.user_name, char: data.character_name, vars: varRecord(data.chat_vars), globalVars: varRecord(data.global_vars), custom: Object.fromEntries(data.chat_macros.map((item) => [item.key.toLowerCase(), item.value])) },
       depthOf: (id) => depths.get(id),
     };
   }, [scripts.data, depths]);

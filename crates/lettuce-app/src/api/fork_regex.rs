@@ -168,6 +168,7 @@ fn scope_ref(kind: RegexScopeKind, id: String) -> dto::RegexScopeRef {
         kind: match kind {
             RegexScopeKind::Preset => dto::RegexScopeKindDto::Preset,
             RegexScopeKind::Character => dto::RegexScopeKindDto::Character,
+            RegexScopeKind::Chat => dto::RegexScopeKindDto::Chat,
             RegexScopeKind::Global => dto::RegexScopeKindDto::Global,
         },
         id: Some(id),

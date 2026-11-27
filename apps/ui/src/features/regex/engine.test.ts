@@ -100,3 +100,9 @@ describe("rich message HTML", () => {
     expect(handlers).toEqual([]);
   });
 });
+
+describe("fork chat macros", () => {
+  it("resolves chat macros by key, case-insensitively, after built-ins", () => {
+    expect(substituteMacros("{{Town}} / {{char}} / {{other}}", { char: "Eira", custom: { town: "Riverton", char: "x" } })).toBe("Riverton / Eira / {{other}}");
+  });
+});

@@ -31,6 +31,8 @@ export interface MacroValues {
   char?: string;
   vars?: Record<string, string>;
   globalVars?: Record<string, string>;
+  /** Fork: the chat's own `{{key}}` macros, keys in lower case. */
+  custom?: Record<string, string>;
   /** Picks an index below `bound` for `{{random}}` / `{{roll}}`; tests make it fixed. */
   random?: (bound: number) => number;
 }
@@ -148,6 +150,8 @@ function resolve(body: string, values: MacroValues): string | null {
   if (list) return list[0] !== undefined ? (values.globalVars?.[list[0].trim()] ?? "") : null;
   list = args(trimmed, "getvar");
   if (list) return list[0] !== undefined ? (values.vars?.[list[0].trim()] ?? "") : null;
+  const custom = values.custom?.[trimmed.toLowerCase()];
+  if (custom !== undefined && Object.prototype.hasOwnProperty.call(values.custom, trimmed.toLowerCase())) return custom;
   return null;
 }
 

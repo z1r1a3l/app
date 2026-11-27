@@ -8,5 +8,30 @@
     "untitled": "Untitled chat",
     "hint": "Archived. Find it under Chats → Archive.",
     "more": "Show more"
+  },
+  "chatRegex": {
+    "section": "Regex and macros",
+    "title": "Regex and macros of this chat",
+    "hint": "Own scripts and {{example}} macros; switch off global or character scripts here",
+    "globalOff": "global off",
+    "characterOff": "character off",
+    "macroCount_one": "{{count}} macro",
+    "macroCount_other": "{{count}} macros",
+    "inherited": "Inherited scripts",
+    "useGlobal": "Global scripts",
+    "useGlobalHint": "Run the global regex scripts in this chat",
+    "useCharacter": "Character scripts",
+    "useCharacterHint": "Run the characters' regex scripts in this chat",
+    "own": "This chat's scripts",
+    "ownHint": "Run after the global, preset and character scripts",
+    "ownSwitch": "Run this chat's scripts",
+    "macros": "Chat macros",
+    "macrosHint": "{{example}} in prompts and regex replacements of this chat becomes the value. Built-in macros keep their meaning.",
+    "key": "Key, e.g. town",
+    "value": "Value",
+    "remove": "Remove macro",
+    "addMacro": "Add macro",
+    "save": "Save macros",
+    "saved": "Macros saved"
   }
 }
