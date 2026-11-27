@@ -4,7 +4,11 @@
   "toolOn": "On in this chat",
   "title": "Helper model",
   "hint": "After each reply a second model writes what changed. The app keeps the state and gives it to the main model.",
-  "tabs": { "settings": "Settings", "state": "State", "notebook": "Notebook" },
+  "tabs": {
+    "settings": "Settings",
+    "state": "State",
+    "notebook": "Notebook"
+  },
   "chatSwitch": "In this chat",
   "chatSwitchHint": "Overrides the character's switch",
   "chatFollows": "Follows the character",
@@ -42,7 +46,7 @@
   "off": "The helper is off for this chat. Switch it on in Settings.",
   "stateEmpty": "Nothing is tracked yet",
   "stateEmptyHint": "The state fills in after the next reply.",
-  "stateHint": "Edits are kept with the latest reply: swiping or deleting it undoes them.",
+  "stateHint": "Edits are kept with the latest reply: swiping or deleting it undoes them. Locked bonds stay until you unlock them.",
   "scene": "Scene",
   "characters": "Characters",
   "bonds": "Relationships",
@@ -85,5 +89,9 @@
     "revealed": "revealed",
     "hidden": "hidden again",
     "truthRemoved": "dropped"
-  }
+  },
+  "lock": "Lock",
+  "unlock": "Unlock",
+  "locked": "Locked",
+  "lockedHint": "The helper cannot change or remove this bond."
 }

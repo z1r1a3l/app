@@ -11,6 +11,7 @@
 
 mod clue;
 mod delta;
+mod locks;
 mod model;
 mod prompt;
 mod render;
@@ -21,15 +22,16 @@ mod tests;
 
 pub use clue::clue_found;
 pub use delta::{ParsedDelta, parse_delta};
+pub use locks::{BondLock, apply_bond_locks, drop_locked_bond_ops, is_locked, touches_locked_bond};
 pub use model::{
     Clue, Entity, Field, HelperState, Holder, Op, StateDelta, Tracker, Trackers, Truth, apply,
-    diff, fold, limit_new_truths, live_truths, same_key,
+    diff, fold, limit_new_truths, live_truths, normalize, same_key,
 };
 pub use prompt::{
     DEFAULT_PROMPT, HelperInput, HelperLine, MAX_LIVE_TRUTHS, helper_system_prompt,
     helper_user_message,
 };
-pub use render::render_state_block;
+pub use render::{render_state_block, render_state_block_with_locks};
 pub use store::{
     DeltaSource, HelperStateSource, StoredDelta, clear_state_source, set_state_source,
     state_for_path, state_source,

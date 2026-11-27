@@ -11,6 +11,8 @@ pub use fork_helper::{
     helper_chat_get, helper_config_get, helper_config_set, helper_message, helper_scope_set,
     helper_state_set, helper_status,
 };
+pub(crate) mod fork_chapter_recall;
+pub use fork_chapter_recall::{chapter_recall_config_get, chapter_recall_config_set};
 pub(crate) mod fork_macros;
 pub use fork_macros::{macro_message_rolls, macro_preview, macro_vars_get, macro_vars_replace};
 pub(crate) mod fork_regex;

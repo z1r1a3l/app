@@ -2,6 +2,7 @@
 
 use std::fmt::Write as _;
 
+use super::locks::{BondLock, is_locked};
 use super::model::{Entity, Field, HelperState, Tracker, Trackers};
 
 fn fields(fields: &[Field]) -> String {
@@ -12,13 +13,18 @@ fn fields(fields: &[Field]) -> String {
         .join("; ")
 }
 
-fn entities(out: &mut String, title: &str, list: &[Entity]) {
+fn entities(out: &mut String, title: &str, list: &[Entity], locked: &[BondLock]) {
     if list.is_empty() {
         return;
     }
     let _ = writeln!(out, "{title}:");
     for entity in list {
-        let _ = writeln!(out, "- {}: {}", entity.name, fields(&entity.fields));
+        let mark = if title == "Bonds" && is_locked(&entity.name, locked) {
+            " [locked]"
+        } else {
+            ""
+        };
+        let _ = writeln!(out, "- {}: {}{mark}", entity.name, fields(&entity.fields));
     }
 }
 
@@ -31,15 +37,26 @@ pub fn render_state_block(
     trackers: &Trackers,
     header: &str,
 ) -> Option<String> {
+    render_state_block_with_locks(state, trackers, header, &[])
+}
+
+/// Same as `render_state_block`, with locked bonds marked `[locked]`.
+#[must_use]
+pub fn render_state_block_with_locks(
+    state: &HelperState,
+    trackers: &Trackers,
+    header: &str,
+    locked: &[BondLock],
+) -> Option<String> {
     let mut out = String::new();
     if trackers.enabled(Tracker::Scene) && !state.scene.is_empty() {
         let _ = writeln!(out, "Scene: {}", fields(&state.scene));
     }
     if trackers.enabled(Tracker::Characters) {
-        entities(&mut out, "Characters", &state.characters);
+        entities(&mut out, "Characters", &state.characters, locked);
     }
     if trackers.enabled(Tracker::Bonds) {
-        entities(&mut out, "Bonds", &state.bonds);
+        entities(&mut out, "Bonds", &state.bonds, locked);
     }
     if trackers.enabled(Tracker::Inventory) && !state.inventory.is_empty() {
         let _ = writeln!(out, "Inventory:");
@@ -48,7 +65,7 @@ pub fn render_state_block(
         }
     }
     if trackers.enabled(Tracker::Npcs) {
-        entities(&mut out, "NPCs", &state.npcs);
+        entities(&mut out, "NPCs", &state.npcs, locked);
     }
     if trackers.enabled(Tracker::Notebook) {
         let live = state

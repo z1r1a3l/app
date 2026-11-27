@@ -29,6 +29,9 @@ pub struct HelperFieldDto {
 pub struct HelperEntityDto {
     pub name: String,
     pub fields: Vec<HelperFieldDto>,
+    /// Set on bonds the user froze; ignored on other entities.
+    #[serde(default)]
+    pub locked: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

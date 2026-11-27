@@ -9,7 +9,8 @@
 
 use lettuce_characters::{CharacterRepository, PersonaRepository};
 use lettuce_context::fork_helper::{
-    self as helper, HelperInput, HelperLine, MAX_LIVE_TRUTHS, Op, Trackers,
+    self as helper, HelperInput, HelperLine, MAX_LIVE_TRUTHS, Op, Trackers, apply_bond_locks,
+    drop_locked_bond_ops,
 };
 use lettuce_conversations::{
     Conversation, ConversationKind, ConversationReader, GenerationOperation, InferenceRequest,
@@ -337,7 +338,11 @@ where
         .into_iter()
         .map(|row| row.delta)
         .collect::<Vec<_>>();
-    let before = helper::state_for_path(&rows, &path_of(&items[..index]));
+    let locks = database
+        .fork_helper_locks(&conversation_key)
+        .map_err(storage)?;
+    let mut before = helper::state_for_path(&rows, &path_of(&items[..index]));
+    apply_bond_locks(&mut before, &locks);
     let config = database.fork_helper_config().map_err(storage)?;
     let names = names(database, conversation)?;
 
@@ -361,11 +366,12 @@ where
         character_name: names.character.clone(),
         character_card: names.card.clone(),
         user_name: names.user.clone(),
-        state: helper::render_state_block(&before, &trackers, ""),
+        state: helper::render_state_block_with_locks(&before, &trackers, "", &locks),
         earlier,
         latest,
         trackers,
         live_truths: helper::live_truths(&before),
+        locked_bonds: locks.iter().map(|lock| lock.name.clone()).collect(),
     };
     let system = helper::helper_system_prompt(
         config.prompt.as_deref().unwrap_or_default(),
@@ -487,6 +493,7 @@ where
         return Err(HelperRunError::EmptyResponse);
     }
     let (ops, skipped) = keep_ops(&answer, &trackers, &before, &item_text(reply));
+    let ops = drop_locked_bond_ops(&ops, &locks);
     database
         .fork_helper_put_read(
             &conversation_key,

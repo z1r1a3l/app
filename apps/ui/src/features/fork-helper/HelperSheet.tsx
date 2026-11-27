@@ -123,7 +123,7 @@ export function HelperSheet({ open, conversationId, onClose }: { open: boolean; 
               <FieldsEditor fields={draft.scene} onChange={(scene) => patch({ scene })} />
             </section>
             <EntitiesEditor label={t("characters")} entities={draft.characters} onChange={(characters) => patch({ characters })} />
-            <EntitiesEditor label={t("bonds")} entities={draft.bonds} onChange={(bonds) => patch({ bonds })} />
+            <EntitiesEditor label={t("bonds")} entities={draft.bonds} onChange={(bonds) => patch({ bonds })} lockable />
             <InventoryEditor holders={draft.inventory} onChange={(inventory) => patch({ inventory })} />
             <EntitiesEditor label={t("npcs")} entities={draft.npcs} onChange={(npcs) => patch({ npcs })} />
           </div>

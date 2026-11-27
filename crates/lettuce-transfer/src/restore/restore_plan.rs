@@ -124,6 +124,8 @@ struct ProviderMetadata {
     #[serde(default)]
     fork_memory_turns: crate::ForkMemoryTurnsBackup,
     #[serde(default)]
+    fork_chapter_recall: crate::ForkChapterRecallBackup,
+    #[serde(default)]
     device: crate::BackupDeviceState,
 }
 
@@ -342,6 +344,7 @@ pub fn decode_provider_backup_restore_plan(
         fork_macros: metadata.fork_macros,
         fork_helper: metadata.fork_helper,
         fork_memory_turns: metadata.fork_memory_turns,
+        fork_chapter_recall: metadata.fork_chapter_recall,
         version: metadata.version,
         accounts: metadata.accounts.into_iter().map(Into::into).collect(),
         profiles: metadata.profiles.into_iter().map(Into::into).collect(),

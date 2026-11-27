@@ -436,6 +436,43 @@ fn prompt_fills_names_and_lists_trackers() {
     assert!(user.contains("Enabled trackers: Scene, Characters, Bonds, Inventory, NPC"));
     assert!(user.contains("<latest_exchange>\nАква: Привет\n</latest_exchange>"));
     assert!(!user.contains("Notebook:"));
+    let locked = helper_user_message(&HelperInput {
+        locked_bonds: vec!["Кассиан → Хантер".into()],
+        ..HelperInput::default()
+    });
+    assert!(locked.contains("Locked bonds (do not change or remove): Кассиан → Хантер."));
+}
+
+#[test]
+fn render_marks_locked_bonds() {
+    let mut state = HelperState::default();
+    apply(
+        &mut state,
+        &[
+            set(Tracker::Bonds, "Кассиан", "Attitude", "враг"),
+            set(Tracker::Characters, "Кассиан", "Outfit", "плащ"),
+        ],
+        "",
+    );
+    let locks = [BondLock {
+        name: "Кассиан".into(),
+        fields: vec![Field {
+            name: "Attitude".into(),
+            value: "враг".into(),
+        }],
+    }];
+    let block =
+        render_state_block_with_locks(&state, &Trackers::default(), "", &locks).expect("block");
+    assert!(
+        block.contains("- Кассиан: Attitude: враг [locked]"),
+        "{block}"
+    );
+    assert!(block.contains("- Кассиан: Outfit: плащ"), "{block}");
+    let characters = block.split("Bonds:").next().expect("characters");
+    assert!(
+        !characters.contains("[locked]"),
+        "only bonds are marked locked: {block}"
+    );
 }
 
 struct FakeSource {

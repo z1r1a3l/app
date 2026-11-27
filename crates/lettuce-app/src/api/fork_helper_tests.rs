@@ -35,15 +35,31 @@ fn is_helper(request: &InferenceRequest) -> bool {
 /// The model answers the helper with `HELPER_ANSWER` and the chat with the
 /// harness's reply.
 fn helper_harness() -> Harness {
+    helper_harness_with(HELPER_ANSWER)
+}
+
+fn helper_harness_with(answer: &'static str) -> Harness {
     let harness = harness(Reply::Text("Aqua smiles warmly at you."));
-    *harness.provider.response_hook.lock().expect("hook") = Some(Arc::new(|request, outcome| {
-        if is_helper(request) {
-            outcome.candidates[0].parts = vec![MessagePart::Text {
-                text: HELPER_ANSWER.into(),
-            }];
-        }
-    }));
+    *harness.provider.response_hook.lock().expect("hook") =
+        Some(Arc::new(move |request, outcome| {
+            if is_helper(request) {
+                outcome.candidates[0].parts = vec![MessagePart::Text {
+                    text: answer.into(),
+                }];
+            }
+        }));
     harness
+}
+
+fn set_helper_answer(harness: &Harness, answer: &'static str) {
+    *harness.provider.response_hook.lock().expect("hook") =
+        Some(Arc::new(move |request, outcome| {
+            if is_helper(request) {
+                outcome.candidates[0].parts = vec![MessagePart::Text {
+                    text: answer.into(),
+                }];
+            }
+        }));
 }
 
 async fn run_jobs(harness: &Harness) {
@@ -284,6 +300,7 @@ async fn manual_edits_are_kept_with_the_latest_reply() {
             name: "Настроение".into(),
             value: "хмурый".into(),
         }],
+        locked: false,
     });
     state.notebook[0].revealed = true;
     let view = helper_state_set(
@@ -476,4 +493,188 @@ async fn settings_keep_the_default_prompt_as_default() {
     .await
     .expect_err("too many messages");
     assert_eq!(error.code, dto::ApiErrorCode::InvalidInput);
+}
+
+const LOCKED_BOND_ANSWER: &str =
+    "<state_update>\n[Bonds] Кассиан · Attitude: враг -> друг\n</state_update>";
+
+fn cassian(locked: bool, attitude: &str) -> dto::HelperEntityDto {
+    dto::HelperEntityDto {
+        name: "Кассиан".into(),
+        fields: vec![dto::HelperFieldDto {
+            name: "Attitude".into(),
+            value: attitude.into(),
+        }],
+        locked,
+    }
+}
+
+async fn lock_cassian(harness: &Harness, chat: &str, attitude: &str) -> dto::HelperChatView {
+    let mut state = chat_view(harness, chat).await.state;
+    if let Some(bond) = state.bonds.iter_mut().find(|bond| bond.name == "Кассиан") {
+        bond.fields = cassian(true, attitude).fields;
+        bond.locked = true;
+    } else {
+        state.bonds.push(cassian(true, attitude));
+    }
+    helper_state_set(
+        &harness.context,
+        dto::HelperStateUpdate {
+            conversation_id: chat.into(),
+            state,
+        },
+    )
+    .await
+    .expect("lock")
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_locked_bond_ignores_helper_changes_and_survives_regenerate() {
+    let harness = helper_harness_with(LOCKED_BOND_ANSWER);
+    let (chat, reply) = replied_chat(&harness, "helper-lock").await;
+    switch_on(&harness, &chat).await;
+    let view = lock_cassian(&harness, &chat, "враг").await;
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("враг")
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && bond.locked),
+        "{:?}",
+        view.state.bonds
+    );
+
+    admit(&harness, &chat).await.expect("queued");
+    run_jobs(&harness).await;
+    let view = chat_view(&harness, &chat).await;
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("враг")
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && bond.locked)
+    );
+
+    let requests = harness.provider.requests.lock().expect("requests").clone();
+    let helper_text = text_of(
+        requests
+            .iter()
+            .rev()
+            .find(|r| is_helper(r))
+            .expect("helper call"),
+    );
+    assert!(
+        helper_text.contains("Locked bonds (do not change or remove): Кассиан"),
+        "{helper_text}"
+    );
+    assert!(helper_text.contains("[locked]"), "{helper_text}");
+
+    conversation_regenerate(
+        &harness.context,
+        regenerate_request(&harness, &chat, &reply, "helper-lock-regen"),
+        Arc::new(RecordingStream::default()),
+    )
+    .await
+    .expect("regenerate");
+    run_generation(&harness).await;
+    let view = chat_view(&harness, &chat).await;
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("враг"),
+        "lock snapshot survives swipe: {:?}",
+        view.state.bonds
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && bond.locked)
+    );
+
+    run_jobs(&harness).await;
+    let view = chat_view(&harness, &chat).await;
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("враг")
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && bond.locked)
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_user_can_edit_or_unlock_a_locked_bond() {
+    let harness = helper_harness_with(LOCKED_BOND_ANSWER);
+    let (chat, _) = replied_chat(&harness, "helper-lock-edit").await;
+    switch_on(&harness, &chat).await;
+    lock_cassian(&harness, &chat, "враг").await;
+
+    let mut state = chat_view(&harness, &chat).await.state;
+    state.bonds = vec![cassian(true, "нейтрален")];
+    let view = helper_state_set(
+        &harness.context,
+        dto::HelperStateUpdate {
+            conversation_id: chat.clone(),
+            state,
+        },
+    )
+    .await
+    .expect("edit locked");
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("нейтрален")
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && bond.locked)
+    );
+
+    let mut state = view.state;
+    state.bonds = vec![cassian(false, "нейтрален")];
+    let view = helper_state_set(
+        &harness.context,
+        dto::HelperStateUpdate {
+            conversation_id: chat.clone(),
+            state,
+        },
+    )
+    .await
+    .expect("unlock");
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("нейтрален")
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && !bond.locked)
+    );
+
+    admit(&harness, &chat).await.expect("queued");
+    run_jobs(&harness).await;
+    let view = chat_view(&harness, &chat).await;
+    assert_eq!(
+        value(&view.state.bonds, "Кассиан", "Attitude"),
+        Some("друг"),
+        "helper may change an unlocked bond: {:?}",
+        view.state.bonds
+    );
+    assert!(
+        view.state
+            .bonds
+            .iter()
+            .any(|bond| bond.name == "Кассиан" && !bond.locked)
+    );
 }

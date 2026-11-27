@@ -335,6 +335,8 @@ export const commands = {
 	helperScopeSet: (request: HelperScopeUpdate) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("helper_scope_set", { request })),
 	helperStateSet: (request: HelperStateUpdate) => typedError<HelperChatView, ApiError_Serialize>(__TAURI_INVOKE("helper_state_set", { request })),
 	helperMessage: (request: HelperMessageRequest) => typedError<HelperMessageView, ApiError_Serialize>(__TAURI_INVOKE("helper_message", { request })),
+	chapterRecallConfigGet: () => typedError<ChapterRecallConfigDto, ApiError_Serialize>(__TAURI_INVOKE("chapter_recall_config_get")),
+	chapterRecallConfigSet: (request: ChapterRecallConfigDto) => typedError<ChapterRecallConfigDto, ApiError_Serialize>(__TAURI_INVOKE("chapter_recall_config_set", { request })),
 	macroVarsGet: (request: MacroVarsRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_get", { request })),
 	macroVarsReplace: (request: MacroVarsReplaceRequest) => typedError<MacroVarsView, ApiError_Serialize>(__TAURI_INVOKE("macro_vars_replace", { request })),
 	macroPreview: (request: MacroPreviewRequest) => typedError<MacroPreviewResult, ApiError_Serialize>(__TAURI_INVOKE("macro_preview", { request })),
@@ -3448,6 +3450,11 @@ export type HelperConfigUpdate = {
 	history: number,
 };
 
+export type ChapterRecallConfigDto = {
+	enabled: boolean,
+	limit: number,
+};
+
 export type HelperConfigView = {
 	model_profile_id: string | null,
 	/**  `None`: the default prompt is used. */
@@ -3460,6 +3467,8 @@ export type HelperConfigView = {
 export type HelperEntityDto = {
 	name: string,
 	fields: HelperFieldDto[],
+	/** Set on bonds the user froze; ignored on other entities. */
+	locked: boolean,
 };
 
 export type HelperFieldDto = {
