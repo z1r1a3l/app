@@ -12,7 +12,9 @@ fn env() -> MacroEnv {
         last_user_message: Some("hi there".into()),
         last_char_message: Some("hello".into()),
         pick_seed: "chat-1".into(),
-        custom: [("town".to_owned(), "Ривертон".to_owned())].into_iter().collect(),
+        custom: [("town".to_owned(), "Ривертон".to_owned())]
+            .into_iter()
+            .collect(),
     }
 }
 
@@ -576,4 +578,106 @@ fn chat_macros_resolve_by_key_and_builtins_win() {
     assert_eq!(eval("В {{town}}, {{TOWN}}."), "В Ривертон, Ривертон.");
     assert_eq!(eval("{{unknownmacro}}"), "{{unknownmacro}}");
     assert_eq!(eval("{{char}}"), "Шарлотта");
+}
+
+/// The real "Get Isekai'd Simulator" card (illarin.com, v2, ST Macros 2.0):
+/// nothing of the macro syntax may survive evaluation.
+#[test]
+fn isekai_simulator_card_evaluates_fully() {
+    // The card text is a third-party work, so it is not committed. Drop the
+    // card's description and lorebook contents into tests/fixtures/isekai/
+    // (description.txt, lorebook.txt) to run this check locally.
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/isekai");
+    let (Ok(description), Ok(lore)) = (
+        std::fs::read_to_string(dir.join("description.txt")),
+        std::fs::read_to_string(dir.join("lorebook.txt")),
+    ) else {
+        eprintln!("isekai fixture not present; skipping");
+        return;
+    };
+    let (description, lore) = (description.as_str(), lore.as_str());
+    for seed in ["chat-a", "chat-b", "chat-c", "chat-d"] {
+        let mut run = MacroRun::new(
+            MacroEnv {
+                user: Some("Нова".into()),
+                char: Some("Narrator".into()),
+                pick_seed: seed.into(),
+                ..MacroEnv::default()
+            },
+            Vars::new(),
+            Vars::new(),
+        );
+        let out = run.evaluate(description);
+        let left: Vec<&str> = out
+            .match_indices("{{")
+            .map(|(at, _)| &out[at..(at + 60).min(out.len())])
+            .filter(|rest| !rest.starts_with("{{description}}"))
+            .collect();
+        assert!(left.is_empty(), "seed {seed}: leftover macros: {left:#?}");
+        assert!(!out.contains("}}"), "seed {seed}: stray braces");
+        assert!(
+            run.vars().contains_key("ig_culture"),
+            "rolled variables are stored"
+        );
+        assert!(
+            out.contains("Get Isekai'd Simulator")
+                && out.contains(run.vars()["ig_culture"].as_str())
+        );
+        // A second run in the same chat keeps the rolled world.
+        let mut again = MacroRun::new(
+            MacroEnv {
+                user: Some("Нова".into()),
+                pick_seed: seed.into(),
+                ..MacroEnv::default()
+            },
+            run.vars().clone(),
+            Vars::new(),
+        );
+        let second = again.evaluate(description);
+        assert!(
+            !second.contains("{{ "),
+            "seed {seed}: second pass leftovers"
+        );
+        let lore_out = again.evaluate(lore);
+        let lore_left: Vec<&str> = lore_out
+            .match_indices("{{")
+            .map(|(at, _)| &lore_out[at..(at + 60).min(lore_out.len())])
+            .collect();
+        assert!(
+            lore_left.is_empty(),
+            "seed {seed}: lorebook leftovers: {lore_left:#?}"
+        );
+    }
+}
+
+#[test]
+fn macros2_shorthand_paths_and_operators() {
+    let cases = [
+        ("{{.inv = [\"sword\",\"shield\"]}}{{.inv[0]}}", "sword"),
+        ("{{.stats = {\"hp\":7} }}{{.stats.hp}}", "7"),
+        ("{{.stats.hp = 9}}{{.stats.hp}}|{{.stats}}", "9|{\"hp\":9}"),
+        ("{{.inv[1] = bow}}{{.inv[1]}}{{.inv.length}}", "bow2"),
+        ("{{.s = {\"max hp\":3} }}{{.s[\"max hp\"]}}", "3"),
+        ("{{.s = {\"hp\":3} }}{{if {{.s.hp > 2}}}}up{{/if}}", "up"),
+        ("{{.missing.deep}}", ""),
+        ("{{.x = 5}}{{if {{.x > 3}}}}big{{else}}small{{/if}}", "big"),
+        ("{{.x = 2}}{{.x += 3}}{{.x}}", "5"),
+        ("{{.n = 1}}{{.n++}}{{.n}}", "22"),
+        ("{{if !.missing}}none{{/if}}", "none"),
+        ("{{.f = off}}{{if .f}}yes{{else}}no{{/if}}", "no"),
+        ("{{$g = 4}}{{$g}}", "4"),
+        ("{{.x = 3}}{{if {{.x != 3}}}}a{{else}}b{{/if}}", "b"),
+        (
+            "{{.x = 3}}{{if {{.x >= 3}}}}a{{/if}}{{if {{.x <= 2}}}}c{{/if}}",
+            "a",
+        ),
+    ];
+    let mut failures = Vec::new();
+    for (input, want) in cases {
+        let got = eval(input);
+        if got != want {
+            failures.push(format!("{input} => {got:?} (want {want:?})"));
+        }
+    }
+    assert!(failures.is_empty(), "{failures:#?}");
 }

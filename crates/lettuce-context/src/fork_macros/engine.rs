@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use super::number::{js_format, js_number, js_trim};
 
 mod blocks;
+mod paths;
 use blocks::{Form, Head, head_of, pieces_of, raw_text};
 
 /// Variables by name.

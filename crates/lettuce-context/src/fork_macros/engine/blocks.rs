@@ -399,6 +399,11 @@ impl MacroRun {
             return raw();
         };
         let name = after[..end].to_owned();
+        if let Some((steps, tail)) = super::paths::parse_steps(&after[end..]) {
+            return self
+                .eval_path(global, &name, &steps, tail, more)
+                .unwrap_or_else(raw);
+        }
         let rest = after[end..].trim_start_matches(char::is_whitespace);
         let Some(operator) = OPERATORS.iter().find(|op| rest.starts_with(**op)) else {
             if rest.is_empty() && more.is_empty() {
@@ -499,6 +504,48 @@ impl MacroRun {
             "<=" => compare(self, &mut value, |a, b| a <= b),
             _ => raw(),
         }
+    }
+
+    /// Fork: `{{.stats.hp}}`, `{{.inv[0] = x}}` and comparisons on a path.
+    fn eval_path(
+        &mut self,
+        global: bool,
+        name: &str,
+        steps: &[super::paths::Step],
+        tail: &str,
+        more: &[Node],
+    ) -> Option<String> {
+        let tail = tail.trim_start_matches(char::is_whitespace);
+        let current = super::paths::read(self.var(global, name), steps);
+        if tail.is_empty() && more.is_empty() {
+            return Some(current);
+        }
+        let operator = ["==", "!=", ">=", "<=", ">", "<", "="]
+            .into_iter()
+            .find(|op| tail.starts_with(*op))?;
+        let mut pieces = vec![ArgPiece::Text(&tail[operator.len()..])];
+        pieces.extend(pieces_of(more));
+        let mut out = String::new();
+        self.eval_items(&pieces, &mut out);
+        let value = js_trim(&out).to_owned();
+        let number = |text: &str| js_number(text);
+        let compare = |test: fn(f64, f64) -> bool| match (number(&current), number(&value)) {
+            (Some(left), Some(right)) => test(left, right).to_string(),
+            _ => "false".to_owned(),
+        };
+        Some(match operator {
+            "=" => {
+                let written = super::paths::write(self.var(global, name), steps, &value)?;
+                self.set(global, name, written);
+                String::new()
+            }
+            "==" => (current == value).to_string(),
+            "!=" => (current != value).to_string(),
+            ">" => compare(|a, b| a > b),
+            ">=" => compare(|a, b| a >= b),
+            "<" => compare(|a, b| a < b),
+            _ => compare(|a, b| a <= b),
+        })
     }
 
     fn var(&self, global: bool, name: &str) -> Option<&String> {
