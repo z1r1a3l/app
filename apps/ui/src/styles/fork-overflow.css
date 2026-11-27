@@ -34,3 +34,16 @@
   hyphens: auto;
   overflow-wrap: anywhere;
 }
+
+/*
+ * Fork: header rows built as `flex flex-wrap` with a `min-w-0 flex-1` lead
+ * text beside action buttons (Memory → Summary parts, and similar). With a
+ * zero flex-basis the text shrank to one word per line instead of letting
+ * the buttons wrap. A real basis keeps the text readable and drops the
+ * buttons below it on phones.
+ */
+@media (max-width: 640px) {
+  .flex.flex-wrap > .min-w-0.flex-1 {
+    flex-basis: 12rem;
+  }
+}
