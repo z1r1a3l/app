@@ -101,6 +101,8 @@ pub(crate) fn absolute(origin: &str, path: &str) -> String {
 
 /// Plain text from the light HTML hubs use for descriptions: block tags
 /// become line breaks, other tags are dropped, common entities decoded.
+/// `<style>` and `<script>` elements are removed entirely, including their
+/// contents, so author CSS or JS is never shown as text.
 pub(crate) fn html_to_text(html: &str) -> String {
     if !html.contains('<') && !html.contains('&') {
         return html.trim().to_owned();
@@ -109,17 +111,30 @@ pub(crate) fn html_to_text(html: &str) -> String {
     let mut rest = html;
     while let Some(start) = rest.find('<') {
         out.push_str(&rest[..start]);
-        let Some(end) = rest[start..].find('>') else {
-            out.push_str(&rest[start..]);
+        let at = &rest[start..];
+        if let Some(after) = at.strip_prefix("<!--") {
+            rest = after.find("-->").map_or("", |end| &after[end + 3..]);
+            continue;
+        }
+        let Some(end) = at.find('>') else {
+            out.push_str(at);
             rest = "";
             break;
         };
-        let tag = rest[start + 1..start + end].trim_start_matches('/').to_ascii_lowercase();
-        let name: String = tag.chars().take_while(char::is_ascii_alphanumeric).collect();
+        let trimmed = at[1..end].trim_start();
+        let closing = trimmed.starts_with('/');
+        let name: String = trimmed.trim_start_matches('/').chars().take_while(char::is_ascii_alphanumeric).map(|c| c.to_ascii_lowercase()).collect();
+        rest = &at[end + 1..];
+        if !closing && matches!(name.as_str(), "style" | "script") {
+            rest = match close_tag_end(rest, &name) {
+                Some(index) => &rest[index..],
+                None => "",
+            };
+            continue;
+        }
         if matches!(name.as_str(), "br" | "p" | "div" | "li" | "hr" | "h1" | "h2" | "h3" | "h4" | "tr") {
             out.push('\n');
         }
-        rest = &rest[start + end + 1..];
     }
     out.push_str(rest);
     let decoded = out
@@ -138,6 +153,26 @@ pub(crate) fn html_to_text(html: &str) -> String {
         lines.push(line);
     }
     lines.join("\n").trim().to_owned()
+}
+
+/// Byte index just after a case-insensitive `</name ...>` close tag, or `None`
+/// if it never appears (the rest of the document is then discarded).
+fn close_tag_end(html: &str, name: &str) -> Option<usize> {
+    let prefix = format!("</{name}");
+    let needle = prefix.as_bytes();
+    let bytes = html.as_bytes();
+    let mut index = 0;
+    while index + needle.len() <= bytes.len() {
+        if bytes[index..index + needle.len()].eq_ignore_ascii_case(needle) {
+            let next = bytes.get(index + needle.len()).copied().unwrap_or(b'>');
+            if next == b'>' || next.is_ascii_whitespace() || next == b'/' {
+                let gt = html[index + needle.len()..].find('>')?;
+                return Some(index + needle.len() + gt + 1);
+            }
+        }
+        index += 1;
+    }
+    None
 }
 
 /// The first `limit` characters of a text, cut at a character boundary.
