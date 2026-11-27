@@ -5,6 +5,7 @@ pub(crate) mod conversation_generation_input;
 pub(crate) mod conversation_inference;
 pub(crate) mod feature_parameters;
 pub(crate) mod feature_prompt_entries;
+pub(crate) mod fork_chapter_recall;
 pub(crate) mod fork_helper_run;
 pub(crate) mod fork_prompt_aether;
 pub(crate) mod fork_prompt_helper;

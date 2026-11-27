@@ -87,6 +87,9 @@ impl AppBackend {
         lettuce_context::fork_helper::set_state_source(Arc::new(
             lettuce_database::DatabaseHelperStateSource(Arc::downgrade(&database)),
         ));
+        lettuce_memory::set_chapter_recall_source(Arc::new(
+            lettuce_database::DatabaseChapterRecallSource(Arc::downgrade(&database)),
+        ));
         let backend = Self {
             whisper_runtime: Arc::new(WhisperCppRuntime::new(database.clone())),
             database,

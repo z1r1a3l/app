@@ -1003,7 +1003,13 @@ where
                 )
                 .map_err(ConversationGenerationInputError::Memory)?;
                 let usage_snapshot = usage_memory_snapshot(&memory.items, summary_record.as_ref())?;
-                let summary = summary_record.map(|summary| summary.text);
+                let summary = crate::generation::fork_chapter_recall::with_recalled_chapters(
+                    summary_record.map(|summary| summary.text),
+                    memory.id,
+                    conversation_id,
+                    branch_id,
+                    &timeline.items,
+                );
                 let policy = live_memory
                     .as_ref()
                     .and_then(|memory| memory.dynamic_policy.as_ref())
@@ -2192,7 +2198,16 @@ where
         )
         .map_err(ConversationGenerationInputError::Memory)?;
         let usage_snapshot = usage_memory_snapshot(&memory.items, summary_record.as_ref())?;
-        let summary = summary_record.map(|summary| summary.text);
+        let branch_id = ConversationReader::get_turn(self.repository, work.turn_id)
+            .map_err(ConversationGenerationInputError::Repository)?
+            .branch_id;
+        let summary = crate::generation::fork_chapter_recall::with_recalled_chapters(
+            summary_record.map(|summary| summary.text),
+            memory.id,
+            work.conversation_id,
+            branch_id,
+            timeline,
+        );
         let (selected, revision, effective_now) = if let Some(receipt) = prior_access {
             if receipt.access.space_id != memory.id || receipt.resulting_revision != memory.revision
             {
