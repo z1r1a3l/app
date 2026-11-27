@@ -12,6 +12,9 @@ pub struct ForkRegexBackup {
     pub scripts: Vec<BackupSqlRow>,
     #[serde(default)]
     pub scopes: Vec<BackupSqlRow>,
+    /// Per-chat switches and macros (migration 9007).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub chat_overrides: Vec<BackupSqlRow>,
 }
 
 impl ForkRegexBackup {
@@ -19,6 +22,6 @@ impl ForkRegexBackup {
     /// without regex scripts stays readable by upstream builds.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.scripts.is_empty() && self.scopes.is_empty()
+        self.scripts.is_empty() && self.scopes.is_empty() && self.chat_overrides.is_empty()
     }
 }

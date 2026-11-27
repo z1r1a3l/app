@@ -350,6 +350,12 @@ const MIGRATION_9006: Migration = Migration {
     sql: include_str!("../migrations/9006_fork_chapter_recall.sql"),
 };
 
+/// Fork-only migration; see migrations/9007_fork_chat_regex.sql.
+const MIGRATION_9007: Migration = Migration {
+    id: 9007,
+    sql: include_str!("../migrations/9007_fork_chat_regex.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -406,6 +412,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_9004,
     MIGRATION_9005,
     MIGRATION_9006,
+    MIGRATION_9007,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;
@@ -6364,6 +6371,7 @@ mod tests {
                 "dynamic_memory_suffix_rewinds",
                 "dynamic_memory_summary_checkpoints",
                 "fork_chapter_recall_config",
+                "fork_chat_overrides",
                 "fork_chat_vars",
                 "fork_global_vars",
                 "fork_helper_config",
@@ -6628,6 +6636,11 @@ pub use fork_memory_turns::MemoryTurnRange as ForkMemoryTurnRange;
 
 mod fork_chapter_recall;
 pub use fork_chapter_recall::DatabaseChapterRecallSource;
+
+mod fork_chat_overrides;
+pub use fork_chat_overrides::{
+    ChatMacro as ForkChatMacro, ChatOverrides as ForkChatOverrides, MAX_CHAT_MACROS as FORK_MAX_CHAT_MACROS,
+};
 
 pub use backup_index::BackupIndexRecord;
 

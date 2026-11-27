@@ -23,6 +23,7 @@ pub(crate) fn apply_for_chat(
     let key = RegexScopeKey {
         prompt_id,
         character_ids,
+        conversation_id: Some(conversation_id.to_owned()),
     };
     let mut macros = BasicMacroValues {
         user: user.to_owned(),
@@ -34,6 +35,7 @@ pub(crate) fn apply_for_chat(
     if let Some(store) = lettuce_context::fork_macros::var_store() {
         macros.vars = store.chat_vars(conversation_id).into_iter().collect();
         macros.global_vars = store.global_vars().into_iter().collect();
+        macros.custom = store.chat_macros(conversation_id).into_iter().collect();
     }
     fork_regex::remember_scope(conversation_id, &key, &macros);
     let Some(rewrite) = fork_regex::prompt_regex_for(&key, macros) else {
@@ -80,7 +82,8 @@ pub(crate) fn clean_memory_sources(
     conversation_id: &str,
     texts: &mut [(MessageRole, &mut String)],
 ) {
-    let (key, macros) = fork_regex::remembered_scope(conversation_id).unwrap_or_default();
+    let (mut key, macros) = fork_regex::remembered_scope(conversation_id).unwrap_or_default();
+    key.conversation_id = Some(conversation_id.to_owned());
     let Some(rewrite) = fork_regex::prompt_regex_for(&key, macros) else {
         return;
     };

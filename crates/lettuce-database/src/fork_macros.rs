@@ -296,6 +296,19 @@ pub(crate) const ROLL_ROWS: crate::sync::row_sync_adapter::RowTable =
 pub struct DatabaseMacroVarStore(pub Arc<Database>);
 
 impl MacroVarStore for DatabaseMacroVarStore {
+    fn chat_macros(&self, conversation_id: &str) -> Vars {
+        self.0
+            .fork_chat_overrides(conversation_id)
+            .map(|overrides| {
+                overrides
+                    .macros
+                    .into_iter()
+                    .map(|item| (item.key.to_lowercase(), item.value))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     fn chat_vars(&self, conversation_id: &str) -> Vars {
         self.0
             .fork_chat_vars(conversation_id)

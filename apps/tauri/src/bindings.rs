@@ -344,6 +344,8 @@ pub fn specta_builder<R: Runtime>() -> tauri_specta::Builder<R> {
             commands::fork_regex::regex_conversation_scripts,
             commands::fork_regex::regex_pending_scopes,
             commands::fork_regex::regex_scopes_list,
+            commands::fork_chat_regex::chat_regex_settings_get,
+            commands::fork_chat_regex::chat_regex_settings_set,
             commands::fork_helper::helper_config_get,
             commands::fork_helper::helper_config_set,
             commands::fork_helper::helper_chat_get,

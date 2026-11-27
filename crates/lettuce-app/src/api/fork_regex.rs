@@ -18,6 +18,7 @@ fn scope(scope: &dto::RegexScopeRef) -> Result<(RegexScopeKind, String), ApiErro
         dto::RegexScopeKindDto::Global => return Ok((RegexScopeKind::Global, String::new())),
         dto::RegexScopeKindDto::Preset => RegexScopeKind::Preset,
         dto::RegexScopeKindDto::Character => RegexScopeKind::Character,
+        dto::RegexScopeKindDto::Chat => RegexScopeKind::Chat,
     };
     let id = scope
         .id
@@ -250,10 +251,11 @@ pub async fn regex_conversation_scripts(
     context
         .blocking(move |context| {
             let database = context.backend().database();
-            let (key, macros) = match engine::remembered_scope(&conversation_id.to_string()) {
+            let (mut key, macros) = match engine::remembered_scope(&conversation_id.to_string()) {
                 Some(found) => found,
                 None => live_scope(database, conversation_id),
             };
+            key.conversation_id = Some(conversation_id.to_string());
             let scripts = database.fork_regex_effective(&key).map_err(storage)?;
             let (chat_vars, global_vars) =
                 super::fork_macros::vars_dto(database, &conversation_id.to_string())?;
@@ -263,6 +265,10 @@ pub async fn regex_conversation_scripts(
                 scripts: scripts.into_iter().map(script_dto).collect(),
                 chat_vars,
                 global_vars,
+                chat_macros: super::fork_chat_regex::chat_macros(database, &conversation_id.to_string())
+                    .into_iter()
+                    .map(|(key, value)| dto::ChatMacroDto { key, value })
+                    .collect(),
             })
         })
         .await
@@ -422,6 +428,7 @@ mod tests {
         let key = RegexScopeKey {
             prompt_id: Some(prompt.clone()),
             character_ids: vec![character],
+            conversation_id: None,
         };
         let effective = database.fork_regex_effective(&key).expect("effective");
         assert!(effective.is_empty(), "pending scripts do not run");

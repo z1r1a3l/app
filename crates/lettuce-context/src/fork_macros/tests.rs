@@ -12,6 +12,7 @@ fn env() -> MacroEnv {
         last_user_message: Some("hi there".into()),
         last_char_message: Some("hello".into()),
         pick_seed: "chat-1".into(),
+        custom: [("town".to_owned(), "Ривертон".to_owned())].into_iter().collect(),
     }
 }
 
@@ -568,4 +569,11 @@ fn varkey_reads_and_writes_json() {
         globals.evaluate("{{setglobalvarkey::g::k::v}}{{getglobalvarkey::g::k}}"),
         "v"
     );
+}
+
+#[test]
+fn chat_macros_resolve_by_key_and_builtins_win() {
+    assert_eq!(eval("В {{town}}, {{TOWN}}."), "В Ривертон, Ривертон.");
+    assert_eq!(eval("{{unknownmacro}}"), "{{unknownmacro}}");
+    assert_eq!(eval("{{char}}"), "Шарлотта");
 }

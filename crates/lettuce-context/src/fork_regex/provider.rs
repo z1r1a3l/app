@@ -16,6 +16,9 @@ use super::{RegexApplyContext, RegexScript, RegexTarget, apply_regex_scripts};
 pub struct RegexScopeKey {
     pub prompt_id: Option<String>,
     pub character_ids: Vec<String>,
+    /// The chat itself: its own scripts run last, and it may switch off the
+    /// global or the characters' scripts (fork: per-chat regex).
+    pub conversation_id: Option<String>,
 }
 
 /// Resolves the enabled scripts for a chat.

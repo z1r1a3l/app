@@ -1585,6 +1585,11 @@ fn supported_change(change: &CanonicalChange) -> Result<bool, IncomingChangeErro
             crate::fork_chapter_recall::SYNC_VERSION,
         )
         | (
+            crate::fork_chat_overrides::SYNC_KIND,
+            crate::fork_chat_overrides::SYNC_SCHEMA,
+            crate::fork_chat_overrides::SYNC_VERSION,
+        )
+        | (
             lettuce_sync::CHARACTER_LOREBOOK_BINDINGS_SYNC_KIND
             | lettuce_sync::PERSONA_LOREBOOK_BINDINGS_SYNC_KIND
             | lettuce_sync::GROUP_LOREBOOK_BINDINGS_SYNC_KIND,
@@ -3188,6 +3193,15 @@ row_codec!(
 );
 
 row_codec!(
+    FORK_CHAT_OVERRIDE_CODEC,
+    crate::fork_chat_overrides::SYNC_KIND,
+    crate::fork_chat_overrides::SYNC_SCHEMA,
+    crate::fork_chat_overrides::SYNC_VERSION,
+    crate::fork_chat_overrides::SYNC_ROWS,
+    no_assets
+);
+
+row_codec!(
     FORK_CHAPTER_RECALL_CODEC,
     crate::fork_chapter_recall::SYNC_KIND,
     crate::fork_chapter_recall::SYNC_SCHEMA,
@@ -3451,7 +3465,7 @@ const CONVERSATION_MESSAGE_CODEC: SnapshotCodec = SnapshotCodec {
 
 /// Aggregates journaled by comparing their current state with the latest
 /// journaled snapshot, in dependency order (deletes run in reverse).
-const SCANNED_CODECS: [&SnapshotCodec; 50] = [
+const SCANNED_CODECS: [&SnapshotCodec; 51] = [
     &PROVIDER_ACCOUNT_CODEC,
     &MODEL_PROFILE_CODEC,
     &PERSONA_CODEC,
@@ -3502,6 +3516,7 @@ const SCANNED_CODECS: [&SnapshotCodec; 50] = [
     &FORK_HELPER_DELTA_CODEC,
     &FORK_HELPER_LOCK_CODEC,
     &FORK_CHAPTER_RECALL_CODEC,
+    &FORK_CHAT_OVERRIDE_CODEC,
 ];
 
 fn snapshot_codec(kind: &str) -> Option<&'static SnapshotCodec> {

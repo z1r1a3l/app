@@ -9,6 +9,8 @@ pub enum RegexScopeKindDto {
     Global,
     Preset,
     Character,
+    /// One chat's own scripts; the id is the conversation id.
+    Chat,
 }
 
 /// A script list: the global one, a prompt preset's, or a character's.
@@ -120,6 +122,30 @@ pub struct RegexConversationScripts {
     /// display scripts.
     pub chat_vars: Vec<crate::MacroVarDto>,
     pub global_vars: Vec<crate::MacroVarDto>,
+    /// The chat's own `{{key}}` macros.
+    pub chat_macros: Vec<ChatMacroDto>,
+}
+
+/// One chat macro: `{{key}}` becomes `value`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(deny_unknown_fields)]
+pub struct ChatMacroDto {
+    pub key: String,
+    pub value: String,
+}
+
+/// A chat's regex switches and macros (its own scripts use the `chat` scope).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(deny_unknown_fields)]
+pub struct ChatRegexSettingsDto {
+    pub conversation_id: String,
+    /// Global scripts do not run in this chat.
+    pub skip_global: bool,
+    /// The characters' scripts do not run in this chat.
+    pub skip_character: bool,
+    pub macros: Vec<ChatMacroDto>,
 }
 
 /// Runs scripts over a sample text (the editor's live tester).

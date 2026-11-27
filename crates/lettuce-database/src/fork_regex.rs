@@ -19,6 +19,8 @@ pub enum RegexScopeKind {
     Global,
     Preset,
     Character,
+    /// One chat's own scripts (scope id = conversation id).
+    Chat,
 }
 
 impl RegexScopeKind {
@@ -27,6 +29,7 @@ impl RegexScopeKind {
             "global" => Some(Self::Global),
             "preset" => Some(Self::Preset),
             "character" => Some(Self::Character),
+            "chat" => Some(Self::Chat),
             _ => None,
         }
     }
@@ -36,6 +39,7 @@ impl RegexScopeKind {
             Self::Global => "global",
             Self::Preset => "preset",
             Self::Character => "character",
+            Self::Chat => "chat",
         }
     }
 }
@@ -245,12 +249,26 @@ impl Database {
         &self,
         key: &RegexScopeKey,
     ) -> Result<Vec<RegexScript>, DatabaseError> {
-        let mut scopes = vec![(RegexScopeKind::Global, String::new())];
+        let chat = match &key.conversation_id {
+            Some(id) => Some((id, self.fork_chat_overrides(id)?)),
+            None => None,
+        };
+        let skip_global = chat.as_ref().is_some_and(|(_, o)| o.skip_global);
+        let skip_character = chat.as_ref().is_some_and(|(_, o)| o.skip_character);
+        let mut scopes = Vec::new();
+        if !skip_global {
+            scopes.push((RegexScopeKind::Global, String::new()));
+        }
         if let Some(prompt) = &key.prompt_id {
             scopes.push((RegexScopeKind::Preset, prompt.clone()));
         }
-        for character in &key.character_ids {
-            scopes.push((RegexScopeKind::Character, character.clone()));
+        if !skip_character {
+            for character in &key.character_ids {
+                scopes.push((RegexScopeKind::Character, character.clone()));
+            }
+        }
+        if let Some((id, _)) = &chat {
+            scopes.push((RegexScopeKind::Chat, (*id).clone()));
         }
         let mut out = Vec::new();
         for (kind, id) in scopes {
@@ -286,6 +304,12 @@ pub(crate) fn read_backup_in(
     Ok(lettuce_transfer::ForkRegexBackup {
         scripts: read_rows(transaction, "fork_regex_scripts", SCRIPT_COLUMNS, None)?,
         scopes: read_rows(transaction, "fork_regex_scopes", SCOPE_COLUMNS, None)?,
+        chat_overrides: read_rows(
+            transaction,
+            "fork_chat_overrides",
+            crate::fork_chat_overrides::OVERRIDE_COLUMNS,
+            None,
+        )?,
     })
 }
 
@@ -306,6 +330,12 @@ pub(crate) fn insert_restored_in(
         "fork_regex_scopes",
         SCOPE_COLUMNS,
         &backup.scopes,
+    )?;
+    insert_rows(
+        transaction,
+        "fork_chat_overrides",
+        crate::fork_chat_overrides::OVERRIDE_COLUMNS,
+        &backup.chat_overrides,
     )
 }
 
@@ -373,6 +403,33 @@ mod tests {
     }
 
     #[test]
+    fn chat_scope_runs_last_and_can_skip_global_and_character() {
+        let database = Database::open_in_memory().expect("database");
+        database.fork_regex_replace(RegexScopeKind::Global, "", &[script("g")]).expect("global");
+        database.fork_regex_replace(RegexScopeKind::Preset, "p1", &[script("p")]).expect("preset");
+        database.fork_regex_replace(RegexScopeKind::Character, "c1", &[script("c")]).expect("character");
+        database.fork_regex_replace(RegexScopeKind::Chat, "chat1", &[script("own")]).expect("chat");
+        let key = RegexScopeKey {
+            prompt_id: Some("p1".into()),
+            character_ids: vec!["c1".into()],
+            conversation_id: Some("chat1".into()),
+        };
+        assert_eq!(names(database.fork_regex_effective(&key).expect("effective")), ["g", "p", "c", "own"]);
+        database
+            .fork_chat_overrides_set(
+                "chat1",
+                &crate::ForkChatOverrides { skip_global: true, skip_character: true, macros: Vec::new() },
+            )
+            .expect("overrides");
+        assert_eq!(names(database.fork_regex_effective(&key).expect("effective")), ["p", "own"]);
+        let other = RegexScopeKey { conversation_id: Some("chat2".into()), ..key.clone() };
+        assert_eq!(names(database.fork_regex_effective(&other).expect("effective")), ["g", "p", "c"]);
+        let (graph, restored) = crate::backup::restore_writer::tests::backup_round_trip(&database, |_| {});
+        assert_eq!(graph.fork_regex.chat_overrides.len(), 1);
+        assert_eq!(names(restored.fork_regex_effective(&key).expect("effective")), ["p", "own"]);
+    }
+
+    #[test]
     fn scopes_store_order_and_resolve_in_sillytavern_order() {
         let database = Database::open_in_memory().expect("database");
         database
@@ -395,6 +452,7 @@ mod tests {
         let key = RegexScopeKey {
             prompt_id: Some("p1".into()),
             character_ids: vec!["c1".into()],
+            conversation_id: None,
         };
         assert_eq!(
             names(database.fork_regex_effective(&key).expect("effective")),

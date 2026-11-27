@@ -13,6 +13,8 @@ pub struct BasicMacroValues {
     pub char: String,
     pub vars: HashMap<String, String>,
     pub global_vars: HashMap<String, String>,
+    /// The chat's own `{{key}}` macros, keys in lower case.
+    pub custom: HashMap<String, String>,
 }
 
 /// Resolves the supported macros in `text`.
@@ -24,6 +26,7 @@ pub fn substitute_basic_macros(text: &str, values: &BasicMacroValues) -> String 
     let env = MacroEnv {
         user: Some(values.user.clone()),
         char: Some(values.char.clone()),
+        custom: values.custom.clone().into_iter().collect(),
         ..MacroEnv::default()
     };
     MacroRun::new(

@@ -157,6 +157,10 @@ pub async fn macro_preview(
                     user: request.user_name,
                     char: request.character_name,
                     pick_seed: conversation_id.clone().unwrap_or_default(),
+                    custom: conversation_id
+                        .as_deref()
+                        .map(|id| super::fork_chat_regex::chat_macros(database, id))
+                        .unwrap_or_default(),
                     ..MacroEnv::default()
                 },
                 chat,

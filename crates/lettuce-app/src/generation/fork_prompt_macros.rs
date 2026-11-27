@@ -89,6 +89,9 @@ fn env_for(
         last_user_message: last(Some(MessageRole::User)),
         last_char_message: last(Some(MessageRole::Assistant)),
         pick_seed: conversation_id.to_owned(),
+        custom: fork_macros::var_store()
+            .map(|store| store.chat_macros(conversation_id))
+            .unwrap_or_default(),
     }
 }
 

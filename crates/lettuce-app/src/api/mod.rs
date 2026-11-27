@@ -13,6 +13,8 @@ pub use fork_helper::{
 };
 pub(crate) mod fork_chapter_recall;
 pub use fork_chapter_recall::{chapter_recall_config_get, chapter_recall_config_set};
+pub(crate) mod fork_chat_regex;
+pub use fork_chat_regex::{chat_regex_settings_get, chat_regex_settings_set};
 pub(crate) mod fork_macros;
 pub use fork_macros::{macro_message_rolls, macro_preview, macro_vars_get, macro_vars_replace};
 pub(crate) mod fork_regex;

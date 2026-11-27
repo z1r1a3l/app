@@ -46,6 +46,7 @@ fn scripts_for(prompt_id: Option<String>, character_ids: Vec<String>) -> Vec<Reg
     source.scripts_for(&RegexScopeKey {
         prompt_id,
         character_ids,
+        conversation_id: None,
     })
 }
 

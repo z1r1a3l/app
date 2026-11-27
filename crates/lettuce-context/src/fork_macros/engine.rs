@@ -45,6 +45,8 @@ pub struct MacroEnv {
     pub last_char_message: Option<String>,
     /// Seeds `{{pick}}` so the same chat keeps the same picks.
     pub pick_seed: String,
+    /// The chat's own `{{key}}` macros (lower-case keys); built-in names win.
+    pub custom: Vars,
 }
 
 /// The largest value a variable keeps (bytes); longer values are cut.
@@ -539,6 +541,7 @@ impl MacroRun {
             }
             // Only meaningful inside `{{if}}…{{/if}}`.
             "else" => String::new(),
+            _ if args.is_empty() => return self.env.custom.get(&name.to_lowercase()).cloned(),
             _ => return None,
         })
     }

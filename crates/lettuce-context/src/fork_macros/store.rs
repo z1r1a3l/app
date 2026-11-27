@@ -10,6 +10,11 @@ use super::engine::{DiceRoll, VarChanges, Vars};
 pub trait MacroVarStore: Send + Sync {
     fn chat_vars(&self, conversation_id: &str) -> Vars;
     fn global_vars(&self) -> Vars;
+    /// The chat's own `{{key}}` macros, keys in lower case (fork: per-chat
+    /// macros).
+    fn chat_macros(&self, _conversation_id: &str) -> Vars {
+        Vars::new()
+    }
     /// Applies one run's writes (`None` deletes).
     fn apply_changes(&self, conversation_id: &str, chat: &VarChanges, global: &VarChanges);
     /// Keeps a generation's dice under its prompt fingerprint.
