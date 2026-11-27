@@ -6,6 +6,7 @@
     "restore": "Restore {{title}}",
     "restored": "Chat restored",
     "untitled": "Untitled chat",
-    "hint": "Archived. Find it under Chats → Archive."
+    "hint": "Archived. Find it under Chats → Archive.",
+    "more": "Show more"
   }
 }

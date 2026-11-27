@@ -76,7 +76,7 @@ function ArchivedList({ api, characters, onOpen }: { api: ApiClient; characters:
         </div>
       ))}
       {chats.hasNextPage && (
-        <button type="button" className="w-full py-2 text-sm text-fg-3" onClick={() => void chats.fetchNextPage()}>…</button>
+        <button type="button" className="w-full py-2 text-sm text-fg-3" onClick={() => void chats.fetchNextPage()}>{t("archive.more")}</button>
       )}
     </div>
   );
