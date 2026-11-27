@@ -299,6 +299,7 @@ pub fn specta_builder<R: Runtime>() -> tauri_specta::Builder<R> {
             commands::image::image_design_reference,
             commands::fork_discover::discover_search,
             commands::fork_discover::discover_detail,
+            commands::fork_discover::discover_tags,
             commands::fork_discover::discover_download::<tauri::DynRuntime>,
             commands::hugging_face::hf_browser_links,
             commands::hugging_face::hf_search,

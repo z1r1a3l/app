@@ -32,6 +32,16 @@ pub async fn discover_search(
 
 #[tauri::command]
 #[specta::specta]
+pub async fn discover_tags(
+    context: State<'_, ApiContextSlot>,
+    request: lettuce_contracts::DiscoverTagsRequest,
+) -> Result<lettuce_contracts::DiscoverTagsPage, ApiError> {
+    let _context = context.snapshot()?;
+    fork_discover::tags(&request).await
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn discover_detail(
     context: State<'_, ApiContextSlot>,
     request: DiscoverItemRequest,

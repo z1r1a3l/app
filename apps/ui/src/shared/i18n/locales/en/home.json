@@ -204,6 +204,9 @@
       "notImportable": "This file isn't something the app can import."
     },
     "adult": "18+",
-    "creator": "@{{name}}"
+    "creator": "@{{name}}",
+    "removeTag": "Remove tag {{tag}}",
+    "tagSuggestions": "Tag suggestions",
+    "searchTag": "Search by tag {{tag}}"
   }
 }

@@ -511,3 +511,28 @@ fn hub_image_urls_must_be_public_https() {
         assert!(public_https(url).is_none(), "{url}");
     }
 }
+
+#[tokio::test]
+async fn tag_suggestions_prefix_first_and_unsupported_hubs() {
+    use lettuce_contracts::DiscoverTagsRequest;
+    let chub = json!({"count": 3, "tags": [
+        {"name": "Fantasy", "non_private_projects_count": 900},
+        {"name": "Dark Fantasy", "non_private_projects_count": 400},
+        {"name": "Fanfic", "non_private_projects_count": 50},
+        {"name": "fantasy", "non_private_projects_count": 1}
+    ]});
+    let illarin = json!({"tags": [{"value": "fantasy", "count": 12}, {"value": "urban fantasy", "count": 1}]});
+    let fake = Fake::new(vec![
+        ("https://gateway.chub.ai/tags", chub.to_string().into_bytes()),
+        ("https://illarin.com/api/v1/tags", illarin.to_string().into_bytes()),
+    ]);
+    let page = super::tags::tags_with(&fake, &DiscoverTagsRequest { source: Source::Chub, prefix: "fan".into() }).await.unwrap();
+    let names: Vec<_> = page.tags.iter().map(|tag| tag.name.as_str()).collect();
+    assert_eq!(names, ["Fantasy", "Fanfic", "Dark Fantasy"]);
+    assert_eq!(page.tags[0].count, Some(900));
+    let page = super::tags::tags_with(&fake, &DiscoverTagsRequest { source: Source::Illarin, prefix: "fan".into() }).await.unwrap();
+    assert_eq!(page.tags.len(), 2);
+    assert!(fake.seen().iter().any(|request| request.query.contains(&("q".to_owned(), "fan".to_owned()))));
+    let page = super::tags::tags_with(&fake, &DiscoverTagsRequest { source: Source::Wyvern, prefix: "fan".into() }).await.unwrap();
+    assert!(page.unsupported && page.tags.is_empty());
+}

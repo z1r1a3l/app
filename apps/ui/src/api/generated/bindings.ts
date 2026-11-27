@@ -283,6 +283,7 @@ export const commands = {
 	imageDesignReference: (request: ImageDesignReferenceRequest) => typedError<JobAccepted, ApiError_Serialize>(__TAURI_INVOKE("image_design_reference", { request })),
 	discoverSearch: (request: DiscoverSearchRequest_Deserialize) => typedError<DiscoverSearchPage, ApiError_Serialize>(__TAURI_INVOKE("discover_search", { request })),
 	discoverDetail: (request: DiscoverItemRequest) => typedError<DiscoverDetail, ApiError_Serialize>(__TAURI_INVOKE("discover_detail", { request })),
+	discoverTags: (request: DiscoverTagsRequest_Deserialize) => typedError<DiscoverTagsPage, ApiError_Serialize>(__TAURI_INVOKE("discover_tags", { request })),
 	discoverDownload: (request: DiscoverItemRequest) => typedError<DiscoverDownload, ApiError_Serialize>(__TAURI_INVOKE("discover_download", { request })),
 	hfBrowserLinks: () => typedError<HfBrowserLinks, ApiError_Serialize>(__TAURI_INVOKE("hf_browser_links")),
 	hfSearch: (request: HfSearchRequest) => typedError<HfSearchResults, ApiError_Serialize>(__TAURI_INVOKE("hf_search", { request })),
@@ -328,12 +329,14 @@ export const commands = {
 	regexConversationScripts: (request: RegexConversationRequest) => typedError<RegexConversationScripts, ApiError_Serialize>(__TAURI_INVOKE("regex_conversation_scripts", { request })),
 	regexPendingScopes: () => typedError<RegexScopeRef[], ApiError_Serialize>(__TAURI_INVOKE("regex_pending_scopes")),
 	regexScopesList: () => typedError<RegexScopeSummary[], ApiError_Serialize>(__TAURI_INVOKE("regex_scopes_list")),
+	chatRegexSettingsGet: (request: RegexConversationRequest) => typedError<ChatRegexSettingsDto, ApiError_Serialize>(__TAURI_INVOKE("chat_regex_settings_get", { request })),
+	chatRegexSettingsSet: (request: ChatRegexSettingsDto) => typedError<ChatRegexSettingsDto, ApiError_Serialize>(__TAURI_INVOKE("chat_regex_settings_set", { request })),
 	helperConfigGet: () => typedError<HelperConfigView, ApiError_Serialize>(__TAURI_INVOKE("helper_config_get")),
 	helperConfigSet: (request: HelperConfigUpdate) => typedError<HelperConfigView, ApiError_Serialize>(__TAURI_INVOKE("helper_config_set", { request })),
-	helperChatGet: (request: HelperChatRequest) => typedError<HelperChatView, ApiError_Serialize>(__TAURI_INVOKE("helper_chat_get", { request })),
+	helperChatGet: (request: HelperChatRequest) => typedError<HelperChatView_Serialize, ApiError_Serialize>(__TAURI_INVOKE("helper_chat_get", { request })),
 	helperStatus: (request: HelperChatRequest) => typedError<HelperStatusDto | null, ApiError_Serialize>(__TAURI_INVOKE("helper_status", { request })),
 	helperScopeSet: (request: HelperScopeUpdate) => typedError<null, ApiError_Serialize>(__TAURI_INVOKE("helper_scope_set", { request })),
-	helperStateSet: (request: HelperStateUpdate) => typedError<HelperChatView, ApiError_Serialize>(__TAURI_INVOKE("helper_state_set", { request })),
+	helperStateSet: (request: HelperStateUpdate_Deserialize) => typedError<HelperChatView_Serialize, ApiError_Serialize>(__TAURI_INVOKE("helper_state_set", { request })),
 	helperMessage: (request: HelperMessageRequest) => typedError<HelperMessageView, ApiError_Serialize>(__TAURI_INVOKE("helper_message", { request })),
 	chapterRecallConfigGet: () => typedError<ChapterRecallConfigDto, ApiError_Serialize>(__TAURI_INVOKE("chapter_recall_config_get")),
 	chapterRecallConfigSet: (request: ChapterRecallConfigDto) => typedError<ChapterRecallConfigDto, ApiError_Serialize>(__TAURI_INVOKE("chapter_recall_config_set", { request })),
@@ -1105,6 +1108,12 @@ export type CertificatesView = {
 	revision: number,
 };
 
+/**  Global switch and 1–2 chapter limit. Off by default. */
+export type ChapterRecallConfigDto = {
+	enabled: boolean,
+	limit: number,
+};
+
 /**
  *  The colours behind a character's card. `Custom` wins over a disabled
  *  gradient; `Avatar` asks `avatar_gradient` for the avatar's colours.
@@ -1386,6 +1395,22 @@ export type CharactersListRequest_Serialize = {
 export type ChatExportRequest = {
 	conversation_id: string,
 	target: FileTarget | null,
+};
+
+/**  One chat macro: `{{key}}` becomes `value`. */
+export type ChatMacroDto = {
+	key: string,
+	value: string,
+};
+
+/**  A chat's regex switches and macros (its own scripts use the `chat` scope). */
+export type ChatRegexSettingsDto = {
+	conversation_id: string,
+	/**  Global scripts do not run in this chat. */
+	skip_global: boolean,
+	/**  The characters' scripts do not run in this chat. */
+	skip_character: boolean,
+	macros: ChatMacroDto[],
 };
 
 export type ChatTemplateExportRequest = {
@@ -2910,6 +2935,42 @@ export type DiscoverStats = {
 	rating: number | null,
 };
 
+export type DiscoverTag = {
+	name: string,
+	/**  How many works carry it, when the hub says. */
+	count: number | null,
+};
+
+export type DiscoverTagsPage = {
+	tags: DiscoverTag[],
+	/**  The hub exposes no tag list; the app suggests tags from results. */
+	unsupported: boolean,
+};
+
+/**
+ *  Tag suggestions for the Discover tag field: names that start with
+ *  `prefix` first, then names that contain it.
+ */
+export type DiscoverTagsRequest = DiscoverTagsRequest_Serialize | DiscoverTagsRequest_Deserialize;
+
+/**
+ *  Tag suggestions for the Discover tag field: names that start with
+ *  `prefix` first, then names that contain it.
+ */
+export type DiscoverTagsRequest_Deserialize = {
+	source: DiscoverSource,
+	prefix?: string,
+};
+
+/**
+ *  Tag suggestions for the Discover tag field: names that start with
+ *  `prefix` first, then names that contain it.
+ */
+export type DiscoverTagsRequest_Serialize = {
+	source: DiscoverSource,
+	prefix: string,
+};
+
 /**  An image model file on disk below the image models folders. */
 export type DownloadedImageModel = {
 	model_id: string,
@@ -3422,7 +3483,10 @@ export type HelperChatRequest = {
 };
 
 /**  A chat's helper switches, state and latest run. */
-export type HelperChatView = {
+export type HelperChatView = HelperChatView_Serialize | HelperChatView_Deserialize;
+
+/**  A chat's helper switches, state and latest run. */
+export type HelperChatView_Deserialize = {
 	conversation_id: string,
 	/**  The direct chat's character (none for groups). */
 	character_id: string | null,
@@ -3433,7 +3497,23 @@ export type HelperChatView = {
 	enabled: boolean,
 	/**  The trackers that run (or would run once switched on). */
 	trackers: HelperTrackersDto,
-	state: HelperStateDto,
+	state: HelperStateDto_Deserialize,
+	status: HelperStatusDto | null,
+};
+
+/**  A chat's helper switches, state and latest run. */
+export type HelperChatView_Serialize = {
+	conversation_id: string,
+	/**  The direct chat's character (none for groups). */
+	character_id: string | null,
+	character_name: string | null,
+	/**  The chat's own switch; `None` when it follows the character. */
+	chat: HelperScopeDto | null,
+	character: HelperScopeDto | null,
+	enabled: boolean,
+	/**  The trackers that run (or would run once switched on). */
+	trackers: HelperTrackersDto,
+	state: HelperStateDto_Serialize,
 	status: HelperStatusDto | null,
 };
 
@@ -3450,11 +3530,6 @@ export type HelperConfigUpdate = {
 	history: number,
 };
 
-export type ChapterRecallConfigDto = {
-	enabled: boolean,
-	limit: number,
-};
-
 export type HelperConfigView = {
 	model_profile_id: string | null,
 	/**  `None`: the default prompt is used. */
@@ -3464,10 +3539,19 @@ export type HelperConfigView = {
 	history: number,
 };
 
-export type HelperEntityDto = {
+export type HelperEntityDto = HelperEntityDto_Serialize | HelperEntityDto_Deserialize;
+
+export type HelperEntityDto_Deserialize = {
 	name: string,
 	fields: HelperFieldDto[],
-	/** Set on bonds the user froze; ignored on other entities. */
+	/**  Set on bonds the user froze; ignored on other entities. */
+	locked?: boolean,
+};
+
+export type HelperEntityDto_Serialize = {
+	name: string,
+	fields: HelperFieldDto[],
+	/**  Set on bonds the user froze; ignored on other entities. */
 	locked: boolean,
 };
 
@@ -3515,12 +3599,25 @@ export type HelperScopeUpdate = {
 };
 
 /**  The full tracked state of the shown path. */
-export type HelperStateDto = {
+export type HelperStateDto = HelperStateDto_Serialize | HelperStateDto_Deserialize;
+
+/**  The full tracked state of the shown path. */
+export type HelperStateDto_Deserialize = {
 	scene: HelperFieldDto[],
-	characters: HelperEntityDto[],
-	bonds: HelperEntityDto[],
+	characters: HelperEntityDto_Deserialize[],
+	bonds: HelperEntityDto_Deserialize[],
 	inventory: HelperHolderDto[],
-	npcs: HelperEntityDto[],
+	npcs: HelperEntityDto_Deserialize[],
+	notebook: HelperTruthDto[],
+};
+
+/**  The full tracked state of the shown path. */
+export type HelperStateDto_Serialize = {
+	scene: HelperFieldDto[],
+	characters: HelperEntityDto_Serialize[],
+	bonds: HelperEntityDto_Serialize[],
+	inventory: HelperHolderDto[],
+	npcs: HelperEntityDto_Serialize[],
 	notebook: HelperTruthDto[],
 };
 
@@ -3528,9 +3625,24 @@ export type HelperStateDto = {
  *  Saves the state editor: the difference becomes a manual edit anchored
  *  to the latest reply.
  */
-export type HelperStateUpdate = {
+export type HelperStateUpdate = HelperStateUpdate_Serialize | HelperStateUpdate_Deserialize;
+
+/**
+ *  Saves the state editor: the difference becomes a manual edit anchored
+ *  to the latest reply.
+ */
+export type HelperStateUpdate_Deserialize = {
 	conversation_id: string,
-	state: HelperStateDto,
+	state: HelperStateDto_Deserialize,
+};
+
+/**
+ *  Saves the state editor: the difference becomes a manual edit anchored
+ *  to the latest reply.
+ */
+export type HelperStateUpdate_Serialize = {
+	conversation_id: string,
+	state: HelperStateDto_Serialize,
 };
 
 /**  The latest helper run of a chat (kept while the app runs). */
@@ -8936,6 +9048,8 @@ export type RegexConversationScripts = {
 	 */
 	chat_vars: MacroVarDto[],
 	global_vars: MacroVarDto[],
+	/**  The chat's own `{{key}}` macros. */
+	chat_macros: ChatMacroDto[],
 };
 
 /**
@@ -8953,7 +9067,9 @@ export type RegexImportView = {
 	scripts: RegexScriptDto[],
 };
 
-export type RegexScopeKindDto = "global" | "preset" | "character";
+export type RegexScopeKindDto = "global" | "preset" | "character" |
+/**  One chat's own scripts; the id is the conversation id. */
+"chat";
 
 /**  A script list: the global one, a prompt preset's, or a character's. */
 export type RegexScopeRef = {

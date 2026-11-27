@@ -18,7 +18,6 @@ import {
   Select,
   Sheet,
   Switch,
-  TagInput,
   toast,
 } from "@lettuceai/crisp";
 import type { DiscoverCard, DiscoverKind, DiscoverSource } from "@/api/generated/bindings";
@@ -32,6 +31,7 @@ import { PresetImportSheet } from "./PresetImportSheet";
 import { type Section, sortsFor, sourceInfo, sourcesFor } from "./sources";
 import { SourcesSheet } from "./SourcesSheet";
 import { Tile, TileSkeleton } from "./Tile";
+import { TagSuggestInput } from "./TagSuggestInput";
 
 const SHEET_KINDS = new Set(["character", "persona", "lorebook"]);
 
@@ -64,6 +64,7 @@ export function DiscoverPage() {
   const results = useDiscoverSearch(api, filters);
   const seen = new Set<string>();
   const items = (results.data?.pages ?? []).flatMap((page) => page.items).filter((card) => !seen.has(card.id) && seen.add(card.id));
+  const seenTags = items.flatMap((card) => card.tags);
   const total = results.data?.pages[0]?.total ?? null;
   const nextPageError = results.isFetchNextPageError ? results.error : null;
 
@@ -205,12 +206,12 @@ export function DiscoverPage() {
         <div className="space-y-4 pb-2">
           <div className="space-y-1.5">
             <div className="text-sm font-medium">{t("discover.includeTags")}</div>
-            <TagInput value={tags} onChange={setTags} max={6} placeholder={t("discover.tagPlaceholder")} />
+            <TagSuggestInput api={api} source={source} seen={seenTags} value={tags} onChange={setTags} max={6} placeholder={t("discover.tagPlaceholder")} />
           </div>
           {!info.noExclude && (
             <div className="space-y-1.5">
               <div className="text-sm font-medium">{t("discover.excludeTags")}</div>
-              <TagInput value={excludeTags} onChange={setExcludeTags} max={6} placeholder={t("discover.tagPlaceholder")} />
+              <TagSuggestInput api={api} source={source} seen={seenTags} value={excludeTags} onChange={setExcludeTags} max={6} placeholder={t("discover.tagPlaceholder")} />
             </div>
           )}
           <label className="flex items-center justify-between gap-3 rounded-xl bg-fill px-3 py-2.5">
@@ -243,6 +244,11 @@ export function DiscoverPage() {
         importing={importing.isPending}
         onImport={(card) => importing.mutate(card)}
         onClose={() => !importing.isPending && setSelected(null)}
+        onTag={(tag) => {
+          setTags([tag]);
+          setQuery("");
+          setSelected(null);
+        }}
       />
       {prepared && prepared.preview.content.kind === "prompt" && (
         <PresetImportSheet api={api} source={prepared.source} preview={prepared.preview} onClose={() => setPrepared(null)} />

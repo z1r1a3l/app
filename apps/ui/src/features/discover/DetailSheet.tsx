@@ -42,12 +42,15 @@ export function DetailSheet({
   importing,
   onImport,
   onClose,
+  onTag,
 }: {
   api: ApiClient;
   card: DiscoverCard | null;
   importing: boolean;
   onImport: (card: DiscoverCard) => void;
   onClose: () => void;
+  /** Fork: search the hub by a tapped tag. */
+  onTag?: (tag: string) => void;
 }) {
   const { t } = useTranslation("home");
   const detail = useDiscoverDetail(api, card);
@@ -110,7 +113,11 @@ export function DetailSheet({
               {shown.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {shown.tags.slice(0, 16).map((tag) => (
-                    <span key={tag} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-fg-2">{tag}</span>
+                    onTag ? (
+                      <button key={tag} type="button" aria-label={t("discover.searchTag", { tag })} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-fg-2 hover:bg-fill-2" onClick={() => onTag(tag)}>{tag}</button>
+                    ) : (
+                      <span key={tag} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-fg-2">{tag}</span>
+                    )
                   ))}
                 </div>
               )}

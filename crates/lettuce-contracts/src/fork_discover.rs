@@ -134,3 +134,30 @@ pub struct DiscoverDownload {
     pub source: FileSource,
     pub file_name: String,
 }
+
+/// Tag suggestions for the Discover tag field: names that start with
+/// `prefix` first, then names that contain it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(deny_unknown_fields)]
+pub struct DiscoverTagsRequest {
+    pub source: DiscoverSource,
+    #[serde(default)]
+    pub prefix: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+pub struct DiscoverTag {
+    pub name: String,
+    /// How many works carry it, when the hub says.
+    pub count: Option<u32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+pub struct DiscoverTagsPage {
+    pub tags: Vec<DiscoverTag>,
+    /// The hub exposes no tag list; the app suggests tags from results.
+    pub unsupported: bool,
+}

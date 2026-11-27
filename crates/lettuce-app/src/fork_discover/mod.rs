@@ -12,6 +12,7 @@ mod chub;
 mod common;
 mod devalue;
 mod illarin;
+mod tags;
 mod tavern;
 mod wyvern;
 
@@ -62,6 +63,11 @@ fn source_name(source: DiscoverSource) -> &'static str {
         DiscoverSource::Botbooru => "Botbooru",
         DiscoverSource::Illarin => "Illarin",
     }
+}
+
+/// Tag suggestions for the tag field.
+pub async fn tags(request: &dto::DiscoverTagsRequest) -> Result<dto::DiscoverTagsPage, ApiError> {
+    tags::tags_with(&Net, request).await
 }
 
 /// One page of search results.

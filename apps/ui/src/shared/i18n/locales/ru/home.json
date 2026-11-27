@@ -216,6 +216,9 @@
       "notImportable": "Этот файл приложение импортировать не умеет."
     },
     "adult": "18+",
-    "creator": "@{{name}}"
+    "creator": "@{{name}}",
+    "removeTag": "Убрать тег {{tag}}",
+    "tagSuggestions": "Подсказки тегов",
+    "searchTag": "Искать по тегу {{tag}}"
   }
 }
