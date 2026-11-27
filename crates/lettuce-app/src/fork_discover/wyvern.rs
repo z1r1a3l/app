@@ -7,8 +7,8 @@ use serde_json::{Value, json};
 
 use super::card_png::write_card_png;
 use super::common::{
-    HttpRequest, array_len, clip, comma_list, count, file_name, json, malformed, next_page, opt_text, page_of, strings,
-    text, unsupported,
+    HttpRequest, array_len, clip, comma_list, count, file_name, html_to_text, json, malformed, next_page, opt_text,
+    page_of, strings, text, unsupported,
 };
 use super::{Downloaded, Fetch};
 
@@ -52,7 +52,7 @@ fn card(node: &Value) -> Option<dto::DiscoverCard> {
     let stats = node.get("entity_statistics").cloned().unwrap_or(Value::Null);
     let record = node.get("statistics_record").cloned().unwrap_or(Value::Null);
     let rating = text(node, "rating");
-    let tagline = opt_text(node, "tagline").or_else(|| opt_text(node, "creator_notes")).unwrap_or_default();
+    let tagline = html_to_text(&opt_text(node, "tagline").or_else(|| opt_text(node, "creator_notes")).unwrap_or_default());
     Some(dto::DiscoverCard {
         source: DiscoverSource::Wyvern,
         kind: Kind::Character,
@@ -108,6 +108,7 @@ pub(crate) fn parse_detail(body: &[u8]) -> Result<dto::DiscoverDetail, ApiError>
     let card = card(&node).ok_or_else(|| malformed(NAME, "card"))?;
     let description = [text(&node, "creator_notes"), text(&node, "shared_info"), text(&node, "tagline")]
         .into_iter()
+        .map(|text| html_to_text(&text))
         .find(|text| !text.is_empty())
         .unwrap_or_default();
     Ok(dto::DiscoverDetail {

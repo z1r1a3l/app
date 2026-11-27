@@ -224,6 +224,55 @@ fn wyvern_download_embeds_lorebooks() {
     assert_eq!(card["data"]["character_book"]["entries"].as_array().unwrap().len(), 2);
 }
 
+
+#[test]
+fn html_to_text_strips_style_and_script_contents() {
+    use super::common::html_to_text;
+    let text = html_to_text(
+        "Hello<style>.dropdown-row .dropbtn {white-space: nowrap;} .custom-tag {color: red;} .audio-wrap audio {display:block;}</style>\n<p>Visible</p><script>alert(1)</script>World",
+    );
+    assert!(text.contains("Hello"));
+    assert!(text.contains("Visible"));
+    assert!(text.contains("World"));
+    assert!(!text.contains("white-space"));
+    assert!(!text.contains(".custom-tag"));
+    assert!(!text.contains(".audio-wrap"));
+    assert!(!text.contains("alert"));
+    assert!(!text.contains("<style"));
+}
+
+#[test]
+fn html_to_text_drops_unclosed_style_and_html_comments() {
+    use super::common::html_to_text;
+    assert_eq!(html_to_text("Start<style>body{color:red} no closer"), "Start");
+    assert_eq!(html_to_text("A<!-- hidden <style>.x{color:red}</style> -->B"), "AB");
+    assert_eq!(
+        html_to_text("<STYLE type=\"text/css\">.x{color:red}</STYLE><div>Kay takes life</div>"),
+        "Kay takes life"
+    );
+}
+
+#[test]
+fn wyvern_detail_strips_author_css_from_creator_notes() {
+    let body = serde_json::to_vec(&json!({
+        "id": "kay-test",
+        "name": "Kay",
+        "creator": {"displayName": "AMONXXI"},
+        "creator_notes": "<div>Kay takes life like a river.</div><style>.dropdown-row .dropbtn {white-space: nowrap;} .custom-tag {color:red} .audio-wrap audio {display:block}</style>",
+        "first_mes": "Hi",
+        "tagline": "tag",
+        "rating": "explicit",
+        "tags": ["Thai"],
+    }))
+    .unwrap();
+    let detail = super::wyvern::parse_detail(&body).unwrap();
+    assert!(detail.description.contains("Kay takes life like a river."));
+    assert!(!detail.description.contains("white-space"));
+    assert!(!detail.description.contains(".dropdown-row"));
+    assert!(!detail.description.contains("<div"));
+    assert!(!detail.description.contains("<style"));
+}
+
 // ---------- Botbooru ----------
 
 #[test]
