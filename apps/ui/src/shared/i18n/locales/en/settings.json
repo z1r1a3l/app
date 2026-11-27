@@ -1552,7 +1552,11 @@
       "duplicateCheck": "Skip same-meaning memories",
       "duplicateCheckBody": "Uses the embedding model to skip a new memory that says what an existing one already says. Exact copies are always skipped.",
       "fallback": "Structured fallback",
-      "fallbackBody": "Used only when the model cannot call tools"
+      "fallbackBody": "Used only when the model cannot call tools",
+      "chapterRecall": "Recall earlier chapters",
+      "chapterRecallBody": "When the scene mentions a folded chapter, include one or two of those summaries in the prompt. Off by default.",
+      "chapterRecallLimit": "Chapters to recall",
+      "chapterRecallLimitBody": "At most two. The rest stay folded."
     },
     "summarization": {
       "group": "Summarization · shared by all chats",

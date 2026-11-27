@@ -4,6 +4,7 @@ import { Badge, ListGroup, ListRow, Segmented, Switch } from "@lettuceai/crisp";
 import type { SettingsDynamicMemorySettings, SettingsMemoryRetrievalStrategy, SettingsMemoryRunMode, SettingsMemoryStructuredFallbackFormat } from "@/api/generated/bindings";
 import { SettingsControlRow } from "@/shared/ui/SettingsControlRow";
 import { useSettingsLayout } from "../data";
+import { ChapterRecallRows } from "./ChapterRecallRows";
 import { CommitNumber } from "./CommitNumber";
 import { basisPointsToDecimal, customThresholdBasisPoints, decimalToBasisPoints, presetIds, presetOf, presets, runModes } from "./presets";
 
@@ -141,6 +142,7 @@ export function ScopedSettings({ section, value, onChange }: { section: MemorySe
         {toggle(experimental(t("memory.advanced.chapterSummaries")), t("memory.advanced.chapterSummaries"), t("memory.advanced.chapterSummariesBody"), value.chapter_summaries_enabled, (next) => ({ chapter_summaries_enabled: next }))}
         {value.chapter_summaries_enabled && whole(t("memory.advanced.summaryBudget"), t("memory.advanced.summaryBudgetBody"), "summary_token_budget", 1, 1048576, 128)}
         {value.chapter_summaries_enabled && whole(t("memory.advanced.chapterSize"), t("memory.advanced.chapterSizeBody"), "summary_chapter_size", 2, 100, 1)}
+        <ChapterRecallRows />
       </ListGroup>
     );
   }

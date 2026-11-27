@@ -92,6 +92,7 @@ async function mount(initial: SettingsView, calls: MockCallHandlers = {}, stream
         modelsList: () => ok({ models: [], default_model_id: null, revision: 1 }),
         providerAccountsList: () => ok([]),
         promptsList: () => ok({ items: [], next_cursor: null }),
+        chapterRecallConfigGet: () => ok({ enabled: false, limit: 2 }),
         ...calls,
       },
       streams,
@@ -371,6 +372,22 @@ describe("memory settings page", () => {
     expect(lastPatch(store)).toMatchObject({ section: "dynamic_memory", value: { chapter_summaries_enabled: true } });
     expect(await screen.findByText("Summary budget")).toBeTruthy();
     expect(screen.getByText("Cycles per chapter")).toBeTruthy();
+  });
+
+  it("toggles chapter recall and shows the limit without writing dynamic memory", async () => {
+    const setRecall = vi.fn((request: { enabled: boolean; limit: number }) => ok(request));
+    const { store } = await mount(viewOf(), { chapterRecallConfigSet: setRecall });
+    fireEvent.click(screen.getByRole("button", { name: /^Context summary/ }));
+    await screen.findByText("Recall earlier chapters");
+    expect(screen.queryByText("Chapters to recall")).toBeNull();
+    const toggle = screen.getByRole("switch", { name: "Recall earlier chapters" });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    const before = store.update.mock.calls.length;
+    fireEvent.click(toggle);
+    await waitFor(() => expect(setRecall).toHaveBeenCalledTimes(1));
+    expect(setRecall.mock.calls[0]?.[0]).toMatchObject({ enabled: true, limit: 2 });
+    expect(store.update.mock.calls.length).toBe(before);
+    expect(await screen.findByText("Chapters to recall")).toBeTruthy();
   });
 
   it("keeps the page and shows the typed error when the revision is stale", async () => {
