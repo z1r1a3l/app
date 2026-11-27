@@ -11,6 +11,7 @@ pub mod developer;
 pub mod files;
 pub mod fork_discover;
 pub mod fork_helper;
+pub mod fork_chapter_recall;
 pub mod fork_macros;
 pub mod fork_regex;
 pub mod hugging_face;

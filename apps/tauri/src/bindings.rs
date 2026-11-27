@@ -351,6 +351,8 @@ pub fn specta_builder<R: Runtime>() -> tauri_specta::Builder<R> {
             commands::fork_helper::helper_scope_set,
             commands::fork_helper::helper_state_set,
             commands::fork_helper::helper_message,
+            commands::fork_chapter_recall::chapter_recall_config_get,
+            commands::fork_chapter_recall::chapter_recall_config_set,
             commands::fork_macros::macro_vars_get,
             commands::fork_macros::macro_vars_replace,
             commands::fork_macros::macro_preview,
