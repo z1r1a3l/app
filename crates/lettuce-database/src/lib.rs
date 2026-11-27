@@ -344,6 +344,12 @@ const MIGRATION_9005: Migration = Migration {
     sql: include_str!("../migrations/9005_fork_helper_locks.sql"),
 };
 
+/// Fork-only migration; see migrations/9006_fork_chapter_recall.sql.
+const MIGRATION_9006: Migration = Migration {
+    id: 9006,
+    sql: include_str!("../migrations/9006_fork_chapter_recall.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -399,6 +405,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_9003,
     MIGRATION_9004,
     MIGRATION_9005,
+    MIGRATION_9006,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;
@@ -6356,6 +6363,7 @@ mod tests {
                 "dynamic_memory_runs",
                 "dynamic_memory_suffix_rewinds",
                 "dynamic_memory_summary_checkpoints",
+                "fork_chapter_recall_config",
                 "fork_chat_vars",
                 "fork_global_vars",
                 "fork_helper_config",
@@ -6617,6 +6625,9 @@ pub use fork_helper::{
 };
 mod fork_memory_turns;
 pub use fork_memory_turns::MemoryTurnRange as ForkMemoryTurnRange;
+
+mod fork_chapter_recall;
+pub use fork_chapter_recall::DatabaseChapterRecallSource;
 
 pub use backup_index::BackupIndexRecord;
 
