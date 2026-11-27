@@ -47,7 +47,10 @@ pub(crate) struct HelperRunRequest {
 /// What a finished read did.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum HelperRunOutcome {
-    Stored { ops: Vec<Op>, skipped: usize },
+    Stored {
+        ops: Vec<Op>,
+        skipped: usize,
+    },
     /// The reply, its variant or the switch changed meanwhile; nothing kept.
     Dropped,
 }
@@ -96,20 +99,34 @@ impl crate::jobs::one_shot_job::OneShotFailure for HelperRunError {
             Self::Inference(PortError::Provider(failure))
                 if failure.kind == ProviderFailureKind::Unavailable =>
             {
-                (JobErrorCode::ResourceUnavailable, true, "fork-helper-unavailable")
+                (
+                    JobErrorCode::ResourceUnavailable,
+                    true,
+                    "fork-helper-unavailable",
+                )
             }
-            Self::Inference(PortError::Unavailable) | Self::NotClaimed | Self::AlreadySettled => {
-                (JobErrorCode::ResourceUnavailable, true, "fork-helper-unavailable")
-            }
-            Self::Inference(_) => (JobErrorCode::WorkerFailed, false, "fork-helper-inference-failed"),
+            Self::Inference(PortError::Unavailable) | Self::NotClaimed | Self::AlreadySettled => (
+                JobErrorCode::ResourceUnavailable,
+                true,
+                "fork-helper-unavailable",
+            ),
+            Self::Inference(_) => (
+                JobErrorCode::WorkerFailed,
+                false,
+                "fork-helper-inference-failed",
+            ),
             Self::EmptyResponse => (JobErrorCode::WorkerFailed, false, "fork-helper-no-answer"),
-            Self::Storage(_) | Self::Jobs(_) => {
-                (JobErrorCode::StorageFailure, true, "fork-helper-storage-failed")
-            }
+            Self::Storage(_) | Self::Jobs(_) => (
+                JobErrorCode::StorageFailure,
+                true,
+                "fork-helper-storage-failed",
+            ),
             Self::MissingModel => (JobErrorCode::InvalidInput, false, "fork-helper-no-model"),
-            Self::InvalidModel(_) | Self::InvalidRequest(_) | Self::Cancelled => {
-                (JobErrorCode::InvalidInput, false, "fork-helper-invalid-input")
-            }
+            Self::InvalidModel(_) | Self::InvalidRequest(_) | Self::Cancelled => (
+                JobErrorCode::InvalidInput,
+                false,
+                "fork-helper-invalid-input",
+            ),
         };
         JobError::new(code, retryable, message).expect("constant job error is valid")
     }
@@ -437,7 +454,9 @@ where
     if handle.cancellation_token().is_cancelled() {
         return Err(HelperRunError::Cancelled);
     }
-    let outcome = match run_job_inference(database, inference, handle.id(), inference_request, now).await {
+    let outcome = match run_job_inference(database, inference, handle.id(), inference_request, now)
+        .await
+    {
         Ok(outcome) => outcome,
         Err(JobInferenceError::Provider(PortError::Cancelled)) => {
             return Err(HelperRunError::Cancelled);

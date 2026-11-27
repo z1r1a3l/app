@@ -9,7 +9,9 @@ use lettuce_context::fork_helper::{
 };
 use lettuce_contracts::{self as dto, ApiError, ApiErrorCode};
 use lettuce_conversations::{ConversationKind, ConversationReader, MessageRole};
-use lettuce_database::{ForkHelperConfig, ForkHelperScope, ForkHelperScopeKind, MAX_HELPER_HISTORY};
+use lettuce_database::{
+    ForkHelperConfig, ForkHelperScope, ForkHelperScopeKind, MAX_HELPER_HISTORY,
+};
 use lettuce_types::{ConversationId, MessageId};
 
 use super::ApiContext;
@@ -247,7 +249,9 @@ pub(crate) fn change_dto(op: &Op) -> dto::HelperChangeDto {
             hidden_from,
         } => change("truth", id, hidden_from, truth, None),
         Op::Clue { id, text, found } => change("clue", id, "", text, *found),
-        Op::Reveal { id, revealed } => change("reveal", id, "", if *revealed { "1" } else { "0" }, None),
+        Op::Reveal { id, revealed } => {
+            change("reveal", id, "", if *revealed { "1" } else { "0" }, None)
+        }
         Op::TruthRemove { id } => change("truth_remove", id, "", "", None),
     }
 }
@@ -283,7 +287,11 @@ fn chat_path(context: &ApiContext, id: ConversationId) -> Result<ChatPath, ApiEr
 
 impl ChatPath {
     fn state(&self) -> HelperState {
-        let deltas = self.rows.iter().map(|row| row.delta.clone()).collect::<Vec<_>>();
+        let deltas = self
+            .rows
+            .iter()
+            .map(|row| row.delta.clone())
+            .collect::<Vec<_>>();
         helper::state_for_path(&deltas, &path_of(&self.items))
     }
 }
@@ -341,7 +349,9 @@ pub async fn helper_chat_get(
     request: dto::HelperChatRequest,
 ) -> Result<dto::HelperChatView, ApiError> {
     let id = conversation_id(&request.conversation_id)?;
-    context.blocking(move |context| chat_view(context, id)).await
+    context
+        .blocking(move |context| chat_view(context, id))
+        .await
 }
 
 pub async fn helper_status(
@@ -366,7 +376,12 @@ pub async fn helper_scope_set(
             parse_id::<lettuce_types::CharacterId>(&request.id, "id")?;
             ForkHelperScopeKind::Character
         }
-        _ => return Err(invalid_field("scope", "scope must be conversation or character")),
+        _ => {
+            return Err(invalid_field(
+                "scope",
+                "scope must be conversation or character",
+            ));
+        }
     };
     context
         .blocking(move |context| {
@@ -415,16 +430,20 @@ pub async fn helper_config_set(
     if let Some(id) = request.model_profile_id.as_deref() {
         parse_id::<lettuce_types::ModelProfileId>(id, "model_profile_id")?;
     }
-    if request.prompt.as_ref().is_some_and(|p| p.len() > MAX_PROMPT_BYTES) {
+    if request
+        .prompt
+        .as_ref()
+        .is_some_and(|p| p.len() > MAX_PROMPT_BYTES)
+    {
         return Err(invalid_field("prompt", "the prompt is too long"));
     }
     if request.history > MAX_HELPER_HISTORY {
         return Err(invalid_field("history", "at most 40 messages"));
     }
     // The default prompt saved as is stays "default".
-    let prompt = request
-        .prompt
-        .filter(|prompt| !prompt.trim().is_empty() && prompt.trim() != helper::DEFAULT_PROMPT.trim());
+    let prompt = request.prompt.filter(|prompt| {
+        !prompt.trim().is_empty() && prompt.trim() != helper::DEFAULT_PROMPT.trim()
+    });
     context
         .blocking(move |context| {
             let database = context.backend().database();
@@ -435,7 +454,10 @@ pub async fn helper_config_set(
                     history: request.history,
                 })
                 .map_err(storage)?;
-            database.fork_helper_config().map(config_view).map_err(storage)
+            database
+                .fork_helper_config()
+                .map(config_view)
+                .map_err(storage)
         })
         .await
 }

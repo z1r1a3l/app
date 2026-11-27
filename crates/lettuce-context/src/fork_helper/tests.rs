@@ -481,10 +481,18 @@ fn every_open_database_answers_for_its_own_chats() {
     set_state_source(second.clone());
     let source = state_source().expect("sources");
     assert!(source.trackers("fork-helper-source-a", &[]).is_some());
-    assert_eq!(source.deltas("fork-helper-source-b")[0].id, "fork-helper-source-b");
+    assert_eq!(
+        source.deltas("fork-helper-source-b")[0].id,
+        "fork-helper-source-b"
+    );
     assert!(source.trackers("fork-helper-source-c", &[]).is_none());
-    first.alive.store(false, std::sync::atomic::Ordering::SeqCst);
+    first
+        .alive
+        .store(false, std::sync::atomic::Ordering::SeqCst);
     let source = state_source().expect("sources");
-    assert!(source.trackers("fork-helper-source-a", &[]).is_none(), "a closed database drops out");
+    assert!(
+        source.trackers("fork-helper-source-a", &[]).is_none(),
+        "a closed database drops out"
+    );
     assert!(source.trackers("fork-helper-source-b", &[]).is_some());
 }

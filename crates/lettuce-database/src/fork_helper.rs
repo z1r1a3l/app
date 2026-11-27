@@ -2,7 +2,6 @@
 //! the per-chat / per-character switches, and the tracker changes of each
 //! reply variant. All three tables go into backups and sync row by row.
 
-
 use lettuce_context::fork_helper::{DeltaSource, HelperStateSource, Op, StoredDelta, Trackers};
 use rusqlite::{OptionalExtension, params};
 

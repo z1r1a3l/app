@@ -6,7 +6,9 @@ use tauri::State;
 
 #[tauri::command]
 #[specta::specta]
-pub async fn helper_config_get(context: State<'_, ApiContextSlot>) -> Result<dto::HelperConfigView, ApiError> {
+pub async fn helper_config_get(
+    context: State<'_, ApiContextSlot>,
+) -> Result<dto::HelperConfigView, ApiError> {
     let context = context.snapshot()?;
     api::helper_config_get(&context).await
 }

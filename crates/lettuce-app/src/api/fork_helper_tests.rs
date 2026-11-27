@@ -6,17 +6,18 @@ use std::sync::Arc;
 use lettuce_contracts as dto;
 use lettuce_conversations::{InferenceRequest, MessagePart, ProviderContextPart};
 
+use super::*;
 use crate::api::conversations::turns_tests::{regenerate_request, replied_chat, run_generation};
 use crate::api::jobs::{JobHandlers, JobRunner};
 use crate::api::tests::{Harness, RecordingStream, Reply, harness, send};
-use super::*;
 use crate::api::*;
 
 const HELPER_ANSWER: &str = "<state_update>\n[Scene]\nМесто: таверна\n[Characters]\nAqua · Одежда: синее платье\n[Inventory]\n+ Traveller: посох\n[Notebook]\n+ T1: Аква — богиня | hidden from: Traveller\nClue T1: smiles warmly\n</state_update>";
 
 fn text_of(request: &InferenceRequest) -> String {
     request
-        .context.messages
+        .context
+        .messages
         .iter()
         .flat_map(|message| &message.parts)
         .filter_map(|part| match part {
@@ -144,7 +145,10 @@ async fn a_read_stores_changes_and_the_next_prompt_gets_one_state_block() {
     let status = view.status.expect("status");
     assert_eq!(status.job_id, job.to_string());
     assert_eq!(status.state, dto::HelperRunState::Done, "{status:?}");
-    assert_eq!(value(&view.state.characters, "Aqua", "Одежда"), Some("синее платье"));
+    assert_eq!(
+        value(&view.state.characters, "Aqua", "Одежда"),
+        Some("синее платье")
+    );
     assert_eq!(view.state.scene[0].value, "таверна");
     assert_eq!(view.state.inventory[0].items, ["посох"]);
     let truth = &view.state.notebook[0];
@@ -162,7 +166,11 @@ async fn a_read_stores_changes_and_the_next_prompt_gets_one_state_block() {
     .expect("message");
     assert!(read.read);
     assert!(read.raw.contains("синее платье"));
-    assert!(read.changes.iter().any(|c| c.kind == "set" && c.subject == "Aqua" && c.value == "синее платье"));
+    assert!(
+        read.changes
+            .iter()
+            .any(|c| c.kind == "set" && c.subject == "Aqua" && c.value == "синее платье")
+    );
 
     // The helper read the reply and the user message before it.
     let requests = harness.provider.requests.lock().expect("requests").clone();
@@ -173,9 +181,15 @@ async fn a_read_stores_changes_and_the_next_prompt_gets_one_state_block() {
 
     // The next turn: the state block is in the prompt once; the post-reply
     // hook queues the next read by itself.
-    send(&harness, &chat, "helper-read-2", "Hi again", Arc::new(RecordingStream::default()))
-        .await
-        .expect("send");
+    send(
+        &harness,
+        &chat,
+        "helper-read-2",
+        "Hi again",
+        Arc::new(RecordingStream::default()),
+    )
+    .await
+    .expect("send");
     run_generation(&harness).await;
     let requests = harness.provider.requests.lock().expect("requests").clone();
     let main = requests
@@ -213,19 +227,39 @@ async fn regenerating_a_reply_rolls_its_changes_back_and_drops_a_stale_read() {
     .expect("regenerate");
     run_generation(&harness).await;
     let requests = harness.provider.requests.lock().expect("requests").clone();
-    let regen = text_of(requests.iter().rev().find(|r| !is_helper(r)).expect("regenerate request"));
-    assert!(!regen.contains("синее платье"), "the replaced reply's changes are not in its regenerate prompt: {regen}");
+    let regen = text_of(
+        requests
+            .iter()
+            .rev()
+            .find(|r| !is_helper(r))
+            .expect("regenerate request"),
+    );
+    assert!(
+        !regen.contains("синее платье"),
+        "the replaced reply's changes are not in its regenerate prompt: {regen}"
+    );
 
     let view = chat_view(&harness, &chat).await;
-    assert!(view.state.characters.is_empty(), "rolled back: {:?}", view.state);
+    assert!(
+        view.state.characters.is_empty(),
+        "rolled back: {:?}",
+        view.state
+    );
     assert!(view.state.notebook.is_empty());
 
     // The stale read is dropped; the hook's read of the new variant stores.
     let before = helper_requests(&harness);
     run_jobs(&harness).await;
-    assert_eq!(helper_requests(&harness), before + 1, "the stale read never called the model");
+    assert_eq!(
+        helper_requests(&harness),
+        before + 1,
+        "the stale read never called the model"
+    );
     let view = chat_view(&harness, &chat).await;
-    assert_eq!(value(&view.state.characters, "Aqua", "Одежда"), Some("синее платье"));
+    assert_eq!(
+        value(&view.state.characters, "Aqua", "Одежда"),
+        Some("синее платье")
+    );
     let rows = harness
         .context
         .backend()
@@ -261,8 +295,14 @@ async fn manual_edits_are_kept_with_the_latest_reply() {
     )
     .await
     .expect("save");
-    assert_eq!(value(&view.state.characters, "Aqua", "Одежда"), Some("красная мантия"));
-    assert_eq!(value(&view.state.npcs, "Трактирщик", "Настроение"), Some("хмурый"));
+    assert_eq!(
+        value(&view.state.characters, "Aqua", "Одежда"),
+        Some("красная мантия")
+    );
+    assert_eq!(
+        value(&view.state.npcs, "Трактирщик", "Настроение"),
+        Some("хмурый")
+    );
     assert!(view.state.notebook[0].revealed);
     let read = helper_message(
         &harness.context,
@@ -287,7 +327,13 @@ async fn manual_edits_are_kept_with_the_latest_reply() {
     .await
     .expect("save again");
     assert_eq!(
-        harness.context.backend().database().fork_helper_deltas(&chat).expect("rows").len(),
+        harness
+            .context
+            .backend()
+            .database()
+            .fork_helper_deltas(&chat)
+            .expect("rows")
+            .len(),
         2
     );
 
@@ -330,14 +376,20 @@ async fn a_tracker_switched_off_keeps_its_lines_out() {
     assert!(!view.state.characters.is_empty());
     let requests = harness.provider.requests.lock().expect("requests").clone();
     let helper_text = text_of(requests.iter().find(|r| is_helper(r)).expect("helper call"));
-    assert!(!helper_text.contains("Enabled trackers: Scene, Characters, Bonds, Inventory"), "{helper_text}");
+    assert!(
+        !helper_text.contains("Enabled trackers: Scene, Characters, Bonds, Inventory"),
+        "{helper_text}"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn a_character_switch_turns_the_helper_on_and_a_chat_switch_overrides_it() {
     let harness = helper_harness();
     let (chat, _) = replied_chat(&harness, "helper-character").await;
-    let character = chat_view(&harness, &chat).await.character_id.expect("direct chat");
+    let character = chat_view(&harness, &chat)
+        .await
+        .character_id
+        .expect("direct chat");
     helper_scope_set(
         &harness.context,
         dto::HelperScopeUpdate {
@@ -386,7 +438,10 @@ async fn settings_keep_the_default_prompt_as_default() {
     let harness = helper_harness();
     let view = helper_config_get(&harness.context).await.expect("config");
     assert_eq!(view.prompt, None);
-    assert!(view.default_prompt.contains("NSFW/NSFL allowed; all descriptions explicit."));
+    assert!(
+        view.default_prompt
+            .contains("NSFW/NSFL allowed; all descriptions explicit.")
+    );
     assert!(view.default_prompt.contains("Russian"));
     let saved = helper_config_set(
         &harness.context,

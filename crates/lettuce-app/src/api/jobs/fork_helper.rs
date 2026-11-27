@@ -146,9 +146,11 @@ impl JobHandler for ForkHelperHandler {
         };
         let Some(request) = request else {
             // An unreadable detail: settle the job as invalid.
-            settle_failed(context, claim, &HelperRunError::InvalidRequest(
-                "the helper job detail is unreadable".to_owned(),
-            ))
+            settle_failed(
+                context,
+                claim,
+                &HelperRunError::InvalidRequest("the helper job detail is unreadable".to_owned()),
+            )
             .await?;
             return Ok(None);
         };

@@ -9,8 +9,8 @@
 
 use lettuce_context::fork_helper::{self as helper, HelperState, StoredDelta};
 use lettuce_conversations::{
-    ContextRequest, MessageRenderSource, MessageRole, ProviderContextPart,
-    ProviderNeutralMessage, TimelineItem,
+    ContextRequest, MessageRenderSource, MessageRole, ProviderContextPart, ProviderNeutralMessage,
+    TimelineItem,
 };
 
 /// Depth of the block: before the last message of the history.
@@ -27,7 +27,9 @@ pub(crate) fn variant_key(item: &TimelineItem) -> String {
 }
 
 /// `(message id, shown variant)` of each item, in order.
-pub(crate) fn path_of<'a>(items: impl IntoIterator<Item = &'a TimelineItem>) -> Vec<(String, String)> {
+pub(crate) fn path_of<'a>(
+    items: impl IntoIterator<Item = &'a TimelineItem>,
+) -> Vec<(String, String)> {
     items
         .into_iter()
         .map(|item| (item.message.id.to_string(), variant_key(item)))
