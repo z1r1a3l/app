@@ -152,3 +152,18 @@ it("browses presets as resources from Illarin", async () => {
   await waitFor(() => expect(requests.at(-1)).toMatchObject({ source: "illarin", kind: "preset" }));
   expect(await screen.findByText("AyaPrism")).toBeTruthy();
 });
+
+it("keeps a long description fully in the sheet body instead of a nested scroll box", async () => {
+  const description = `${"A line of the tale.\n".repeat(40)}The ending that was cut off.`;
+  await open({
+    discoverSearch: () => ok({ items: [eira], next_cursor: null, total: 1 }),
+    discoverDetail: () => ok(fixtureDetail(eira, { description, greeting: "Hello there." })),
+  });
+  fireEvent.click(await screen.findByText("Eira the Witch"));
+  const detail = within(await screen.findByRole("dialog"));
+  const about = await detail.findByText(/The ending that was cut off/);
+  expect(about.textContent).toContain("A line of the tale.");
+  expect(about.className).not.toMatch(/overflow-y-auto/);
+  expect(about.className).not.toMatch(/max-h-72/);
+});
+

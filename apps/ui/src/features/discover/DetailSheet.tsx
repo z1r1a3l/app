@@ -129,13 +129,13 @@ export function DetailSheet({
               {description && (
                 <section className="space-y-1">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-3">{t("discover.about")}</h3>
-                  <p className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-fg-2">{description}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-2">{description}</p>
                 </section>
               )}
               {detail.data?.greeting && (
                 <section className="space-y-1">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-3">{t("discover.greeting")}</h3>
-                  <p className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl bg-fill p-3 text-sm leading-relaxed text-fg-2">
+                  <p className="whitespace-pre-wrap rounded-xl bg-fill p-3 text-sm leading-relaxed text-fg-2">
                     {detail.data.greeting}
                   </p>
                 </section>
