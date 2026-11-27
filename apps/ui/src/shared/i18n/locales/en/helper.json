@@ -8,7 +8,7 @@
   "chatSwitch": "In this chat",
   "chatSwitchHint": "Overrides the character's switch",
   "chatFollows": "Follows the character",
-  "characterSwitch": "For {{name}}",
+  "characterSwitch": "Character: {{name}}",
   "characterSwitchHint": "Every chat with this character, unless the chat has its own switch",
   "groupHint": "Group chat: only the chat switch applies.",
   "trackers": "Trackers",

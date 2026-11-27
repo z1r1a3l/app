@@ -8,7 +8,7 @@
   "chatSwitch": "В этом чате",
   "chatSwitchHint": "Важнее переключателя персонажа",
   "chatFollows": "Как у персонажа",
-  "characterSwitch": "Для {{name}}",
+  "characterSwitch": "Персонаж: {{name}}",
   "characterSwitchHint": "Во всех чатах с этим персонажем, если у чата нет своего переключателя",
   "groupHint": "Групповой чат: действует только переключатель чата.",
   "trackers": "Трекеры",

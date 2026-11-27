@@ -59,8 +59,8 @@ export function plaqueHtml(changes: readonly HelperChangeDto[], labels: PlaqueLa
   const sections = ORDER.flatMap((tracker) => {
     const own = changes.filter((change) => change.tracker === tracker);
     if (own.length === 0) return [];
-    const items = own.map((change) => `<li>${line(change, labels)}</li>`).join("");
-    return [`<p><b>${escapeHtml(labels.trackers[tracker] ?? tracker)}</b></p><ul>${items}</ul>`];
+    const items = own.map((change) => `<br>• ${line(change, labels)}`).join("");
+    return [`<p><b>${escapeHtml(labels.trackers[tracker] ?? tracker)}</b>${items}</p>`];
   });
   return `<details class="helper-plaque">${summary}${sections.join("")}</details>`;
 }
