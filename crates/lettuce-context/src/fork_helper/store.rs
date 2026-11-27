@@ -53,37 +53,69 @@ pub fn state_for_path(rows: &[StoredDelta], path: &[(String, String)]) -> Helper
     state
 }
 
-/// The database side, set once at start (prompt assembly has no database).
+/// The database side, registered at start (prompt assembly has no
+/// database). Every open database registers one; chat ids are unique, so a
+/// lookup asks each live one in turn.
 pub trait HelperStateSource: Send + Sync {
     /// The trackers that run in this chat; `None` when the helper is off.
     fn trackers(&self, conversation_id: &str, character_ids: &[String]) -> Option<Trackers>;
     /// Every stored change of the chat.
     fn deltas(&self, conversation_id: &str) -> Vec<StoredDelta>;
+    /// `false` once its database is closed; it is then forgotten.
+    fn alive(&self) -> bool {
+        true
+    }
 }
 
 type Source = Arc<dyn HelperStateSource>;
 
-fn slot() -> &'static RwLock<Option<Source>> {
-    static SLOT: RwLock<Option<Source>> = RwLock::new(None);
+fn slot() -> &'static RwLock<Vec<Source>> {
+    static SLOT: RwLock<Vec<Source>> = RwLock::new(Vec::new());
     &SLOT
 }
 
+/// Registers an open database's source.
 pub fn set_state_source(source: Source) {
-    *slot()
+    let mut sources = slot()
         .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(source);
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    sources.retain(|known| known.alive());
+    sources.push(source);
 }
 
 pub fn clear_state_source() {
-    *slot()
+    slot()
         .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clear();
+}
+
+/// The registered sources, asked in turn.
+struct Sources(Vec<Source>);
+
+impl HelperStateSource for Sources {
+    fn trackers(&self, conversation_id: &str, character_ids: &[String]) -> Option<Trackers> {
+        self.0
+            .iter()
+            .filter(|source| source.alive())
+            .find_map(|source| source.trackers(conversation_id, character_ids))
+    }
+
+    fn deltas(&self, conversation_id: &str) -> Vec<StoredDelta> {
+        self.0
+            .iter()
+            .filter(|source| source.alive())
+            .map(|source| source.deltas(conversation_id))
+            .find(|rows| !rows.is_empty())
+            .unwrap_or_default()
+    }
 }
 
 #[must_use]
 pub fn state_source() -> Option<Source> {
-    slot()
+    let sources = slot()
         .read()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .clone()
+        .clone();
+    (!sources.is_empty()).then(|| Arc::new(Sources(sources)) as Source)
 }

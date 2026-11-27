@@ -2,7 +2,6 @@
 //! the per-chat / per-character switches, and the tracker changes of each
 //! reply variant. All three tables go into backups and sync row by row.
 
-use std::sync::Arc;
 
 use lettuce_context::fork_helper::{DeltaSource, HelperStateSource, Op, StoredDelta, Trackers};
 use rusqlite::{OptionalExtension, params};
@@ -321,11 +320,13 @@ impl Database {
 
 /// The database as the prompt assembler's state source.
 #[derive(Debug, Clone)]
-pub struct DatabaseHelperStateSource(pub Arc<Database>);
+/// Holds its database weakly: a closed database drops out of the lookup.
+pub struct DatabaseHelperStateSource(pub std::sync::Weak<Database>);
 
 impl HelperStateSource for DatabaseHelperStateSource {
     fn trackers(&self, conversation_id: &str, character_ids: &[String]) -> Option<Trackers> {
         self.0
+            .upgrade()?
             .fork_helper_effective(conversation_id, character_ids)
             .unwrap_or_else(|error| {
                 tracing::warn!(%error, "fork helper switches could not be read");
@@ -334,13 +335,20 @@ impl HelperStateSource for DatabaseHelperStateSource {
     }
 
     fn deltas(&self, conversation_id: &str) -> Vec<StoredDelta> {
-        self.0
+        let Some(database) = self.0.upgrade() else {
+            return Vec::new();
+        };
+        database
             .fork_helper_deltas(conversation_id)
             .map(|rows| rows.into_iter().map(|row| row.delta).collect())
             .unwrap_or_else(|error| {
                 tracing::warn!(%error, "fork helper changes could not be read");
                 Vec::new()
             })
+    }
+
+    fn alive(&self) -> bool {
+        self.0.strong_count() > 0
     }
 }
 

@@ -437,3 +437,54 @@ fn prompt_fills_names_and_lists_trackers() {
     assert!(user.contains("<latest_exchange>\nАква: Привет\n</latest_exchange>"));
     assert!(!user.contains("Notebook:"));
 }
+
+struct FakeSource {
+    chat: &'static str,
+    alive: std::sync::atomic::AtomicBool,
+}
+
+impl HelperStateSource for FakeSource {
+    fn trackers(&self, conversation_id: &str, _: &[String]) -> Option<Trackers> {
+        (conversation_id == self.chat).then(Trackers::default)
+    }
+
+    fn deltas(&self, conversation_id: &str) -> Vec<StoredDelta> {
+        if conversation_id != self.chat {
+            return Vec::new();
+        }
+        vec![StoredDelta {
+            id: self.chat.to_owned(),
+            message_id: String::new(),
+            variant_key: String::new(),
+            source: DeltaSource::Manual,
+            ops: vec![set(Tracker::Scene, "", "Место", self.chat)],
+            created_at: 1,
+        }]
+    }
+
+    fn alive(&self) -> bool {
+        self.alive.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+
+#[test]
+fn every_open_database_answers_for_its_own_chats() {
+    let first = std::sync::Arc::new(FakeSource {
+        chat: "fork-helper-source-a",
+        alive: true.into(),
+    });
+    let second = std::sync::Arc::new(FakeSource {
+        chat: "fork-helper-source-b",
+        alive: true.into(),
+    });
+    set_state_source(first.clone());
+    set_state_source(second.clone());
+    let source = state_source().expect("sources");
+    assert!(source.trackers("fork-helper-source-a", &[]).is_some());
+    assert_eq!(source.deltas("fork-helper-source-b")[0].id, "fork-helper-source-b");
+    assert!(source.trackers("fork-helper-source-c", &[]).is_none());
+    first.alive.store(false, std::sync::atomic::Ordering::SeqCst);
+    let source = state_source().expect("sources");
+    assert!(source.trackers("fork-helper-source-a", &[]).is_none(), "a closed database drops out");
+    assert!(source.trackers("fork-helper-source-b", &[]).is_some());
+}
