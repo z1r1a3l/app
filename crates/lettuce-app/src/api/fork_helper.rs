@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use lettuce_context::fork_helper::{
-    self as helper, Clue, DeltaSource, Entity, Field, HelperState, Holder, Op, Trackers, Truth,
+    self as helper, BondLock, Clue, DeltaSource, Entity, Field, HelperState, Holder, Op, Trackers,
+    Truth, apply_bond_locks, is_locked,
 };
 use lettuce_contracts::{self as dto, ApiError, ApiErrorCode};
 use lettuce_conversations::{ConversationKind, ConversationReader, MessageRole};
@@ -102,18 +103,27 @@ fn field_dto(field: &Field) -> dto::HelperFieldDto {
     }
 }
 
-fn entity_dto(entity: &Entity) -> dto::HelperEntityDto {
+fn entity_dto(entity: &Entity, locked: bool) -> dto::HelperEntityDto {
     dto::HelperEntityDto {
         name: entity.name.clone(),
         fields: entity.fields.iter().map(field_dto).collect(),
+        locked,
     }
 }
 
-pub(crate) fn state_dto(state: &HelperState) -> dto::HelperStateDto {
+pub(crate) fn state_dto(state: &HelperState, locks: &[BondLock]) -> dto::HelperStateDto {
     dto::HelperStateDto {
         scene: state.scene.iter().map(field_dto).collect(),
-        characters: state.characters.iter().map(entity_dto).collect(),
-        bonds: state.bonds.iter().map(entity_dto).collect(),
+        characters: state
+            .characters
+            .iter()
+            .map(|entity| entity_dto(entity, false))
+            .collect(),
+        bonds: state
+            .bonds
+            .iter()
+            .map(|entity| entity_dto(entity, is_locked(&entity.name, locks)))
+            .collect(),
         inventory: state
             .inventory
             .iter()
@@ -122,7 +132,11 @@ pub(crate) fn state_dto(state: &HelperState) -> dto::HelperStateDto {
                 items: holder.items.clone(),
             })
             .collect(),
-        npcs: state.npcs.iter().map(entity_dto).collect(),
+        npcs: state
+            .npcs
+            .iter()
+            .map(|entity| entity_dto(entity, false))
+            .collect(),
         notebook: state
             .notebook
             .iter()
@@ -266,6 +280,7 @@ struct ChatPath {
     conversation: lettuce_conversations::Conversation,
     items: Vec<lettuce_conversations::TimelineItem>,
     rows: Vec<lettuce_database::ForkHelperDeltaRow>,
+    locks: Vec<BondLock>,
 }
 
 fn chat_path(context: &ApiContext, id: ConversationId) -> Result<ChatPath, ApiError> {
@@ -275,24 +290,31 @@ fn chat_path(context: &ApiContext, id: ConversationId) -> Result<ChatPath, ApiEr
         .conversation;
     let items = crate::generation::fork_helper_run::shown_timeline(database, &conversation)
         .map_err(storage)?;
-    let rows = database
-        .fork_helper_deltas(&id.to_string())
-        .map_err(storage)?;
+    let key = id.to_string();
+    let rows = database.fork_helper_deltas(&key).map_err(storage)?;
+    let locks = database.fork_helper_locks(&key).map_err(storage)?;
     Ok(ChatPath {
         conversation,
         items,
         rows,
+        locks,
     })
 }
 
 impl ChatPath {
-    fn state(&self) -> HelperState {
+    fn fold(&self) -> HelperState {
         let deltas = self
             .rows
             .iter()
             .map(|row| row.delta.clone())
             .collect::<Vec<_>>();
         helper::state_for_path(&deltas, &path_of(&self.items))
+    }
+
+    fn state(&self) -> HelperState {
+        let mut state = self.fold();
+        apply_bond_locks(&mut state, &self.locks);
+        state
     }
 }
 
@@ -339,7 +361,7 @@ fn chat_view(context: &ApiContext, id: ConversationId) -> Result<dto::HelperChat
         character: character.map(scope_dto),
         enabled: effective.is_some(),
         trackers: trackers_dto(trackers),
-        state: state_dto(&path.state()),
+        state: state_dto(&path.state(), &path.locks),
         status: status(&key),
     })
 }
@@ -474,7 +496,23 @@ pub async fn helper_state_set(
     context
         .blocking(move |context| {
             let path = chat_path(context, id)?;
-            let ops = helper::diff(&path.state(), &state_of(&request.state));
+            let desired = state_of(&request.state);
+            let locks = request
+                .state
+                .bonds
+                .iter()
+                .filter(|bond| bond.locked && !bond.name.trim().is_empty())
+                .map(|bond| BondLock {
+                    name: bond.name.trim().to_owned(),
+                    fields: fields_of(&bond.fields),
+                })
+                .collect::<Vec<_>>();
+            let mut ops = helper::diff(&path.state(), &desired);
+            // Unlocking must not drop a bond only the old snapshot was holding.
+            let mut next = path.fold();
+            helper::apply(&mut next, &ops, "");
+            apply_bond_locks(&mut next, &locks);
+            ops.extend(helper::diff(&next, &desired));
             if !ops.is_empty() {
                 // Anchored to the latest reply: deleting or swiping it
                 // rolls the edit back with the reply's own changes.
@@ -492,6 +530,11 @@ pub async fn helper_state_set(
                     .fork_helper_add_edit(&id.to_string(), &message_id, &variant, &ops)
                     .map_err(storage)?;
             }
+            context
+                .backend()
+                .database()
+                .fork_helper_locks_set(&id.to_string(), &locks)
+                .map_err(storage)?;
             chat_view(context, id)
         })
         .await
