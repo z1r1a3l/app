@@ -47,7 +47,10 @@ fn helper_harness() -> Harness {
 
 async fn run_jobs(harness: &Harness) {
     let runner = JobRunner::new(harness.context.clone(), JobHandlers::standard());
-    while runner.run_once().await.expect("runner") {}
+    // Reads of one chat share a lane: wait for each before the next.
+    while runner.run_once().await.expect("runner") {
+        runner.wait_idle().await;
+    }
     runner.wait_idle().await;
 }
 
