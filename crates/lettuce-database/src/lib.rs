@@ -6360,6 +6360,7 @@ mod tests {
                 "fork_global_vars",
                 "fork_helper_config",
                 "fork_helper_deltas",
+                "fork_helper_locks",
                 "fork_helper_scopes",
                 "fork_macro_rolls",
                 "fork_memory_turns",
