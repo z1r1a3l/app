@@ -338,6 +338,12 @@ const MIGRATION_9004: Migration = Migration {
     sql: include_str!("../migrations/9004_fork_helper.sql"),
 };
 
+/// Fork-only migration; see migrations/9005_fork_helper_locks.sql.
+const MIGRATION_9005: Migration = Migration {
+    id: 9005,
+    sql: include_str!("../migrations/9005_fork_helper_locks.sql"),
+};
+
 const MIGRATIONS: &[Migration] = &[
     MIGRATION_1,
     MIGRATION_2,
@@ -392,6 +398,7 @@ const MIGRATIONS: &[Migration] = &[
     MIGRATION_9002,
     MIGRATION_9003,
     MIGRATION_9004,
+    MIGRATION_9005,
 ];
 
 const PROVIDER_CONFIG_FORMAT_VERSION: u32 = 1;

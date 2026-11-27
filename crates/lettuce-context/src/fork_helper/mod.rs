@@ -25,7 +25,7 @@ pub use delta::{ParsedDelta, parse_delta};
 pub use locks::{BondLock, apply_bond_locks, drop_locked_bond_ops, is_locked, touches_locked_bond};
 pub use model::{
     Clue, Entity, Field, HelperState, Holder, Op, StateDelta, Tracker, Trackers, Truth, apply,
-    diff, fold, limit_new_truths, live_truths, same_key,
+    diff, fold, limit_new_truths, live_truths, normalize, same_key,
 };
 pub use prompt::{
     DEFAULT_PROMPT, HelperInput, HelperLine, MAX_LIVE_TRUTHS, helper_system_prompt,

@@ -2,7 +2,9 @@
 //! the per-chat / per-character switches, and the tracker changes of each
 //! reply variant. All three tables go into backups and sync row by row.
 
-use lettuce_context::fork_helper::{DeltaSource, HelperStateSource, Op, StoredDelta, Trackers};
+use lettuce_context::fork_helper::{
+    BondLock, DeltaSource, HelperStateSource, Op, StoredDelta, Trackers, normalize,
+};
 use rusqlite::{OptionalExtension, params};
 
 use crate::{Database, DatabaseError};
@@ -301,7 +303,7 @@ impl Database {
         Ok(id)
     }
 
-    /// Drops switches and changes of chats that no longer exist.
+    /// Drops switches, changes and locks of chats that no longer exist.
     pub fn fork_helper_prune(&self) -> Result<usize, DatabaseError> {
         let connection = self.connection()?;
         let deltas = connection.execute(
@@ -313,7 +315,64 @@ impl Database {
              AND scope_id NOT IN (SELECT id FROM conversations)",
             [],
         )?;
-        Ok(deltas + scopes)
+        let locks = connection.execute(
+            "DELETE FROM fork_helper_locks WHERE conversation_id NOT IN (SELECT id FROM conversations)",
+            [],
+        )?;
+        Ok(deltas + scopes + locks)
+    }
+
+    /// The user-locked bonds of a chat, in name order.
+    pub fn fork_helper_locks(&self, conversation_id: &str) -> Result<Vec<BondLock>, DatabaseError> {
+        let connection = self.connection()?;
+        let mut statement = connection.prepare(
+            "SELECT bond_name, fields_json FROM fork_helper_locks
+             WHERE conversation_id = ?1 ORDER BY bond_name, bond_key",
+        )?;
+        let mut rows = statement.query(params![conversation_id])?;
+        let mut locks = Vec::new();
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(0)?;
+            let fields_json: String = row.get(1)?;
+            let fields = serde_json::from_str(&fields_json).map_err(json_error)?;
+            locks.push(BondLock { name, fields });
+        }
+        Ok(locks)
+    }
+
+    /// Replaces the chat's locks with `locks`. Empty names are skipped.
+    pub fn fork_helper_locks_set(
+        &self,
+        conversation_id: &str,
+        locks: &[BondLock],
+    ) -> Result<(), DatabaseError> {
+        let mut connection = self.connection()?;
+        let transaction = connection.transaction()?;
+        transaction.execute(
+            "DELETE FROM fork_helper_locks WHERE conversation_id = ?1",
+            params![conversation_id],
+        )?;
+        let now = now_millis();
+        let mut seen = std::collections::HashSet::new();
+        for lock in locks {
+            let name = lock.name.trim();
+            if name.is_empty() {
+                continue;
+            }
+            let key = normalize(name);
+            if key.is_empty() || !seen.insert(key.clone()) {
+                continue;
+            }
+            let fields_json = serde_json::to_string(&lock.fields).map_err(json_error)?;
+            transaction.execute(
+                "INSERT INTO fork_helper_locks
+                    (conversation_id, bond_key, bond_name, fields_json, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![conversation_id, key, name, fields_json, now],
+            )?;
+        }
+        transaction.commit()?;
+        Ok(())
     }
 }
 
@@ -342,6 +401,18 @@ impl HelperStateSource for DatabaseHelperStateSource {
             .map(|rows| rows.into_iter().map(|row| row.delta).collect())
             .unwrap_or_else(|error| {
                 tracing::warn!(%error, "fork helper changes could not be read");
+                Vec::new()
+            })
+    }
+
+    fn bond_locks(&self, conversation_id: &str) -> Vec<BondLock> {
+        let Some(database) = self.0.upgrade() else {
+            return Vec::new();
+        };
+        database
+            .fork_helper_locks(conversation_id)
+            .unwrap_or_else(|error| {
+                tracing::warn!(%error, "fork helper locks could not be read");
                 Vec::new()
             })
     }
@@ -471,7 +542,7 @@ pub(crate) const DELTA_ROWS: crate::sync::row_sync_adapter::RowTable =
 
 #[cfg(test)]
 mod tests {
-    use lettuce_context::fork_helper::{Tracker, state_for_path};
+    use lettuce_context::fork_helper::{BondLock, Field, Tracker, state_for_path};
 
     use super::*;
 
@@ -660,6 +731,54 @@ mod tests {
         let rows = restored.fork_helper_deltas("chat").expect("rows");
         assert_eq!(rows[0].delta.ops, outfit("платье"));
         assert_eq!(rows[0].raw, "raw");
+    }
+
+    fn enemy(name: &str) -> BondLock {
+        BondLock {
+            name: name.into(),
+            fields: vec![Field {
+                name: "Attitude".into(),
+                value: "враг".into(),
+            }],
+        }
+    }
+
+    #[test]
+    fn locks_round_trip_and_match_names_loosely() {
+        let database = open();
+        database
+            .fork_helper_locks_set(
+                "chat",
+                &[enemy("Кассиан → Хантер"), enemy("  Кассиан → Хантер  ")],
+            )
+            .expect("set");
+        let locks = database.fork_helper_locks("chat").expect("get");
+        assert_eq!(locks.len(), 1);
+        assert_eq!(locks[0].name, "Кассиан → Хантер");
+        assert_eq!(locks[0].fields[0].value, "враг");
+        database
+            .fork_helper_locks_set("chat", &[enemy("Трактирщик")])
+            .expect("replace");
+        let locks = database.fork_helper_locks("chat").expect("get");
+        assert_eq!(locks.len(), 1);
+        assert_eq!(locks[0].name, "Трактирщик");
+        database.fork_helper_locks_set("chat", &[]).expect("clear");
+        assert!(
+            database
+                .fork_helper_locks("chat")
+                .expect("empty")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn prune_drops_locks_of_deleted_chats() {
+        let database = open();
+        database
+            .fork_helper_locks_set("gone", &[enemy("Кассиан")])
+            .expect("set");
+        assert_eq!(database.fork_helper_prune().expect("prune"), 1);
+        assert!(database.fork_helper_locks("gone").expect("gone").is_empty());
     }
 
     #[test]
