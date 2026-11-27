@@ -27,7 +27,7 @@ export function ChapterRecallRows() {
     <>
       <ListRow
         title={
-          <span className="flex items-center gap-2">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {t("memory.advanced.chapterRecall")} <Badge>{t("memory.advanced.experimental")}</Badge>
           </span>
         }

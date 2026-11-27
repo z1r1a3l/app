@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 @import "@lettuceai/crisp/styles.css";
+@import "./fork-overflow.css";
 
 @source "../../node_modules/@lettuceai/crisp/dist";
 

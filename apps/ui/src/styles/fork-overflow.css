@@ -1,0 +1,36 @@
+/*
+ * Fork: long localized labels (Russian especially) must not run off a phone
+ * screen. Row titles wrap to two lines instead of being cut with an
+ * ellipsis, and segmented controls size their options by content, shrink
+ * and wrap instead of overflowing.
+ */
+@media (max-width: 640px) {
+  .row-py > .min-w-0.flex-1 > .block.truncate {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+[role="radiogroup"] {
+  max-width: 100%;
+}
+[role="radiogroup"] > button[role="radio"] {
+  min-width: 0;
+  height: auto;
+  min-height: 1.75rem;
+  padding-block: 0.25rem;
+}
+[role="radiogroup"].w-full > button[role="radio"] {
+  flex: 1 1 auto;
+}
+[role="radiogroup"] > button[role="radio"] > span:last-child {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}

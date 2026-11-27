@@ -83,7 +83,7 @@ export function ScopedSettings({ section, value, onChange }: { section: MemorySe
     <ListRow title={title} description={description} trailing={<Switch checked={checked} onChange={(next) => void set(patch(next))} aria-label={label} />} />
   );
   const experimental = (label: string) => (
-    <span className="flex items-center gap-2">
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
       {label} <Badge>{t("memory.advanced.experimental")}</Badge>
     </span>
   );
