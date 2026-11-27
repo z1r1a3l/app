@@ -4,6 +4,8 @@
 pub(super) mod jobs;
 #[cfg(test)]
 mod jobs_tests;
+#[cfg(test)]
+mod fork_entry_live_tests;
 pub(super) mod projects;
 #[cfg(test)]
 pub(super) mod tests;

@@ -119,6 +119,7 @@
     "failed_many": "Ошибка в {{count}} записях",
     "failed_other": "Ошибка в {{count}} записях",
     "reasonSuffix": " — {{reason}}",
+    "sameText": " — модель вернула запись без изменений",
     "discard": "Отклонить всё",
     "apply_one": "Применить {{count}}",
     "apply_few": "Применить {{count}}",

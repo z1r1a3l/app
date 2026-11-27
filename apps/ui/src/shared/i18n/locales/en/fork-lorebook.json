@@ -107,6 +107,7 @@
     "failed_one": "{{count}} entry failed",
     "failed_other": "{{count}} entries failed",
     "reasonSuffix": " — {{reason}}",
+    "sameText": " — the model returned the entry unchanged",
     "discard": "Discard all",
     "apply_one": "Apply {{count}}",
     "apply_other": "Apply {{count}}",
