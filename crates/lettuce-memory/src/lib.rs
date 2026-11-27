@@ -13,6 +13,7 @@ mod revert;
 mod run;
 mod structured_fallback;
 mod summary_units;
+mod fork_chapter_recall;
 mod text;
 mod tool;
 
@@ -54,6 +55,11 @@ pub use run::{
     MAX_DYNAMIC_MEMORY_ATTEMPT_TOOL_CALLS, MAX_DYNAMIC_MEMORY_INFERENCE_ROUNDS,
     NewDynamicMemoryAttemptRecovery, NewDynamicMemoryInferenceRound, NewDynamicMemoryRunAttempt,
     NewDynamicMemoryToolCall,
+};
+pub use fork_chapter_recall::{
+    ChapterRecallConfig, ChapterRecallSource, FoldedChapter, append_recalled_chapters,
+    chapter_recall_source, clear_chapter_recall_source, render_block, select_chapters,
+    set_chapter_recall_source,
 };
 pub use summary_units::{
     SummaryAdoption, combined_time_range, plan_summary_adoption, render_summary_units,
